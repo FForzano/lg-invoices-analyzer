@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% from "_macros.html" import eur, num %}
+{% from "_macros.html" import eur, num, pager %}
 {% block content %}
 <h1>Bollette</h1>
 <p><a href="{{ url_for('bills.new', commodity='power') }}">+ Luce</a> · <a href="{{ url_for('bills.new', commodity='gas') }}">+ Gas</a></p>
 <table>
   <tr><th>Fornitura</th><th>Periodo</th><th class="num">Consumo</th><th>Lettura</th><th class="num">Totale</th><th></th></tr>
-  {% for b in bills %}
+  {% for b in page.items %}
   <tr>
     <td>{{ 'Luce' if b.commodity == 'power' else 'Gas' }}</td>
     <td>{{ b.period_start }} → {{ b.period_end }}</td>
@@ -20,4 +20,5 @@
   </tr>
   {% else %}<tr><td colspan="6" class="muted">Nessuna bolletta.</td></tr>{% endfor %}
 </table>
+{{ pager(page, request.endpoint, request.args) }}
 {% endblock %}

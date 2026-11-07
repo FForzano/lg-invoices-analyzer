@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import eur, num %}
+{% from "_macros.html" import eur, num, pager %}
 {% block content %}
 {% set commodity = a.commodity %}{% set consumption = a.consumption %}{% set assumptions = a.assumptions %}{% set settings = a.settings %}{% set skipped = a.skipped %}
 <h1>Confronto {{ 'luce' if commodity == 'power' else 'gas' }}</h1>
@@ -14,7 +14,7 @@
   <span class="muted">Ipotesi per le offerte indicizzate: {% if commodity == 'power' %}PUN medio annuo {{ num(settings.pun, 3) }} €/kWh × {{ num(a.season_multiplier, 2) }} (stagionalità sui tuoi consumi) = {{ num(assumptions.pun, 3) }} €/kWh, perdite di rete {{ num(assumptions.loss_pct, 1) }}% se non indicate{% else %}PSV medio annuo {{ num(settings.psv, 3) }} €/Smc × {{ num(a.season_multiplier, 2) }} (stagionalità sui tuoi consumi) = {{ num(assumptions.psv, 3) }} €/Smc{% endif %} (<a href="{{ url_for('settings.index') }}">modifica</a>). Zona: regione {{ settings.region or '–' }}, provincia {{ settings.province or '–' }}, comune {{ settings.comune or '–' }}.</span></p>
   <table>
     <tr><th>Offerta</th><th class="num">Energia</th><th class="num">Quote fisse</th><th class="num">Sconti</th><th class="num">Costo annuo</th><th class="num">Risparmio</th></tr>
-    {% for r in ranked %}
+    {% for r in page.items %}
     <tr>
       <td>{{ r.offer.supplier }} – {{ r.offer.name }}{% if r.offer.is_current %} <strong>(attuale)</strong>{% endif %}</td>
       <td class="num">{{ eur(r.estimate.energy) }}</td>
@@ -25,7 +25,7 @@
     </tr>
     {% else %}<tr><td colspan="6" class="muted">Nessuna offerta valida.</td></tr>{% endfor %}
   </table>
-  {% if total > ranked | length %}<p class="muted">Prime {{ ranked | length }} offerte su {{ total }}.</p>{% endif %}
+  {{ pager(page, request.endpoint, request.args) }}
   {% if skipped %}<p class="muted">{{ skipped | length }} offerte non valutabili per dati incompleti.</p>{% endif %}
 {% endif %}
 <p class="muted">Stima della sola parte decisa dal fornitore (energia, quote fisse, potenza, sconti): trasporto, oneri, imposte, bonus sociali e canone TV sono esclusi. Non è un preventivo.</p>

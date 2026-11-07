@@ -14,7 +14,7 @@ def create_app(data_dir: str | None = None) -> Flask:
         DATA_DIR=data,
         DB_PATH=data / "bollette.db",
         PDF_DIR=data / "pdf",
-        MAX_CONTENT_LENGTH=20 * 1024 * 1024,
+        MAX_CONTENT_LENGTH=100 * 1024 * 1024,
     )
     try:
         app.config["PDF_DIR"].mkdir(parents=True, exist_ok=True)

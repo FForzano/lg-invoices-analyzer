@@ -25,7 +25,7 @@ uv run pytest
 
 ## Come si usa
 
-1. **Carica le bollette** (PDF di luce e gas): l'app legge i dati, ricava l'**offerta attuale** (spread, perdite di rete, dispacciamento, capacità, quota fissa, PUN/PSV del mese) e li mostra da confermare.
+1. **Carica le bollette** (PDF di luce e gas): l'app legge i dati, ricava l'**offerta attuale** (spread, perdite di rete, dispacciamento, capacità, quota fissa, PUN/PSV del mese) e li mostra da confermare. Puoi selezionare **più PDF insieme**: quelli letti per intero e non già presenti (stessa fornitura e periodo) vengono salvati subito, gli altri sono elencati e si inseriscono uno per uno.
 2. **Importa le offerte** dal Portale Offerte (una volta ogni tanto, pulsante in *Offerte*).
 3. **Home**: per luce e gas dice se conviene cambiare, con quale offerta, quanto si risparmia in un anno, e se il vantaggio regge con PUN/PSV ±20%. Soglia: almeno 30 € e 5% l'anno.
 

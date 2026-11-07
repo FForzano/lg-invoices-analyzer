@@ -3,12 +3,13 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, u
 from .. import db, forms
 from ..models import Offer
 from ..services import arera
+from ..services.paging import paginate
 from ..services.offers_csv import parse_offers_csv
 
 bp = Blueprint("offers", __name__)
 
 
-LIST_LIMIT = 200
+PER_PAGE = 50
 
 
 @bp.get("/offers")
@@ -19,7 +20,8 @@ def index():
         offers = [o for o in offers if q in f"{o.supplier} {o.name}".lower()]
     # prima le offerte inserite a mano o marcate come attuali, poi quelle importate
     offers.sort(key=lambda o: (not o.is_current, (o.source or "").startswith(arera.SOURCE_PREFIX)))
-    return render_template("offers.html", offers=offers[:LIST_LIMIT], total=len(offers), q=q)
+    page = paginate(offers, request.args.get("page", 1, type=int), PER_PAGE)
+    return render_template("offers.html", page=page, q=q)
 
 
 @bp.get("/offers/new")

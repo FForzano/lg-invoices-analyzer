@@ -17,3 +17,13 @@
 {% macro eur(x) -%}{{ '{:,.2f}'.format(x).replace(',', ' ').replace('.', ',') }} €{%- endmacro %}
 {% macro num(x, d=2) -%}{% if x is none %}–{% else %}{{ ('{:,.' ~ d ~ 'f}').format(x).replace(',', ' ').replace('.', ',') }}{% endif %}{%- endmacro %}
 {% macro pct(x) -%}{% if x is none %}–{% else %}<span class="{{ 'bad' if x > 0 else 'good' }}">{{ '{:+.1f}'.format(x).replace('.', ',') }}%</span>{% endif %}{%- endmacro %}
+
+{% macro pager(p, endpoint, args) -%}
+{% if p.pages > 1 %}
+<p class="pager">
+  {% if p.number > 1 %}<a href="{{ url_for(endpoint, **dict(args.to_dict(), page=1)) }}" title="Prima">«</a> <a href="{{ url_for(endpoint, **dict(args.to_dict(), page=p.number - 1)) }}">← precedente</a>{% endif %}
+  <span class="muted">Pagina {{ p.number }} di {{ p.pages }} · {{ p.total }} elementi</span>
+  {% if p.number < p.pages %}<a href="{{ url_for(endpoint, **dict(args.to_dict(), page=p.number + 1)) }}">successiva →</a> <a href="{{ url_for(endpoint, **dict(args.to_dict(), page=p.pages)) }}" title="Ultima">»</a>{% endif %}
+</p>
+{% endif %}
+{%- endmacro %}

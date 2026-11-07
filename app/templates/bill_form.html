@@ -7,9 +7,10 @@
   <legend>Da PDF <span class="muted">(lettura locale a regole{% if can_extract %}, con LLM come ripiego{% endif %})</span></legend>
   <form method="post" action="{{ url_for('bills.upload') }}" enctype="multipart/form-data" class="grid">
     {{ select('commodity', 'Fornitura', v, [('power', 'Luce'), ('gas', 'Gas')], required=true) }}
-    <label>PDF<input type="file" name="pdf" accept="application/pdf" required></label>
+    <label>PDF (anche più di uno)<input type="file" name="pdf" accept="application/pdf" multiple required></label>
     <div><button>Carica e leggi</button></div>
   </form>
+  <p class="muted">Con più PDF la fornitura è riconosciuta dal testo e le bollette lette per intero vengono salvate subito; le altre sono segnalate e vanno inserite una per una. Già presenti (stessa fornitura e periodo) = saltate.</p>
   {% if can_extract %}<p class="muted">Solo se la lettura locale non basta, il testo della bolletta (dati personali) viene inviato all'API del modello.</p>{% endif %}
 </fieldset>
 {% endif %}

@@ -86,3 +86,29 @@ def test_unwritable_data_dir_gives_clear_error(tmp_path):
             create_app(str(tmp_path / "data"))
     finally:
         tmp_path.chmod(0o700)
+
+
+def test_bulk_import_saves_complete_bills_and_reports_the_rest(client, monkeypatch):
+    import io
+    from pathlib import Path
+    from app.services import extraction
+
+    fix = Path(__file__).parent / "fixtures"
+    texts = {b"power": (fix / "bill_power.txt").read_text(), b"gas": (fix / "bill_gas.txt").read_text(), b"junk": "nulla di utile"}
+    monkeypatch.setattr(extraction, "pdf_text", lambda p: texts[Path(p).read_bytes()])
+    files = [(io.BytesIO(k), f"{k.decode()}{i}.pdf") for i, k in enumerate([b"power", b"gas", b"power", b"junk"])]
+    r = client.post("/bills/upload", data={"pdf": files}, content_type="multipart/form-data", follow_redirects=True)
+    assert "Importate 2 bollette su 4" in r.text
+    assert "power2.pdf: già presente" in r.text and "junk3.pdf" in r.text
+    assert "Offerta attuale rilevata" in r.text
+    assert len(list(client.application.config["PDF_DIR"].glob("*.pdf"))) == 2  # i PDF scartati non restano su disco
+
+
+def test_lists_are_paginated(client):
+    for i in range(60):
+        client.post("/offers/save", data={"commodity": "power", "supplier": "X", "name": f"Offerta {i:02d}", "price_type": "fixed", "price": "0,1"})
+    first = client.get("/offers").text
+    assert "Offerta 00" in first and "Offerta 59" not in first and "Pagina 1 di 2" in first
+    second = client.get("/offers?page=2").text
+    assert "Offerta 59" in second and "Offerta 00" not in second
+    assert "Pagina 2 di 2" in client.get("/offers?page=99").text  # pagina fuori limite: l'ultima

@@ -1,13 +1,13 @@
 {% extends "base.html" %}
-{% from "_macros.html" import eur, num %}
+{% from "_macros.html" import eur, num, pager %}
 {% block content %}
 <h1>Offerte</h1>
 <p><a href="{{ url_for('offers.new', commodity='power') }}">+ Luce</a> · <a href="{{ url_for('offers.new', commodity='gas') }}">+ Gas</a></p>
 <form method="get" style="margin:.5rem 0"><input name="q" value="{{ q }}" placeholder="Cerca fornitore o offerta"> <button>Cerca</button></form>
-{% if total > offers | length %}<p class="muted">Mostrate {{ offers | length }} offerte su {{ total }}: affina la ricerca.</p>{% endif %}
+{{ pager(page, request.endpoint, request.args) }}
 <table>
   <tr><th>Fornitura</th><th>Fornitore</th><th>Offerta</th><th>Tipo</th><th>Scadenza</th><th></th><th></th></tr>
-  {% for o in offers %}
+  {% for o in page.items %}
   <tr>
     <td>{{ 'Luce' if o.commodity == 'power' else 'Gas' }}</td><td>{{ o.supplier }}</td>
     <td><a href="{{ url_for('offers.edit', id=o.id) }}">{{ o.name }}</a></td>
@@ -17,6 +17,7 @@
   </tr>
   {% else %}<tr><td colspan="7" class="muted">Nessuna offerta.</td></tr>{% endfor %}
 </table>
+{{ pager(page, request.endpoint, request.args) }}
 <fieldset>
   <legend>Portale Offerte ARERA (open data)</legend>
   <form method="post" action="{{ url_for('offers.import_arera') }}" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Download in corso…'">

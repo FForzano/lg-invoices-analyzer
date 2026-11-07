@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Bollette{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav>
+  <a href="{{ url_for('home.index') }}">Home</a>
+  <a href="{{ url_for('bills.index') }}">Bollette</a>
+  <a href="{{ url_for('bills.history_page') }}">Storico</a>
+  <a href="{{ url_for('offers.index') }}">Offerte</a>
+  <a href="{{ url_for('compare.index') }}">Confronto</a>
+  <a href="{{ url_for('settings.index') }}">Impostazioni</a>
+</nav>
+<main>
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="flash {{ category }}">{{ message }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+</body>
+</html>

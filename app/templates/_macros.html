@@ -1,0 +1,19 @@
+{% macro field(name, label, v, type='text', step='any', required=false) -%}
+<label>{{ label }}
+  <input name="{{ name }}" type="{{ 'number' if type == 'number' else type }}" {% if type == 'number' %}step="{{ step }}"{% endif %}
+         value="{{ v.get(name) if v.get(name) is not none else '' }}" {{ 'required' if required }}>
+</label>
+{%- endmacro %}
+
+{% macro select(name, label, v, options, required=false) -%}
+<label>{{ label }}
+  <select name="{{ name }}" {{ 'required' if required }}>
+    {% if not required %}<option value=""></option>{% endif %}
+    {% for value, text in options %}<option value="{{ value }}" {{ 'selected' if v.get(name) == value }}>{{ text }}</option>{% endfor %}
+  </select>
+</label>
+{%- endmacro %}
+
+{% macro eur(x) -%}{{ '{:,.2f}'.format(x).replace(',', ' ').replace('.', ',') }} €{%- endmacro %}
+{% macro num(x, d=2) -%}{% if x is none %}–{% else %}{{ ('{:,.' ~ d ~ 'f}').format(x).replace(',', ' ').replace('.', ',') }}{% endif %}{%- endmacro %}
+{% macro pct(x) -%}{% if x is none %}–{% else %}<span class="{{ 'bad' if x > 0 else 'good' }}">{{ '{:+.1f}'.format(x).replace('.', ',') }}%</span>{% endif %}{%- endmacro %}

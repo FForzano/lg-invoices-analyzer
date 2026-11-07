@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Bollette luce e gas</h1>
+{% for level, text in alerts %}<div class="flash {{ 'warn' if level == 'warn' else 'info' }}">{{ text }}</div>{% endfor %}
+{% for a in analyses %}{% include "_verdict.html" %}{% endfor %}
+<p class="muted">Stima della sola parte decisa dal fornitore (energia, quote fisse, sconti): trasporto, oneri, imposte, bonus sociale e canone TV non cambiano con il fornitore. Prima di cambiare verifica sempre le condizioni sul sito del venditore.</p>
+<p><a href="{{ url_for('bills.new') }}">+ Carica bolletta</a> · <a href="{{ url_for('offers.new') }}">+ Nuova offerta</a></p>
+{% endblock %}

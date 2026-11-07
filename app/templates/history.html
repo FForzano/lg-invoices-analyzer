@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import eur, num, pct %}
+{% block content %}
+<h1>Storico {{ 'luce' if commodity == 'power' else 'gas' }}</h1>
+<p><a href="?commodity=power">Luce</a> · <a href="?commodity=gas">Gas</a></p>
+{% set unit = 'kWh' if commodity == 'power' else 'Smc' %}
+<table>
+  <tr><th>Periodo</th><th class="num">Consumo ({{ unit }})</th><th class="num">vs anno prima</th><th class="num">Costo medio (€/{{ unit }})</th><th class="num">vs anno prima</th><th>Lettura</th></tr>
+  {% for r in rows %}
+  <tr>
+    <td>{{ r.bill.period_start }} → {{ r.bill.period_end }}</td>
+    <td class="num">{{ num(r.bill.consumption) }}</td><td class="num">{{ pct(r.consumption_yoy) }}</td>
+    <td class="num">{{ num(r.unit_cost, 3) }}</td><td class="num">{{ pct(r.unit_cost_yoy) }}</td>
+    <td>{% if r.bill.reading_type == 'stimata' %}<strong>stimata</strong>{% else %}{{ r.bill.reading_type or '–' }}{% endif %}</td>
+  </tr>
+  {% else %}<tr><td colspan="6" class="muted">Nessuna bolletta.</td></tr>{% endfor %}
+</table>
+<p class="muted">Il costo medio è il totale in bolletta diviso il consumo: include trasporto, imposte e voci come il canone TV.</p>
+{% if rows | selectattr('bill.reading_type', 'equalto', 'stimata') | list %}
+<p class="flash info">Alcune letture sono stimate: fai l'autolettura dal 1 al 5 del mese.</p>
+{% endif %}
+{% endblock %}

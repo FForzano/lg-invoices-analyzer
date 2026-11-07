@@ -1,0 +1,27 @@
+# Esempio per NAS / home server (OpenMediaVault, Synology, Unraid, un Raspberry...).
+# Copia questo file accanto a un `.env` (vedi example.env) e avvia con:  docker compose up -d --build
+name: bollette
+
+services:
+  bollette:
+    # Opzione A: costruisce l'immagine dal repository pubblico, senza clonarlo.
+    build: https://github.com/FForzano/lg-invoices-analyzer.git#main
+    # Opzione B: immagine già costruita (se la pubblichi su un registro tuo).
+    # image: ghcr.io/<utente>/lg-invoices-analyzer:latest
+    container_name: bollette
+    # Deve poter scrivere in DATA_PATH. Di default l'immagine usa 1000:100; su molti NAS è il tuo utente.
+    user: "${PUID:-1000}:${PGID:-100}"
+    ports:
+      # Per esporlo solo a un'interfaccia: "192.168.1.10:8090:8080". Non pubblicarlo su internet: manca l'autenticazione.
+      - "${PORT:-8090}:8080"
+    environment:
+      - TZ=${TZ:-Europe/Rome}
+      - SECRET_KEY=${SECRET_KEY:?imposta SECRET_KEY nel file .env (openssl rand -hex 32)}
+      # Opzionale. Senza chiave l'app non invia mai dati a servizi esterni (la lettura PDF è locale).
+      # Con la chiave, SOLO se la lettura locale non basta, il testo della bolletta va all'API Anthropic.
+      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      # Database SQLite + PDF delle bollette. Crea la cartella e dalle a PUID:PGID prima del primo avvio.
+      - "${DATA_PATH:-./data}:/data"
+    restart: unless-stopped
+    # Il controllo di salute (GET /health) è già nell'immagine.

@@ -1,0 +1,67 @@
+# Bollette self-hosted
+
+> **EN:** a self-hosted web app (Flask + SQLite, one Docker container) for Italian households: upload your electricity and gas bills (PDF, read locally, no cloud needed), import the public offers from the Italian regulator's open-data portal, and find out whether switching supplier would save you money over a year. The UI and docs are in Italian.
+
+App web per raccogliere le bollette di luce e gas, ricavare il consumo annuo e stimare il costo annuo delle offerte di mercato (solo la parte decisa dal fornitore), con il risparmio rispetto all'offerta attuale.
+
+## Avvio
+
+Per installarla su un NAS o home server (compose, permessi, backup, aggiornamento offerte) vedi [`deploy/`](deploy/README.md).
+
+```bash
+# sviluppo
+uv sync && uv run flask --app "app:create_app()" run --debug
+
+# Docker (NAS)
+cp .env.example .env   # opzionale: ANTHROPIC_API_KEY, solo come ripiego di lettura PDF
+docker compose up --build   # http://localhost:8080, dati in ./data
+```
+
+## Test
+
+```bash
+uv run pytest
+```
+
+## Come si usa
+
+1. **Carica le bollette** (PDF di luce e gas): l'app legge i dati, ricava l'**offerta attuale** (spread, perdite di rete, dispacciamento, capacità, quota fissa, PUN/PSV del mese) e li mostra da confermare.
+2. **Importa le offerte** dal Portale Offerte (una volta ogni tanto, pulsante in *Offerte*).
+3. **Home**: per luce e gas dice se conviene cambiare, con quale offerta, quanto si risparmia in un anno, e se il vantaggio regge con PUN/PSV ±20%. Soglia: almeno 30 € e 5% l'anno.
+
+Se hai già un'offerta attuale inserita a mano, le nuove bollette non la sovrascrivono; il pulsante «usa come offerta attuale» in *Bollette* forza la rilevazione.
+
+## Finestra temporale e stagionalità
+
+- Il confronto ragiona su **12 mesi interi**. Il consumo annuo è quello stampato nella bolletta più recente (che copre già gli ultimi 12 mesi); un mese con poco consumo non sposta il verdetto.
+- Se il dato annuo manca, i consumi noti sono proiettati a 12 mesi con un **profilo stagionale tipico** (il gas d'inverno pesa molto più che d'estate) e, sotto i 330 giorni coperti, l'app avverte che la stima è poco affidabile.
+- PUN e PSV nelle Impostazioni sono **medie annue**. Il confronto le adatta ai mesi in cui consumi, usando la stagionalità storica dei prezzi (ultimi 3 anni completi dal CSV del Portale Offerte, aggiornato col pulsante *Aggiorna dal Portale Offerte*; senza aggiornamento valgono valori predefiniti 2023-2025). Alla lettura di una bolletta, il PUN/PSV del mese viene riportato a media annua dividendo per il fattore del mese. In *Impostazioni*, dopo l'aggiornamento dal Portale Offerte, puoi adottare i **prezzi recenti** (media degli ultimi 3 mesi del CSV, destagionalizzata): sono più freschi della bolletta ma estrapolano il trend, e se li adotti le bollette successive non li sovrascrivono.
+
+## Lettura delle bollette
+
+1. **Parser a regole** (locale, gratuito): legge le etichette standard ARERA e controlla la coerenza dei dati (es. le fasce devono sommare al consumo). Gestito con le bollette di Energia Pulita/Antenore; altri fornitori con lo stesso standard dovrebbero funzionare.
+2. **LLM, solo se il parser non trova i campi essenziali** (fornitura, periodo, consumo, totale) e solo se `ANTHROPIC_API_KEY` è impostata: in quel caso il testo della bolletta (dati personali) esce dal NAS. Con tutti i campi essenziali trovati l'LLM non viene mai chiamato.
+3. Altrimenti modulo manuale, precompilato con quanto letto.
+
+## Offerte
+
+- A mano, da CSV (`examples/offers.csv`) o dal **Portale Offerte** (open data Acquirente Unico/ARERA, pulsante in *Offerte*): scarica i file XML pubblici (~35 MB) e importa le offerte domestiche; sostituisce le precedenti importate, tenendo quelle a mano e l'«attuale».
+- Non importati: sconti e bonus una tantum, offerte con fasce particolari, dual fuel.
+- **Zona**: le offerte limitate a certe aree (codici ISTAT nel file) compaiono nel confronto solo se coprono la località impostata in *Impostazioni* (default Ferrara: regione 08, provincia 038, comune 038008).
+- I codici dell'XML non sono documentati ufficialmente: la decodifica è in `app/services/arera.py` ed è dedotta dai dati.
+
+## Database
+
+Migrazioni SQL numerate in `app/migrations/`, applicate all'avvio (versione in `PRAGMA user_version`). Per modificare lo schema aggiungi `NNN_descrizione.sql`; non modificare quelle già pubblicate.
+
+## Limiti
+
+- È una stima, non un preventivo. Per le offerte indicizzate usa PUN/PSV assunti (Impostazioni).
+- I prezzi futuri di PUN/PSV non sono noti: la stagionalità è storica e non prevede trend (nel 2026 sono saliti). Il verdetto mostra la sensibilità a ±20%.
+- Dispacciamento e oneri di capacità: molte offerte li fatturano a parte al costo regolato; si assume un valore (Impostazioni) per renderle confrontabili con l'offerta attuale.
+- Alcune offerte valgono solo in certe aree ma l'XML non lo dichiara (es. «Dedicata Comune»): controlla sempre le condizioni sul sito del venditore.
+- Nessuna autenticazione: tenere solo in rete locale.
+
+## Licenza
+
+Apache-2.0, vedi [LICENSE](LICENSE). I dati delle offerte provengono dagli [open data del Portale Offerte](https://www.ilportaleofferte.it/portaleOfferte/it/open-data.page) (uso libero); l'app non è affiliata ad ARERA né ad Acquirente Unico.

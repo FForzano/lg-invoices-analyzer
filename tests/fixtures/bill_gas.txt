@@ -1,0 +1,32 @@
+ENERGIA PULITA SRL
+Fornitura: GAS NATURALE
+MERCATO LIBERO
+ENTRO QUANDO?TOTALE DA PAGARE
+27,77 € 12/08/2026
+Periodo fatturato 1-30 GIUGNO 2026
+Consumo totale fatturato [Smc] 10,19
+Consumi stimati [Smc]                10,19
+Consumo annuo aggiornato
+553,759264 Smc
+dal 01/07/2025 al 30/06/2026
+Data di scadenza del bonus sociale
+28/02/2027
+=====PAGE=====
+Totale da pagare 27,77
+1,018672
+Coefficiente C
+Dal 01/07/2025 al 30/06/2026 € 813,01
+Spesa annua sostenuta
+di cui spesa per vendita gas naturale 0,732326 Euro/Smc 7,46
+di cui spesa per vendita gas naturale 11,50 €/mese 11,50
+Box dell'offerta
+Zero pensieri casa indexNome dell'offerta commerciale
+Offerta a prezzo variabileTipologia offerta
+PSVda,m
+   06/2026: 0,504871 Euro/Smc
+Spread
+   06/2026: 0,165 Euro/Smc
+Corrispettivo di gestione variabile
+   06/2026: 0,05 Euro/Smc
+Corrispettivo di gestione variabile
+   06/2026: 0,05 Euro/Smc

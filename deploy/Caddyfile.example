@@ -1,0 +1,10 @@
+# Reverse proxy Caddy con autenticazione, per raggiungere l'app fuori casa senza esporla senza login.
+# Meglio ancora: raggiungila solo tramite VPN (WireGuard/Tailscale) e non esporre nulla.
+#
+# Password:  docker run --rm caddy caddy hash-password --plaintext 'la-tua-password'
+bollette.example.com {
+    basic_auth {
+        tuo-utente  $2a$14$INCOLLA_QUI_L_HASH_GENERATO
+    }
+    reverse_proxy bollette:8080   # stesso network Docker del servizio, oppure host:porta
+}

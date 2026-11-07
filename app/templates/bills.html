@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import eur, num %}
+{% block content %}
+<h1>Bollette</h1>
+<p><a href="{{ url_for('bills.new', commodity='power') }}">+ Luce</a> · <a href="{{ url_for('bills.new', commodity='gas') }}">+ Gas</a></p>
+<table>
+  <tr><th>Fornitura</th><th>Periodo</th><th class="num">Consumo</th><th>Lettura</th><th class="num">Totale</th><th></th></tr>
+  {% for b in bills %}
+  <tr>
+    <td>{{ 'Luce' if b.commodity == 'power' else 'Gas' }}</td>
+    <td>{{ b.period_start }} → {{ b.period_end }}</td>
+    <td class="num">{{ num(b.consumption) }} {{ 'kWh' if b.commodity == 'power' else 'Smc' }}</td>
+    <td>{{ b.reading_type or '–' }}</td>
+    <td class="num">{% if b.total_eur is not none %}{{ eur(b.total_eur) }}{% else %}–{% endif %}</td>
+    <td>
+      {% if b.pdf_path %}<a href="{{ url_for('bills.pdf', id=b.id) }}">PDF</a>
+      <form method="post" action="{{ url_for('bills.detect_offer', id=b.id) }}" style="display:inline"><button class="link" style="color:var(--accent)" title="Imposta come offerta attuale quella descritta in questa bolletta">usa come offerta attuale</button></form>{% endif %}
+      <form method="post" action="{{ url_for('bills.delete', id=b.id) }}" style="display:inline" onsubmit="return confirm('Eliminare?')"><button class="link">elimina</button></form>
+    </td>
+  </tr>
+  {% else %}<tr><td colspan="6" class="muted">Nessuna bolletta.</td></tr>{% endfor %}
+</table>
+{% endblock %}

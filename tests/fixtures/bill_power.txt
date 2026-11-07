@@ -1,0 +1,48 @@
+ENERGIA PULITA SRL
+Fornitura: ENERGIA ELETTRICA
+MERCATO LIBERO
+ENTRO QUANDO?TOTALE DA PAGARE
+95,05 € 05/08/2026
+DATI FATTURAZIONE
+Periodo fatturato 1-30 GIUGNO 2026
+Consumo totale fatturato [kWh] 260,54
+Consumo annuo aggiornato F1: 431,93
+kWh   F2: 509,62 kWh   F3: 1.213,65 kWh
+dal 01/07/2025 al 30/06/2026
+PROSSIME SCADENZE
+Data di scadenza del bonus sociale
+28/02/2027
+=====PAGE=====
+4,5 kW
+Potenza Impegnata
+Totale da pagare 95,05
+Riepilogo consumi fatturati
+Pot. max(*)Energia attiva [kWh]FasciaTipoMese
+Prec.Fatt.
+2,148,01F1Consumi effettivigiugno 2026
+3,054,69F2Consumi effettivi
+2,5157,84F3Consumi effettivi
+3,0260,54Tot
+Dal 01/07/2025 al 30/06/2026 € 824,44
+Spesa annua sostenuta
+Quota fissa e quota potenza
+1 mesi x 13,52 €/mese 13,52
+di cui spesa per vendita energia elettrica 11,60 €/mese 11,60
+Box dell'offerta
+Zero pensieri casa indexNome dell'offerta commerciale
+Offerta a prezzo variabileTipologia offerta
+Durata indeterminataData scadenza delle condizioni economiche
+PUN
+   06/2026: F1 0,12576 F2 0,1517 F3 0,127236 €/kWh
+Perdite di Rete
+   06/2026: 10,00 %
+Spread
+   06/2026: 0,025 €/kWh
+Dispacciamento
+   06/2026: 0,0105 €/kWh
+Corrispettivo orario oneri capacita' per il mercato libero, ore picco Terna
+   06/2026: 0,0715 €/kWh
+Corrispettivo orario oneri capacita' per il mercato libero, ore fuori picco Terna
+   06/2026: 0,003981 €/kWh
+€/kWh 101,1816,440,0715Corrispettivo ore picco oneri capacita' (Del. ARG/ELT 98/11)
+€/kWh 100,97244,090,003981Corrispettivo ore fuori picco oneri capacita' (Del. ARG/ELT 98/11)

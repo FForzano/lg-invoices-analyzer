@@ -1,0 +1,39 @@
+{# Verdetto per una fornitura. Parametro: a (analysis.Analysis) #}
+{% from "_macros.html" import eur, num %}
+{% set label = 'Luce' if a.commodity == 'power' else 'Gas' %}
+{% set index = 'PUN' if a.commodity == 'power' else 'PSV' %}
+{% set v = a.verdict %}
+<section class="card">
+  <h2>{{ label }}</h2>
+  {% if not a.consumption %}
+    <p>Carica una bolletta di {{ label | lower }} per stimare il consumo annuo.</p>
+  {% else %}
+    {% if a.consumption.partial %}
+      <p class="flash warn">Ho solo {{ a.consumption.days_covered }} giorni di bollette: il consumo annuo è una proiezione con un profilo stagionale tipico e il verdetto è poco affidabile. Carica altre bollette (ideale 12 mesi, oppure una che riporti il consumo annuo).</p>
+    {% endif %}
+    {% if not a.has_current %}
+      <p>Manca l'offerta attuale. Se carichi il PDF della bolletta la rilevo da sola; altrimenti <a href="{{ url_for('offers.new', commodity=a.commodity) }}">inseriscila a mano</a>.</p>
+    {% elif not v %}
+      <p>Nessuna offerta alternativa da confrontare. <a href="{{ url_for('offers.index') }}">Importa le offerte</a>.</p>
+    {% else %}
+      <p class="headline {{ 'good' if v.worthwhile else '' }}">
+        {% if v.worthwhile %}Conviene cambiare: risparmieresti circa <strong>{{ eur(v.saving) }} l'anno</strong> ({{ num(v.saving_pct, 0) }}%).
+        {% else %}Non conviene: la migliore alternativa fa risparmiare solo <strong>{{ eur(v.saving) }} l'anno</strong> ({{ num(v.saving_pct, 0) }}%).{% endif %}
+      </p>
+      <p>Migliore: <strong>{{ v.best.offer.name }}</strong> – {{ v.best.offer.supplier }}.<br>
+         Costo annuo stimato <strong>{{ eur(v.best.estimate.total) }}</strong> contro <strong>{{ eur(v.current.estimate.total) }}</strong> con l'offerta attuale.</p>
+      {% set o = v.best.offer %}
+      <p class="muted">Condizioni importate: {{ 'prezzo fisso' if o.price_type == 'fixed' else 'indicizzato' }}
+        {%- if o.price_type == 'fixed' %} {{ num(o.price if o.price is not none else o.price_f1, 4) }} €/{{ 'kWh' if a.commodity == 'power' else 'Smc' }}{% else %}, spread {{ num(o.spread, 4) }}{% endif %},
+        quota fissa {{ eur(o.fixed_fee_month or 0) }}/mese{% if o.expires_on %}, valida fino al {{ o.expires_on }}{% endif %}. Verificale sul sito del venditore.</p>
+      {% if (v.saving_range[1] - v.saving_range[0]) < 1 %}
+        <p class="muted">Il risparmio non dipende dall'andamento del {{ index }}: anche l'offerta attuale è indicizzata.</p>
+      {% elif v.worthwhile and not v.robust %}
+        <p class="flash warn">Il vantaggio dipende dall'andamento del {{ index }}: con prezzi dell'indice ±20% il risparmio va da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }}.</p>
+      {% else %}
+        <p class="muted">Con {{ index }} ±20%: da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }} l'anno.</p>
+      {% endif %}
+      <p class="muted"><a href="{{ url_for('compare.index', commodity=a.commodity) }}">Vedi tutte le offerte</a></p>
+    {% endif %}
+  {% endif %}
+</section>

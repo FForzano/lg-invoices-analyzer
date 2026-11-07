@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+.pytest_cache/
+data/
+.env
+
+# specifiche originali: contengono dati di consumo personali, restano locali
+Specifiche*.md

@@ -1,0 +1,5 @@
+commodity,supplier,name,price_type,price,spread,avg_price,fixed_fee_month,power_fee_kw_month,one_off_discount,expires_on,is_current,loss_pct,dispatching,capacity,gas_mgmt,pcs_adjustment,source
+power,Esempio Energia,Luce Fissa 12,fixed,0.135,,,10.00,,40,2027-12-31,0,,,,,,manuale
+power,Attuale,Luce variabile,indexed,,0.025,,11.60,,,,1,10,0.01,0.002,,,bolletta
+gas,Esempio Gas,Gas Fisso 12,fixed,0.55,,,9.00,,,2027-12-31,0,,,,,,manuale
+gas,Attuale,Gas variabile,indexed,,0.165,,11.50,,,,1,,,,0.05,0,bolletta

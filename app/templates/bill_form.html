@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, select %}
+{% block content %}
+<h1>Nuova bolletta</h1>
+{% if not v.get('pdf_path') %}
+<fieldset>
+  <legend>Da PDF <span class="muted">(lettura locale a regole{% if can_extract %}, con LLM come ripiego{% endif %})</span></legend>
+  <form method="post" action="{{ url_for('bills.upload') }}" enctype="multipart/form-data" class="grid">
+    {{ select('commodity', 'Fornitura', v, [('power', 'Luce'), ('gas', 'Gas')], required=true) }}
+    <label>PDF<input type="file" name="pdf" accept="application/pdf" required></label>
+    <div><button>Carica e leggi</button></div>
+  </form>
+  {% if can_extract %}<p class="muted">Solo se la lettura locale non basta, il testo della bolletta (dati personali) viene inviato all'API del modello.</p>{% endif %}
+</fieldset>
+{% endif %}
+<form method="post" action="{{ url_for('bills.create') }}" class="grid">
+  <input type="hidden" name="pdf_path" value="{{ v.get('pdf_path') or '' }}">
+  {{ select('commodity', 'Fornitura', v, [('power', 'Luce'), ('gas', 'Gas')], required=true) }}
+  {{ field('supplier', 'Fornitore', v) }}
+  {{ field('period_start', 'Inizio periodo', v, 'date', required=true) }}
+  {{ field('period_end', 'Fine periodo', v, 'date', required=true) }}
+  {{ select('reading_type', 'Tipo di lettura', v, [('effettiva', 'Effettiva'), ('stimata', 'Stimata')]) }}
+  {{ field('total_eur', 'Totale da pagare (€)', v, 'number') }}
+  {% if v.get('commodity', 'power') == 'power' %}
+    {{ field('kwh_f1', 'kWh F1', v, 'number') }}
+    {{ field('kwh_f2', 'kWh F2', v, 'number') }}
+    {{ field('kwh_f3', 'kWh F3', v, 'number') }}
+    {{ field('power_kw', 'Potenza impegnata (kW)', v, 'number') }}
+    {{ field('annual_f1', 'Annuo F1 (kWh)', v, 'number') }}
+    {{ field('annual_f2', 'Annuo F2 (kWh)', v, 'number') }}
+    {{ field('annual_f3', 'Annuo F3 (kWh)', v, 'number') }}
+  {% else %}
+    {{ field('mc', 'Metri cubi (mc)', v, 'number') }}
+    {{ field('coeff_c', 'Coefficiente C', v, 'number') }}
+  {% endif %}
+  {{ field('consumption', 'Consumo fatturato (kWh o Smc)', v, 'number') }}
+  {{ field('annual_consumption', 'Consumo annuo in bolletta', v, 'number') }}
+  {{ field('annual_spend', 'Spesa annua in bolletta (€)', v, 'number') }}
+  {{ field('social_bonus_expires_on', 'Scadenza bonus sociale', v, 'date') }}
+  <div class="full"><button>Salva</button> <span class="muted">Se lasci vuoto il consumo fatturato viene ricavato da fasce o mc × C.</span></div>
+</form>
+{% endblock %}

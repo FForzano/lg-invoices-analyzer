@@ -1,0 +1,1 @@
+ALTER TABLE offers ADD COLUMN dispatching_extra INTEGER NOT NULL DEFAULT 0;

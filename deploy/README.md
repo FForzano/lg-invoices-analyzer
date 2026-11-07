@@ -25,8 +25,8 @@ sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$(openssl rand -hex 32)/" .env
 # 2. la cartella dati deve essere scrivibile dall'utente del container
 mkdir -p data && sudo chown 1000:100 data
 
-# 3. avvio (il primo build scarica le dipendenze: qualche minuto)
-docker compose up -d --build
+# 3. avvio (scarica l'immagine pubblicata dalla CI)
+docker compose up -d
 ```
 
 Apri `http://<ip-del-nas>:8090`. Al primo avvio il database viene creato e migrato da solo.
@@ -61,10 +61,10 @@ Il default è Ferrara; cambiala.
 
 ```bash
 # backup (vedi sotto), poi:
-docker compose up -d --build --pull
+docker compose pull && docker compose up -d
 ```
 
-Le migrazioni del database partono da sole all'avvio. Se hai usato `build:` da URL git, `--build` riscarica l'ultima versione.
+Le migrazioni del database partono da sole all'avvio. Se costruisci l'immagine da URL git (`build:`), usa invece `docker compose up -d --build`.
 
 ## Backup
 

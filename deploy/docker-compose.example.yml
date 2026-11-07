@@ -1,13 +1,13 @@
 # Esempio per NAS / home server (OpenMediaVault, Synology, Unraid, un Raspberry...).
-# Copia questo file accanto a un `.env` (vedi example.env) e avvia con:  docker compose up -d --build
+# Copia questo file accanto a un `.env` (vedi example.env) e avvia con:  docker compose up -d
 name: bollette
 
 services:
   bollette:
-    # Opzione A: costruisce l'immagine dal repository pubblico, senza clonarlo.
-    build: https://github.com/FForzano/lg-invoices-analyzer.git#main
-    # Opzione B: immagine già costruita (se la pubblichi su un registro tuo).
-    # image: ghcr.io/<utente>/lg-invoices-analyzer:latest
+    # Immagine già costruita dalla CI (GitHub Container Registry), ultimo commit di main.
+    image: ghcr.io/fforzano/lg-invoices-analyzer:latest
+    # In alternativa, costruiscila tu (serve `git` sull'host): sostituisci `image` con
+    # build: https://github.com/FForzano/lg-invoices-analyzer.git#main
     container_name: bollette
     # Deve poter scrivere in DATA_PATH. Di default l'immagine usa 1000:100; su molti NAS è il tuo utente.
     user: "${PUID:-1000}:${PGID:-100}"

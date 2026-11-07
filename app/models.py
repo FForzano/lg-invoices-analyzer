@@ -23,6 +23,9 @@ class Bill:
     mc: float | None = None
     coeff_c: float | None = None
     power_kw: float | None = None
+    max_power_kw: float | None = None  # picco di potenza prelevata nel mese fatturato (luce)
+    annual_max_power_kw: float | None = None  # picco degli ultimi 12 mesi stampato in bolletta
+    power_rate_kw_month: float | None = None  # quota potenza di rete in bolletta, €/kW/mese
     reading_type: str | None = field(default=None, metadata={"choices": ("effettiva", "stimata")})
     total_eur: float | None = None
     annual_consumption: float | None = None  # stampato in bolletta
@@ -66,6 +69,7 @@ class Offer:
     expires_on: str | None = None
     is_current: bool = False
     source: str | None = None
+    dual_with: str | None = None  # offerta luce+gas: `source` dell'altra metà, valida solo se sottoscritte insieme
     zones: str | None = None  # se limitata: codici ISTAT separati da virgola (R08 regione, P038 provincia, C038008 comune)
     # componenti formula indicizzata luce
     loss_pct: float | None = None

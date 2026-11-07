@@ -10,7 +10,7 @@
   {% for o in page.items %}
   <tr>
     <td>{{ 'Luce' if o.commodity == 'power' else 'Gas' }}</td><td>{{ o.supplier }}</td>
-    <td><a href="{{ url_for('offers.edit', id=o.id) }}">{{ o.name }}</a></td>
+    <td><a href="{{ url_for('offers.edit', id=o.id) }}">{{ o.name }}</a>{% if o.dual_with %} <span class="muted">(luce+gas)</span>{% endif %}</td>
     <td>{{ 'fisso' if o.price_type == 'fixed' else 'indicizzato' }}</td>
     <td>{{ o.expires_on or '–' }}</td><td>{% if o.is_current %}<strong>attuale</strong>{% endif %}</td>
     <td><form method="post" action="{{ url_for('offers.delete', id=o.id) }}" onsubmit="return confirm('Eliminare?')"><button class="link">elimina</button></form></td>

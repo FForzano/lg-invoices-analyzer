@@ -96,6 +96,16 @@ def _power(text: str, f: dict, r: ParseResult) -> None:
         f["annual_f1"], f["annual_f2"], f["annual_f3"] = (num(g) for g in m.groups())
         f["annual_consumption"] = round(f["annual_f1"] + f["annual_f2"] + f["annual_f3"], 2)
 
+    if m := _search(r"Livello massimo mensile di potenza prelevata:\s*" + NUM + r"\s*\[kW\]", text):
+        f["max_power_kw"] = num(m.group(1))
+    if m := _search(r"kW\s+per\s+\d+\s+mesi\s+x\s+" + NUM + r"\s*€/kW/mese", text):
+        f["power_rate_kw_month"] = num(m.group(1))
+    # storico: riga dei mesi e riga dei 12 valori (1 decimale), incollati tra loro: "3,42,3 2,6kW 2,8 ..."
+    if m := _search(r"Livello massimo della potenza prelevata[^\n]*\n[^\n]*\n([^\n]*)", text):
+        levels = re.findall(r"\d{1,2},\d", m.group(1))
+        if len(levels) == 12:
+            f["annual_max_power_kw"] = max(num(v) for v in levels)
+
     # Tabella "Riepilogo consumi": nel testo estratto potenza max (1 decimale) e kWh (2 decimali)
     # sono incollati, es. "2,148,01F1Consumi effettivi" = potenza 2,1 + 48,01 kWh in F1.
     bands = {}

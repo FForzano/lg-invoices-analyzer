@@ -23,11 +23,14 @@ Prec.Fatt.
 3,054,69F2Consumi effettivi
 2,5157,84F3Consumi effettivi
 3,0260,54Tot
+(*)Livello massimo di potenza prelevata [kW]
+Livello massimo mensile di potenza prelevata: 3,0 [kW]
 Dal 01/07/2025 al 30/06/2026 € 824,44
 Spesa annua sostenuta
 Quota fissa e quota potenza
 1 mesi x 13,52 €/mese 13,52
 di cui spesa per vendita energia elettrica 11,60 €/mese 11,60
+4,5 kW per 1 mesi x 1,975556 €/kW/mese 8,89
 Box dell'offerta
 Zero pensieri casa indexNome dell'offerta commerciale
 Offerta a prezzo variabileTipologia offerta
@@ -46,3 +49,8 @@ Corrispettivo orario oneri capacita' per il mercato libero, ore fuori picco Tern
    06/2026: 0,003981 €/kWh
 €/kWh 101,1816,440,0715Corrispettivo ore picco oneri capacita' (Del. ARG/ELT 98/11)
 €/kWh 100,97244,090,003981Corrispettivo ore fuori picco oneri capacita' (Del. ARG/ELT 98/11)
+
+=====PAGE=====
+Livello massimo della potenza prelevata
+Feb 2026Ago 2025 Apr 2026Mese Set 2025 Dic 2025Nov 2025Lug 2025 Mar 2026Ott 2025 Gen 2026 Mag 2026 Giu 2026
+3,42,3 2,6kW 2,8 3,04,43,0 2,82,8 3,5 3,0 3,0

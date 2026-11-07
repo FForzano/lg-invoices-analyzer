@@ -12,7 +12,9 @@ bp = Blueprint("home", __name__)
 @bp.get("/")
 def index():
     alerts = build_alerts(db.list_bills(), db.list_offers(), date.today())
-    return render_template("index.html", alerts=alerts, analyses=[analysis.analyze(c) for c in COMMODITIES])
+    analyses = [analysis.analyze(c) for c in COMMODITIES]
+    dual = analysis.analyze_dual(*analyses)
+    return render_template("index.html", alerts=alerts, analyses=analyses, dual=dual)
 
 
 @bp.get("/health")

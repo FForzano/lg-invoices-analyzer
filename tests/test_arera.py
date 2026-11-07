@@ -13,7 +13,7 @@ A = Assumptions(pun=0.12, psv=0.40, default_power_kw=3.0)
 def test_parse_sample():
     offers, skipped = arera.parse_offers(FIX / "offers_sample.xml", "power")
     by = {o.source: o for o in offers}
-    assert set(by) == {"arera:IDX1", "arera:FIX1", "arera:ZONE1"}  # business scartata in silenzio, errore di unità segnalato
+    assert set(by) == {"arera:IDX1", "arera:FIX1", "arera:ZONE1", "arera:DUAL1"}  # business scartata in silenzio, errore di unità segnalato
     assert dict(skipped) == {"prezzo fuori scala": 1}
 
     idx = by["arera:IDX1"]
@@ -46,9 +46,35 @@ def test_replace_imported_keeps_manual_and_current(client):
     app = client.application
     offers, _ = arera.parse_offers(FIX / "offers_sample.xml", "power")
     with app.app_context():
-        assert db.replace_imported_offers(offers, arera.SOURCE_PREFIX) == 3
+        assert db.replace_imported_offers(offers, arera.SOURCE_PREFIX) == 4
         current = next(o for o in db.list_offers() if o.source == "arera:FIX1")
         current.is_current = True
         db.save_offer(current, current.id)
-        assert db.replace_imported_offers(offers, arera.SOURCE_PREFIX) == 2  # l'attuale non viene duplicata
-        assert len(db.list_offers()) == 3
+        assert db.replace_imported_offers(offers, arera.SOURCE_PREFIX) == 3  # l'attuale non viene duplicata
+        assert len(db.list_offers()) == 4
+
+
+def test_dual_fuel_link_declared_by_seller_and_pairing():
+    offers, _ = arera.parse_offers(FIX / "offers_sample.xml", "power")
+    dual = next(o for o in offers if o.source == "arera:DUAL1")
+    assert dual.dual_with == "arera:DUAL1G"
+    assert all(o.dual_with is None for o in offers if o is not dual)  # le singole non sono toccate
+
+
+def _half(commodity, name, code, link=arera.UNPAIRED, supplier="s.it"):
+    from app.models import Offer
+    return Offer(commodity=commodity, supplier=supplier, name=name, price_type="fixed", price=0.1,
+                 source=arera.SOURCE_PREFIX + code, dual_with=link)
+
+
+def test_pair_dual_fuel_by_declared_link_by_name_and_drops_ambiguous():
+    single = _half("power", "Singola", "S1", link=None)
+    declared = [_half("power", "A luce", "A1", "arera:A2"), _half("gas", "Altro nome", "A2", "arera:A1")]
+    by_name = [_half("power", "Casa Luce", "B1"), _half("gas", "Casa Gas", "B2")]
+    ambiguous = [_half("power", "Fix luce", "C1"), _half("power", "Fix luce", "C2"), _half("gas", "Fix gas", "C3")]
+    other_supplier = [_half("power", "Casa Luce", "D1", supplier="x.it")]
+    kept, dropped = arera.pair_dual_fuel([single, *declared, *by_name, *ambiguous, *other_supplier])
+    assert {o.source for o in kept} == {"arera:S1", "arera:A1", "arera:A2", "arera:B1", "arera:B2"}
+    assert dropped == 4
+    partner = {o.source: o.dual_with for o in kept}
+    assert partner["arera:B1"] == "arera:B2" and partner["arera:B2"] == "arera:B1" and partner["arera:S1"] is None

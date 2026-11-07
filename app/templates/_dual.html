@@ -1,0 +1,20 @@
+{# Verdetto luce+gas insieme. Parametro: dual (analysis.DualAnalysis) #}
+{% from "_macros.html" import eur, num %}
+{% set v = dual.verdict %}
+{% if v %}
+<section class="card">
+  <h2>Luce e gas insieme</h2>
+  <p class="headline {{ 'good' if v.worthwhile else '' }}">
+    {% if v.worthwhile %}Un'offerta luce+gas ti farebbe risparmiare circa <strong>{{ eur(v.saving) }} l'anno</strong> ({{ num(v.saving_pct, 0) }}%).
+    {% else %}Nessuna offerta luce+gas conviene: la migliore fa risparmiare solo <strong>{{ eur(v.saving) }} l'anno</strong> ({{ num(v.saving_pct, 0) }}%).{% endif %}
+  </p>
+  <p>Migliore: <strong>{{ v.best.power.offer.name }}</strong> + <strong>{{ v.best.gas.offer.name }}</strong> – {{ v.best.power.offer.supplier }}.<br>
+     Costo annuo stimato <strong>{{ eur(v.best.total) }}</strong> (luce {{ eur(v.best.power.estimate.total) }}, gas {{ eur(v.best.gas.estimate.total) }}).</p>
+  {% if v.beats_separate %}
+    <p class="muted">Meglio che cambiare separatamente le due forniture ({{ eur(v.separate_saving) }} l'anno).</p>
+  {% elif v.separate_saving > 0 %}
+    <p class="flash warn">Cambiando luce e gas separatamente, con le migliori offerte singole, risparmieresti di più: {{ eur(v.separate_saving) }} l'anno.</p>
+  {% endif %}
+  <p class="muted">Sconti e bonus (anche quelli «dual fuel») non sono inclusi, e il costo dipende da PUN/PSV per le parti indicizzate: il risparmio reale può essere diverso. <a href="{{ url_for('compare.dual') }}">Vedi tutte le offerte luce+gas</a></p>
+</section>
+{% endif %}

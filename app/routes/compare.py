@@ -16,3 +16,11 @@ def index():
     result = analysis.analyze(commodity)
     page = paginate(result.ranked, request.args.get("page", 1, type=int), PER_PAGE)
     return render_template("compare.html", a=result, page=page)
+
+
+@bp.get("/compare/dual")
+def dual():
+    power, gas = (analysis.analyze(c) for c in COMMODITIES)
+    result = analysis.analyze_dual(power, gas)
+    page = paginate(result.bundles, request.args.get("page", 1, type=int), PER_PAGE)
+    return render_template("compare_dual.html", power=power, gas=gas, dual=result, page=page)

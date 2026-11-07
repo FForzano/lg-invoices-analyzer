@@ -112,3 +112,27 @@ def test_lists_are_paginated(client):
     second = client.get("/offers?page=2").text
     assert "Offerta 59" in second and "Offerta 00" not in second
     assert "Pagina 2 di 2" in client.get("/offers?page=99").text  # pagina fuori limite: l'ultima
+
+
+def test_dual_fuel_offers_stay_out_of_single_ranking_and_appear_in_bundles(client):
+    for commodity, unit in (("power", "kWh"), ("gas", "Smc")):
+        client.post("/bills", data={
+            "commodity": commodity, "period_start": "2025-07-01", "period_end": "2026-06-30",
+            "consumption": "2000", "annual_consumption": "2000", "total_eur": "500",
+        })
+    base = {"price_type": "fixed", "supplier": "S"}
+    offers = [
+        {"commodity": "power", "name": "Attuale luce", "price": "0,25", "is_current": "on"},
+        {"commodity": "gas", "name": "Attuale gas", "price": "1", "is_current": "on"},
+        {"commodity": "power", "name": "Pacchetto luce", "price": "0,10", "source": "arera:P", "dual_with": "arera:G"},
+        {"commodity": "gas", "name": "Pacchetto gas", "price": "0,4", "source": "arera:G", "dual_with": "arera:P"},
+    ]
+    for o in offers:
+        client.post("/offers/save", data={**base, **o})
+    single = client.get("/compare?commodity=power").text
+    assert "Pacchetto luce" not in single  # richiede anche il gas: non è un'alternativa singola
+    page = client.get("/compare/dual").text
+    assert "Pacchetto luce" in page and "Pacchetto gas" in page
+    home = client.get("/").text
+    assert "Luce e gas insieme" in home and "Un'offerta luce+gas ti farebbe risparmiare" in home
+    assert "(luce+gas)" in client.get("/offers").text

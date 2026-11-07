@@ -95,3 +95,8 @@ def test_offer_terms_none_when_unrecognised():
     from app.services.bill_parser import parse_offer_terms
 
     assert parse_offer_terms("Fornitura: GAS NATURALE\nTotale da pagare 12,00", "gas") is None
+
+
+def test_power_peaks_and_power_rate():
+    f = parse_bill_text((Path(__file__).parent / "fixtures" / "bill_power.txt").read_text()).fields
+    assert f["max_power_kw"] == 3.0 and f["annual_max_power_kw"] == 4.4 and f["power_rate_kw_month"] == 1.975556

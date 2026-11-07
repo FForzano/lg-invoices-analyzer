@@ -125,3 +125,27 @@ def compare(offers: list[Offer], c: Consumption, a: Assumptions, today: date, lo
         for o in offers if o.id in estimates
     ]
     return sorted(ranked, key=lambda r: r.estimate.total), skipped
+
+
+@dataclass(frozen=True)
+class Bundle:
+    """Offerta luce+gas dello stesso fornitore: le due metà vanno sottoscritte insieme."""
+    power: Ranked
+    gas: Ranked
+    total: float
+    saving: float | None  # rispetto alle due offerte attuali
+
+
+def pair_bundles(power: list[Ranked], gas: list[Ranked]) -> list[Bundle]:
+    """Abbina le metà luce+gas già valutate (`Offer.dual_with`); ordinate per costo annuo totale.
+    Una coppia manca se una delle metà è scaduta, fuori zona o non valutabile."""
+    gas_by_source = {r.offer.source: r for r in gas if not r.offer.is_current}
+    current = [next((r for r in ranked if r.offer.is_current), None) for ranked in (power, gas)]
+    base = None if None in current else sum(r.estimate.total for r in current)
+    bundles = []
+    for p in power:
+        g = gas_by_source.get(p.offer.dual_with)
+        if g is not None and not p.offer.is_current:
+            total = p.estimate.total + g.estimate.total
+            bundles.append(Bundle(p, g, total, None if base is None else base - total))
+    return sorted(bundles, key=lambda b: b.total)

@@ -42,4 +42,12 @@
       <IntervalloPrezzi><PREZZO>0.10</PREZZO><UNITA_MISURA>03</UNITA_MISURA></IntervalloPrezzi></ComponenteImpresa>
     <ZoneOfferta><REGIONE>02</REGIONE></ZoneOfferta>
   </offerta>
+  <offerta>
+    <IdentificativiOfferta><PIVA_UTENTE>111</PIVA_UTENTE><COD_OFFERTA>DUAL1</COD_OFFERTA></IdentificativiOfferta>
+    <DettaglioOfferta><TIPO_CLIENTE>01</TIPO_CLIENTE><OFFERTA_SINGOLA>NO</OFFERTA_SINGOLA><TIPO_OFFERTA>01</TIPO_OFFERTA><NOME_OFFERTA>Insieme luce</NOME_OFFERTA></DettaglioOfferta>
+    <TipoPrezzo><TIPOLOGIA_FASCE>01</TIPOLOGIA_FASCE></TipoPrezzo>
+    <ComponenteImpresa><NOME>Energia</NOME><MACROAREA>04</MACROAREA>
+      <IntervalloPrezzi><PREZZO>0.11</PREZZO><UNITA_MISURA>03</UNITA_MISURA></IntervalloPrezzi></ComponenteImpresa>
+    <OffertaDual><OFFERTE_CONGIUNTE_GAS>DUAL1G</OFFERTE_CONGIUNTE_GAS></OffertaDual>
+  </offerta>
 </ListaOfferteMercatoLibero>

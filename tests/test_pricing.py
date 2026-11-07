@@ -95,3 +95,37 @@ def test_zone_restricted_offers_need_matching_location():
     assert [r.offer.id for r in ranked] == [3, 4]
     current_elsewhere = offer(id=5, price=0.5, zones="R02", is_current=True)
     assert len(compare([current_elsewhere], C, A, date(2026, 11, 7), loc)[0]) == 1
+
+
+def test_bundles_pair_halves_and_compute_saving_against_both_current_offers():
+    from app.services.pricing import pair_bundles
+    from app.services.verdict import make_dual_verdict
+
+    cur_p = offer(id=1, price=0.20, is_current=True, source="bolletta:1")
+    cur_g = offer(id=2, commodity="gas", price=1.0, is_current=True, source="bolletta:2")
+    half_p = offer(id=3, price=0.10, source="arera:P", dual_with="arera:G")
+    half_g = offer(id=4, commodity="gas", price=0.5, source="arera:G", dual_with="arera:P")
+    orphan = offer(id=5, price=0.05, source="arera:X", dual_with="arera:MISSING")
+    c_gas = Consumption(total=500, bands=None, power_kw=None, source="test")
+    rp, _ = compare([cur_p, half_p, orphan], C, A, date(2026, 11, 1))
+    rg, _ = compare([cur_g, half_g], c_gas, A, date(2026, 11, 1))
+    bundles = pair_bundles(rp, rg)
+    assert len(bundles) == 1  # l'orfana non ha la sua metà
+    b = bundles[0]
+    assert b.total == pytest.approx(2000 * 0.10 + 500 * 0.5)
+    assert b.saving == pytest.approx((2000 * 0.20 + 500 * 1.0) - b.total)
+    v = make_dual_verdict(bundles, None, None)
+    assert v.worthwhile and v.separate_saving == 0 and v.beats_separate
+    assert make_dual_verdict([], None, None) is None
+
+
+def test_bundle_without_current_offers_has_no_saving():
+    from app.services.pricing import pair_bundles
+    from app.services.verdict import make_dual_verdict
+
+    half_p = offer(id=3, price=0.10, source="arera:P", dual_with="arera:G")
+    half_g = offer(id=4, commodity="gas", price=0.5, source="arera:G", dual_with="arera:P")
+    rp, _ = compare([half_p], C, A, date(2026, 11, 1))
+    rg, _ = compare([half_g], Consumption(total=500, bands=None, power_kw=None, source="t"), A, date(2026, 11, 1))
+    bundles = pair_bundles(rp, rg)
+    assert bundles[0].saving is None and make_dual_verdict(bundles, None, None) is None

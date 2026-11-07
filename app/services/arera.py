@@ -7,6 +7,7 @@ decodifica qui sotto è dedotta dai dati e confermata dagli esempi del manuale (
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 import tempfile
 import urllib.request
 from collections import Counter
@@ -30,6 +31,7 @@ DISP_PASSTHROUGH = "14"  # TIPO_DISPACCIAMENTO "CdispD": dispacciamento al costo
 FASCE_SINGLE, FASCE_F1F2F3 = "01", "03"  # TIPOLOGIA_FASCE
 UM_EUR_YEAR, UM_EUR_KWH, UM_EUR_SMC = "01", "03", "04"  # UNITA_MISURA; gli altri (02, 05) non sono gestiti
 SOURCE_PREFIX = "arera:"
+UNPAIRED = SOURCE_PREFIX + "?"  # offerta luce+gas non ancora abbinata alla sua metà (vedi `pair_dual_fuel`)
 MAX_ENERGY_PRICE = {"power": 1.5, "gas": 5.0}  # oltre è un errore di unità del venditore
 
 
@@ -85,13 +87,17 @@ def fetch_offers() -> tuple[list[Offer], Counter]:
                 found, why = parse_offers(tmp, commodity)
             offers += found
             skipped += why
+        offers, unpaired = pair_dual_fuel(offers)
+        if unpaired:
+            skipped["luce+gas non abbinabili"] += unpaired
         return offers, skipped
     except OSError as e:
         raise AreraError(f"Download non riuscito: {e}") from e
 
 
 def parse_offers(source: IO[bytes] | str | Path, commodity: str) -> tuple[list[Offer], Counter]:
-    """Interpreta il XML (file o percorso). Tiene solo offerte domestiche singole (non dual fuel)."""
+    """Interpreta il XML (file o percorso). Tiene le offerte domestiche; quelle luce+gas escono con
+    `dual_with` provvisorio, da risolvere con `pair_dual_fuel` dopo aver letto entrambi i file."""
     offers: list[Offer] = []
     skipped: Counter = Counter()
     for _, el in ET.iterparse(source):
@@ -112,7 +118,8 @@ def _t(el: ET.Element, path: str) -> str | None:
 
 def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
     """Offerta, oppure il motivo dello scarto (None = fuori perimetro, non conteggiata)."""
-    if _t(el, "DettaglioOfferta/TIPO_CLIENTE") != CLIENT_DOMESTIC or _t(el, "DettaglioOfferta/OFFERTA_SINGOLA") != "SI":
+    single = _t(el, "DettaglioOfferta/OFFERTA_SINGOLA")
+    if _t(el, "DettaglioOfferta/TIPO_CLIENTE") != CLIENT_DOMESTIC or single not in ("SI", "NO"):
         return None
     kind = _t(el, "DettaglioOfferta/TIPO_OFFERTA")
     if kind not in (OFFER_FIXED, OFFER_INDEXED):
@@ -158,6 +165,7 @@ def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
         expires_on=_expiry(_t(el, "ValiditaOfferta/DATA_FINE")),
         zones=_zones(el.find(NS + "ZoneOfferta")),
         source=SOURCE_PREFIX + (_t(el, "IdentificativiOfferta/COD_OFFERTA") or "?"),
+        dual_with=None if single == "SI" else _dual_link(el),
     )
     if kind == OFFER_FIXED:
         if not any(bands):
@@ -172,6 +180,43 @@ def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
     spread = sum(b * w for b, w in zip(bands, DEFAULT_BAND_SPLIT))  # PUN/PSV unico nelle ipotesi: spread medio pesato
     dispatching = sum(float(d.text) for d in el.iter(NS + "VALORE_DISP") if d.text) if commodity == "power" else None
     return Offer(price_type="indexed", spread=spread, dispatching=dispatching or None, **common)
+
+
+def _dual_link(el: ET.Element) -> str:
+    """Offerta luce+gas: l'altra metà dichiarata dal venditore (OffertaDual), se c'è."""
+    for tag in ("OFFERTE_CONGIUNTE_EE", "OFFERTE_CONGIUNTE_GAS"):
+        if code := el.findtext(f"{NS}OffertaDual/{NS}{tag}"):
+            return SOURCE_PREFIX + code
+    return UNPAIRED
+
+
+def pair_dual_fuel(offers: list[Offer]) -> tuple[list[Offer], int]:
+    """Abbina le metà luce e gas delle offerte luce+gas. Il venditore dichiara il legame solo per
+    alcune: per le altre vale lo stesso fornitore e lo stesso nome a meno di «luce»/«gas», se univoco.
+    Restituisce le offerte con le sole metà abbinate (dual_with = fonte dell'altra) e quante ne sono state scartate."""
+    duals = [o for o in offers if o.dual_with]
+    by_source = {o.source: o for o in duals}
+    partner: dict[str, str] = {}
+
+    def link(a: Offer, b: Offer) -> None:
+        if a.commodity != b.commodity and a.source not in partner and b.source not in partner:
+            partner[a.source], partner[b.source] = b.source, a.source
+
+    for o in duals:  # legami dichiarati
+        if (other := by_source.get(o.dual_with)) is not None:
+            link(o, other)
+    groups: dict[tuple[str, str], list[Offer]] = {}
+    for o in duals:  # per nome
+        if o.source not in partner:
+            groups.setdefault((o.supplier, re.sub(r"luce|gas", "*", o.name.lower())), []).append(o)
+    for group in groups.values():
+        power = [o for o in group if o.commodity == "power"]
+        gas = [o for o in group if o.commodity == "gas"]
+        if len(power) == len(gas) == 1:
+            link(power[0], gas[0])
+
+    kept = [replace(o, dual_with=partner[o.source]) if o.dual_with else o for o in offers if not o.dual_with or o.source in partner]
+    return kept, len(offers) - len(kept)
 
 
 def _expiry(raw: str | None) -> str | None:

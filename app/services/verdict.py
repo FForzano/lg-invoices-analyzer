@@ -6,7 +6,7 @@ from datetime import date
 
 from ..models import Offer
 from .consumption import Consumption
-from .pricing import Assumptions, Location, Ranked, compare
+from .pricing import Assumptions, Bundle, Location, Ranked, compare
 
 MIN_SAVING_EUR = 30.0  # sotto questa soglia (o sotto il 5%) il cambio non vale lo sforzo
 MIN_SAVING_PCT = 5.0
@@ -49,4 +49,31 @@ def make_verdict(
         current=current, best=best, saving=saving, saving_pct=pct,
         saving_range=(min(scenario_savings), max(scenario_savings)),
         worthwhile=ok(saving), robust=all(ok(s) for s in scenario_savings),
+    )
+
+
+@dataclass(frozen=True)
+class DualVerdict:
+    best: Bundle
+    saving: float
+    saving_pct: float
+    separate_saving: float  # cambiando luce e gas separatamente con le migliori offerte singole
+    worthwhile: bool
+
+    @property
+    def beats_separate(self) -> bool:
+        return self.saving > self.separate_saving
+
+
+def make_dual_verdict(bundles: list[Bundle], power: Verdict | None, gas: Verdict | None) -> DualVerdict | None:
+    """None se non ci sono coppie valutabili o manca una delle due offerte attuali."""
+    best = next((b for b in bundles if b.saving is not None), None)
+    if best is None:
+        return None
+    base = best.total + best.saving
+    pct = best.saving / base * 100 if base else 0.0
+    separate = sum(max(v.saving, 0.0) for v in (power, gas) if v)
+    return DualVerdict(
+        best=best, saving=best.saving, saving_pct=pct, separate_saving=separate,
+        worthwhile=best.saving >= MIN_SAVING_EUR and pct >= MIN_SAVING_PCT,
     )

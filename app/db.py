@@ -4,7 +4,7 @@ from __future__ import annotations
 import dataclasses
 import sqlite3
 
-from flask import Flask, current_app, g
+from flask import Flask, current_app, g, has_request_context, session
 
 from .migrations import migrate_database
 from .models import SYSTEM_FIELDS, Bill, Offer, columns
@@ -15,6 +15,8 @@ SETTING_DEFAULTS: dict[str, float | str] = {
     # codici ISTAT della località di fornitura (default: Ferrara)
     "region": "08", "province": "038", "comune": "038008",
 }
+# impostazioni che valgono per il singolo profilo (appartamento); le altre sono globali
+PROFILE_SETTINGS = ("region", "province", "comune", "default_power_kw")
 
 
 def get_db() -> sqlite3.Connection:
@@ -41,8 +43,8 @@ def _fetch(cls, sql: str, args=()):
     return [cls(**dict(r)) for r in get_db().execute(sql, args)]
 
 
-def _insert(table: str, obj) -> int:
-    values = {k: v for k, v in dataclasses.asdict(obj).items() if k not in SYSTEM_FIELDS}
+def _insert(table: str, obj, **extra) -> int:
+    values = {**{k: v for k, v in dataclasses.asdict(obj).items() if k not in SYSTEM_FIELDS}, **extra}
     names = ", ".join(values)
     marks = ", ".join("?" for _ in values)
     db = get_db()
@@ -59,92 +61,167 @@ def _update(table: str, id: int, obj) -> None:
     db.commit()
 
 
-def _delete(table: str, id: int) -> None:
+def _delete(table: str, id: int, **scope) -> None:
     db = get_db()
-    db.execute(f"DELETE FROM {table} WHERE id = ?", (id,))
+    where = "".join(f" AND {k} = ?" for k in scope)
+    db.execute(f"DELETE FROM {table} WHERE id = ?{where}", (id, *scope.values()))
     db.commit()
+
+
+# --- profili -----------------------------------------------------------------
+
+def profile_id() -> int:
+    """Profilo attivo: quello scelto nella sessione, se esiste ancora, altrimenti il primo."""
+    if "profile_id" not in g:
+        wanted = session.get("profile_id") if has_request_context() else None
+        row = get_db().execute("SELECT id FROM profiles WHERE id = ?", (wanted,)).fetchone() if wanted else None
+        g.profile_id = row["id"] if row else get_db().execute("SELECT min(id) FROM profiles").fetchone()[0]
+    return g.profile_id
+
+
+def list_profiles() -> list[dict]:
+    return [dict(r) for r in get_db().execute("SELECT * FROM profiles ORDER BY id")]
+
+
+def current_profile() -> dict:
+    return dict(get_db().execute("SELECT * FROM profiles WHERE id = ?", (profile_id(),)).fetchone())
+
+
+def add_profile(name: str, region: str, province: str, comune: str, default_power_kw: float) -> int:
+    db = get_db()
+    cur = db.execute(
+        "INSERT INTO profiles (name, region, province, comune, default_power_kw) VALUES (?, ?, ?, ?, ?)",
+        (name, region, province, comune, default_power_kw),
+    )
+    db.commit()
+    return cur.lastrowid
+
+
+def rename_profile(id: int, name: str) -> None:
+    db = get_db()
+    db.execute("UPDATE profiles SET name = ? WHERE id = ?", (name, id))
+    db.commit()
+
+
+def delete_profile(id: int) -> list[str]:
+    """Elimina il profilo con bollette e offerte attuali. Restituisce i PDF da cancellare dal disco."""
+    db = get_db()
+    pdfs = [r["pdf_path"] for r in db.execute("SELECT pdf_path FROM bills WHERE profile_id = ? AND pdf_path IS NOT NULL", (id,))]
+    for table in ("bills", "offers"):
+        db.execute(f"DELETE FROM {table} WHERE profile_id = ?", (id,))
+    db.execute("DELETE FROM profiles WHERE id = ?", (id,))
+    db.commit()
+    return pdfs
 
 
 # --- bollette ---------------------------------------------------------------
 
 def list_bills(commodity: str | None = None) -> list[Bill]:
-    where, args = ("WHERE commodity = ?", (commodity,)) if commodity else ("", ())
+    where, args = "WHERE profile_id = ?", [profile_id()]
+    if commodity:
+        where, args = where + " AND commodity = ?", [*args, commodity]
     return _fetch(Bill, f"SELECT {', '.join(columns(Bill))} FROM bills {where} ORDER BY period_start DESC", args)
 
 
 def add_bill(bill: Bill) -> int:
-    return _insert("bills", bill)
+    return _insert("bills", bill, profile_id=profile_id())
 
 
 def delete_bill(id: int) -> None:
-    _delete("bills", id)
+    _delete("bills", id, profile_id=profile_id())
 
 
 # --- offerte ----------------------------------------------------------------
 
+# Offerte visibili al profilo attivo: catalogo condiviso (profile_id NULL) più le proprie; la versione
+# propria di un'offerta (stessa `source`) nasconde quella condivisa.
+VISIBLE_OFFERS = (
+    "(profile_id IS NULL OR profile_id = :p) AND NOT (profile_id IS NULL AND source IS NOT NULL "
+    "AND source IN (SELECT source FROM offers WHERE profile_id = :p AND source IS NOT NULL))"  # senza il filtro, un NULL nella lista rende NULL tutto il NOT IN
+)
+
+
 def list_offers(commodity: str | None = None) -> list[Offer]:
-    where, args = ("WHERE commodity = ?", (commodity,)) if commodity else ("", ())
+    where = f"WHERE {VISIBLE_OFFERS}" + (" AND commodity = :c" if commodity else "")
     return _fetch(
-        Offer, f"SELECT {', '.join(columns(Offer))} FROM offers {where} ORDER BY commodity, supplier, name", args
+        Offer, f"SELECT {', '.join(columns(Offer))} FROM offers {where} ORDER BY commodity, supplier, name",
+        {"p": profile_id(), "c": commodity},
     )
 
 
 def get_offer(id: int) -> Offer | None:
-    rows = _fetch(Offer, f"SELECT {', '.join(columns(Offer))} FROM offers WHERE id = ?", (id,))
+    rows = _fetch(
+        Offer, f"SELECT {', '.join(columns(Offer))} FROM offers WHERE id = :id AND (profile_id IS NULL OR profile_id = :p)",
+        {"id": id, "p": profile_id()},
+    )
     return rows[0] if rows else None
 
 
 def save_offer(offer: Offer, id: int | None = None) -> int:
-    """Inserisce o aggiorna; l'offerta attuale è una sola per fornitura."""
-    if id is None:
-        id = _insert("offers", offer)
+    """Inserisce o aggiorna. L'offerta attuale è una sola per fornitura e per profilo e appartiene al profilo:
+    se un'offerta condivisa diventa «attuale» se ne crea una copia del profilo, il catalogo non cambia."""
+    existing = get_offer(id) if id is not None else None
+    if id is not None and existing is None:
+        raise LookupError(f"Offerta {id} non trovata")
+    if existing is None or (offer.is_current and existing.profile_id is None):
+        id = _insert("offers", offer, profile_id=profile_id() if offer.is_current else None)
     else:
         _update("offers", id, offer)
     if offer.is_current:
         db = get_db()
-        db.execute("UPDATE offers SET is_current = 0 WHERE commodity = ? AND id != ?", (offer.commodity, id))
+        db.execute(
+            "UPDATE offers SET is_current = 0 WHERE commodity = ? AND id != ? AND profile_id = ?",
+            (offer.commodity, id, profile_id()),
+        )
         db.commit()
     return id
 
 
 def save_detected_offer(offer: Offer) -> int:
-    """Salva l'offerta letta da una bolletta come «attuale»: aggiorna quella già rilevata, se c'è."""
+    """Salva l'offerta letta da una bolletta come «attuale» del profilo: aggiorna quella già rilevata, se c'è."""
     row = get_db().execute(
-        "SELECT id FROM offers WHERE commodity = ? AND source LIKE 'bolletta:%' AND is_current = 1", (offer.commodity,)
+        "SELECT id FROM offers WHERE commodity = ? AND source LIKE 'bolletta:%' AND is_current = 1 AND profile_id = ?",
+        (offer.commodity, profile_id()),
     ).fetchone()
     return save_offer(offer, row["id"] if row else None)
 
 
 def replace_imported_offers(offers: list[Offer], prefix: str) -> int:
-    """Sostituisce le offerte importate (`source` che inizia per `prefix`), tenendo quella
-    marcata come attuale se ancora presente nel file. Restituisce il numero di offerte inserite."""
+    """Sostituisce il catalogo condiviso importato (`source` che inizia per `prefix`). Le copie dei profili
+    (l'offerta attuale scelta tra quelle importate) restano. Restituisce il numero di offerte inserite."""
     db = get_db()
-    kept = {r["source"] for r in db.execute("SELECT source FROM offers WHERE is_current = 1 AND source LIKE ?", (prefix + "%",))}
-    db.execute("DELETE FROM offers WHERE source LIKE ? AND is_current = 0", (prefix + "%",))
+    db.execute("DELETE FROM offers WHERE source LIKE ? AND profile_id IS NULL", (prefix + "%",))
     db.commit()
-    new = [o for o in offers if o.source not in kept]
-    for o in new:
+    for o in offers:
         _insert("offers", o)
-    return len(new)
+    return len(offers)
 
 
 def delete_offer(id: int) -> None:
-    _delete("offers", id)
+    db = get_db()
+    db.execute("DELETE FROM offers WHERE id = ? AND (profile_id IS NULL OR profile_id = ?)", (id, profile_id()))
+    db.commit()
 
 
 # --- impostazioni -----------------------------------------------------------
 
 def get_settings() -> dict[str, float | str]:
+    """Impostazioni globali più quelle del profilo attivo (località, potenza di default)."""
     stored = {r["key"]: r["value"] for r in get_db().execute("SELECT key, value FROM settings")}
-    return {**SETTING_DEFAULTS, **stored}
+    profile = current_profile()
+    return {**SETTING_DEFAULTS, **stored, **{k: profile[k] for k in PROFILE_SETTINGS}}
 
 
 def save_settings(values: dict[str, float | str]) -> None:
     db = get_db()
+    per_profile = {k: v for k, v in values.items() if k in PROFILE_SETTINGS}
+    shared = {k: v for k, v in values.items() if k not in PROFILE_SETTINGS}
     db.executemany(
         "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-        values.items(),
+        shared.items(),
     )
+    for key, value in per_profile.items():  # i nomi vengono da PROFILE_SETTINGS, mai dall'utente
+        db.execute(f"UPDATE profiles SET {key} = ? WHERE id = ?", (value, profile_id()))
     db.commit()
 
 

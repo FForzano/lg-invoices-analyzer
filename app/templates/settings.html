@@ -2,6 +2,7 @@
 {% from "_macros.html" import field %}
 {% block content %}
 <h1>Impostazioni</h1>
+<p class="muted">PUN, PSV, perdite e dispacciamento valgono per tutti i profili. Potenza di default e località sono del profilo <strong>{{ profile.name }}</strong>.</p>
 <form method="post" class="grid">
   {{ field('pun', 'PUN medio annuo assunto (€/kWh)', s, 'number') }}
   {{ field('psv', 'PSV medio annuo assunto (€/Smc)', s, 'number') }}

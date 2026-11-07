@@ -71,3 +71,21 @@ def test_concurrent_startup_applies_each_migration_once(tmp_path):
     [t.join() for t in threads]
     assert not errors
     assert sqlite3.connect(path).execute("PRAGMA user_version").fetchone()[0] == migration_files()[-1][0]
+
+
+def test_profiles_migration_moves_existing_data_to_first_profile():
+    conn = sqlite3.connect(":memory:")
+    for version, path in migration_files():
+        if version <= 7:
+            conn.executescript(path.read_text())
+    conn.execute("PRAGMA user_version = 7")
+    conn.execute("INSERT INTO bills (commodity, period_start, period_end) VALUES ('gas', '2026-06-01', '2026-06-30')")
+    conn.execute("INSERT INTO offers (commodity, supplier, name, price_type, is_current) VALUES ('gas', 'S', 'Mia', 'fixed', 1)")
+    conn.execute("INSERT INTO offers (commodity, supplier, name, price_type) VALUES ('gas', 'S', 'Catalogo', 'fixed')")
+    conn.execute("INSERT INTO settings (key, value) VALUES ('comune', '027042'), ('default_power_kw', 4.5), ('pun', 0.15)")
+    conn.commit()
+    migrate(conn)
+    assert conn.execute("SELECT name, comune, default_power_kw FROM profiles").fetchall() == [("Casa", "027042", 4.5)]
+    assert conn.execute("SELECT profile_id FROM bills").fetchall() == [(1,)]
+    assert dict(conn.execute("SELECT name, profile_id FROM offers").fetchall()) == {"Mia": 1, "Catalogo": None}
+    assert [r[0] for r in conn.execute("SELECT key FROM settings")] == ["pun"]  # le impostazioni di profilo escono dalla tabella globale

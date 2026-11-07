@@ -26,3 +26,4 @@ fieldset { border:1px solid var(--line); border-radius:8px; margin:1rem 0; }
 .headline { font-size:1.15rem; }
 
 .pager { display:flex; flex-wrap:wrap; gap:.75rem; align-items:center; }
+nav .profile-switch { margin-left:auto; display:flex; gap:.5rem; align-items:center; }

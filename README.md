@@ -43,6 +43,10 @@ Se hai già un'offerta attuale inserita a mano, le nuove bollette non la sovrasc
 2. **LLM, solo se il parser non trova i campi essenziali** (fornitura, periodo, consumo, totale) e solo se `ANTHROPIC_API_KEY` è impostata: in quel caso il testo della bolletta (dati personali) esce dal NAS. Con tutti i campi essenziali trovati l'LLM non viene mai chiamato.
 3. Altrimenti modulo manuale, precompilato con quanto letto.
 
+## Profili (più appartamenti)
+
+Non sono account: non c'è login. Un **profilo** è un appartamento, con le sue bollette, la sua offerta attuale, la località e la potenza di default. Si crea e si cambia da *Profili* (o dal menu in alto); la scelta resta nel cookie del browser. Il catalogo delle offerte (importate o inserite a mano) e le ipotesi su PUN/PSV sono condivisi. Cancellare un profilo elimina le sue bollette e i PDF. I dati esistenti passano nel profilo «Casa».
+
 ## Offerte
 
 - A mano, da CSV (`examples/offers.csv`) o dal **Portale Offerte** (open data Acquirente Unico/ARERA, pulsante in *Offerte*): scarica i file XML pubblici (~35 MB) e importa le offerte domestiche; sostituisce le precedenti importate, tenendo quelle a mano e l'«attuale».

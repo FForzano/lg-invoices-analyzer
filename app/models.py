@@ -36,6 +36,7 @@ class Bill:
     social_bonus_expires_on: str | None = None
     pdf_path: str | None = None
     id: int | None = None
+    profile_id: int | None = None
     created_at: str | None = None
 
     def with_derived_consumption(self) -> Bill:
@@ -80,10 +81,11 @@ class Offer:
     gas_mgmt: float | None = None  # €/Smc
     pcs_adjustment: float | None = None  # €/Smc
     id: int | None = None
+    profile_id: int | None = None  # NULL = catalogo condiviso; altrimenti solo di quel profilo (l'offerta attuale)
     created_at: str | None = None
 
 
-SYSTEM_FIELDS = {"id", "created_at"}
+SYSTEM_FIELDS = {"id", "created_at", "profile_id"}  # gestiti dal livello db, mai da form/CSV/LLM
 
 
 def columns(cls) -> list[str]:

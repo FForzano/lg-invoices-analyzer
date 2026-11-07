@@ -43,7 +43,10 @@ def save():
     except ValueError as e:
         flash(str(e), "warn")
         return render_template("offer_form.html", v=request.form, id=id), 400
-    db.save_offer(offer, id)
+    try:
+        db.save_offer(offer, id)
+    except LookupError:
+        abort(404)  # id di un'offerta non visibile a questo profilo
     return redirect(url_for("offers.index"))
 
 

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Bollette luce e gas</h1>
+<h1>Bollette luce e gas <span class="muted">· {{ profile.name }}</span></h1>
 {% for level, text in alerts %}<div class="flash {{ 'warn' if level == 'warn' else 'info' }}">{{ text }}</div>{% endfor %}
 {% for a in analyses %}{% include "_verdict.html" %}{% endfor %}
 {% include "_dual.html" %}

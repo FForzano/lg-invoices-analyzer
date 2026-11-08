@@ -220,10 +220,12 @@ def learn_rule(text: str, field_name: str, sample: str, choice: str | None = Non
         if not (_anchor_re(sample).search(text) and _good_anchor(sample)):
             raise ValueError("questo testo non compare nella bolletta (o non è un'etichetta generica)")
         return Rule(field_name, "keyword", _clean(sample), value=choice)
-    target = _convert(kind, m) if kind != "text" and (m := VALUE_RE[kind].fullmatch(sample)) else None
+    target = None
     if kind == "text":
         target = sample
-    elif target is None:
+    elif m := VALUE_RE[kind].search(sample):  # tollera simboli attorno al valore selezionato («€ 88,40»)
+        sample, target = m.group(0), _convert(kind, m)
+    if target is None:
         raise ValueError("il valore non ha il formato atteso (numero con virgola, o data come 01/06/2026)")
     rejected = "l'etichetta accanto al valore contiene dati personali o è troppo lunga"
     tried = False

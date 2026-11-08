@@ -114,6 +114,7 @@ def test_teach_flow_then_next_bill_is_read_automatically(client, monkeypatch):
     assert "Insegna all&#39;app a leggerlo" in r.text or "Insegna all'app a leggerlo" in r.text
     import re
     pdf = re.search(r"pdf=([0-9a-f]{32}\.pdf)", r.text).group(1)
+    assert client.get(f"/layouts/pdf/{pdf}").mimetype == "application/pdf"  # lo stesso PDF già caricato, mostrato nella pagina
     page = client.get(f"/layouts/teach?pdf={pdf}")
     assert page.status_code == 200 and "Importo da pagare" in page.text and 'name="v_total_eur"' in page.text
 

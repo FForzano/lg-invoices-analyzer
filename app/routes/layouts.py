@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from urllib.parse import quote
 
-from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, send_file, url_for
 
 from .. import db
 from ..services import extraction, layouts
@@ -72,6 +72,12 @@ def teach_save():
     db.save_layout(layout)
     flash(f"Layout «{layout.name}» salvato ({len(layout.rules)} regole): le prossime bollette dello stesso fornitore si leggeranno da sole.", "info")
     return bills.prefill_form(name, path, request.form.get("commodity", "power"))
+
+
+@bp.get("/layouts/pdf/<name>")
+def pdf(name: str):
+    """Il PDF da mostrare nella pagina «Insegna» (anche prima che la bolletta sia salvata)."""
+    return send_file(_pdf(name), mimetype="application/pdf")
 
 
 @bp.post("/layouts/<int:id>/delete")

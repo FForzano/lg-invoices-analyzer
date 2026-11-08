@@ -46,7 +46,7 @@ Se hai già un'offerta attuale inserita a mano, le nuove bollette non la sovrasc
 
 ### La tua bolletta non si legge?
 
-Carica il PDF da solo: l'app propone **«Insegna all'app a leggerlo»**. Selezioni nel testo del PDF i valori (periodo, consumo, totale…) e l'app ricava dove si trovano; dalla bolletta successiva dello stesso fornitore la lettura è automatica. In *Bollette → Layout di lettura* puoi vedere o eliminare i layout.
+Carica il PDF da solo: l'app propone **«Insegna all'app a leggerlo»**. L'app mostra il PDF appena caricato e, un passo alla volta, ti chiede di selezionare con il dito o il mouse i valori (periodo, consumo, totale…) e l'app ricava dove si trovano; dalla bolletta successiva dello stesso fornitore la lettura è automatica. In *Bollette → Layout di lettura* puoi vedere o eliminare i layout.
 
 Se vuoi che il tuo fornitore funzioni per tutti, *Segnala agli sviluppatori* mostra prima il file che verrebbe condiviso: **solo etichette e formati, mai valori, nomi o indirizzi** (le etichette con dati sospetti sono escluse). Non parte nulla in automatico: lo invii tu, per esempio con la segnalazione GitHub già compilata. Per chi mantiene il progetto: vedi `app/layouts/README.md`.
 

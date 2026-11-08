@@ -22,7 +22,7 @@ Entry point `app/__init__.py` (`create_app`, config da env: `DATA_DIR`, `SECRET_
 - `app/forms.py` — `parse(cls, mapping)`: stringhe → dataclass, guidato dai type hint (virgola decimale, `choices` nei metadata dei campi).
 - `app/db.py` — connessione SQLite e repository (`list_*`, `add_bill`, `save_offer`, `get_settings`…). SQL grezzo, nessun ORM.
 - `app/migrations/` — migrazioni SQL numerate (`NNN_nome.sql`), applicate all'avvio da `migrations.migrate` (versione in `PRAGMA user_version`).
-- `app/services/` — logica di dominio **pura, senza Flask**: `pricing` (stima/confronto), `consumption` (consumo annuo), `history`, `alerts`, `offers_csv`, `bill_parser` (lettura PDF a regole + condizioni dell'offerta attuale), `seasonality` (profili di consumo, fattori mensili PUN/PSV), `verdict` (conviene cambiare? risparmio e sensibilità PUN/PSV), `extraction` (orchestra regole → LLM come ripiego), `arera` (import open data Portale Offerte), `power` (consiglio sulla potenza impegnata dai picchi in bolletta), `paging` (paginazione delle liste: bollette, offerte, confronto; macro `pager` in `_macros.html`).
+- `app/services/` — logica di dominio **pura, senza Flask**: `pricing` (stima/confronto), `consumption` (consumo annuo), `history`, `alerts`, `offers_csv`, `bill_parser` (lettura PDF a regole + condizioni dell'offerta attuale), `layouts` (regole etichetta → valore come dati: layout forniti in `app/layouts/*.json` e insegnati dall'utente), `seasonality` (profili di consumo, fattori mensili PUN/PSV), `verdict` (conviene cambiare? risparmio e sensibilità PUN/PSV), `extraction` (orchestra regole → LLM come ripiego), `arera` (import open data Portale Offerte), `power` (consiglio sulla potenza impegnata dai picchi in bolletta), `paging` (paginazione delle liste: bollette, offerte, confronto; macro `pager` in `_macros.html`).
 - `app/analysis.py` — `analyze(commodity)`: unisce database e servizi (consumo, confronto, verdetto); usata da home e confronto.
 - Proposte (`/proposal`, `routes/proposal.py`): form per valutare un'offerta non pubblicata (es. telefonata); `analysis.evaluate_proposal` → `verdict.judge_proposal` contro l'offerta attuale. Valutare non salva nulla; «Salva» scrive in `proposals` (migrazione 010, per profilo, `terms` = JSON dei campi di `Offer` via `services/proposal.py`, nessuna colonna per campo): fuori dal catalogo e dai confronti, pagina di dettaglio con promemoria da verificare nel contratto. Solo singola fornitura, no dual fuel.
 - `app/routes/` — un blueprint per area; solo HTTP, niente logica di dominio.
@@ -38,7 +38,7 @@ Entry point `app/__init__.py` (`create_app`, config da env: `DATA_DIR`, `SECRET_
 
 ## Gotchas
 
-- **Lettura bollette: LLM solo come ultima risorsa.** `extraction.extract_bill` prova sempre prima `bill_parser`; l'LLM parte solo se mancano i campi essenziali (`bill_parser.REQUIRED`), mai per campi opzionali. Non aggiungere usi dell'LLM (nemmeno riepiloghi) senza chiederlo: la preferenza è evitarlo.
+- **Lettura bollette: LLM solo come ultima risorsa.** `extraction.extract_bill` prova sempre prima `bill_parser`, poi i layout (`services/layouts.py`: forniti in `app/layouts/` e insegnati in `bill_layouts`, migrazione 011); l'LLM parte solo se mancano i campi essenziali (`bill_parser.REQUIRED`), mai per campi opzionali. Non aggiungere usi dell'LLM (nemmeno riepiloghi) senza chiederlo: la preferenza è evitarlo.
 - **Avvio con più worker gunicorn**: le migrazioni girano in ogni worker; `migrations.migrate_database` le serializza con un lock su file (`bollette.db.lock`). Non richiamare `migrate()` direttamente all'avvio: due worker applicherebbero la stessa migrazione (`duplicate column`). `tests/test_migrations.py` lo copre.
 - **Immagine Docker**: gira come `1000:100` (non root), `/data` va reso scrivibile da quell'utente (`create_app` fallisce con un messaggio esplicito); gunicorn con `--no-control-socket` (altrimenti prova a scrivere in `/.gunicorn`). Healthcheck su `/health`. Un bind mount con permessi sbagliati è il guasto più comune: vedi `deploy/README.md`.
 - **Nuovo campo di `Bill`/`Offer`** = aggiornare insieme: dataclass, una nuova migrazione `NNN_*.sql` (mai modificare quelle esistenti), template del form e (per `Bill`) `FIELD_HELP` in `services/extraction.py`. `tests/test_migrations.py` fallisce se migrazioni e dataclass divergono.
@@ -62,10 +62,12 @@ Entry point `app/__init__.py` (`create_app`, config da env: `DATA_DIR`, `SECRET_
 
 ---
 
+- **Layout insegnati** (`/layouts`, `routes/layouts.py`): l'utente indica un valore nel testo di un PDF non riconosciuto e `layouts.learn_rule` ricava la regola (etichetta + lato + indice), verificandola sullo stesso testo. Una regola non contiene mai valori: `layouts.report` esporta solo etichette (scartando quelle con dati personali) per la segnalazione, che l'utente invia a mano (link a una issue GitHub precompilata, `REPORT_REPO_URL` per un fork). Un campo nuovo di `Bill` è insegnabile senza altro codice (`teachable_fields` legge i type hint). Non estendere `report` con testo della bolletta, nemmeno «mascherato»: rischio dati personali.
+
 ## Environment variables
 
 - `DATA_DIR` (default `data`; in Docker `/data`): DB `bollette.db` e `pdf/`
-- `SECRET_KEY`, `ANTHROPIC_API_KEY` (opzionale, solo ripiego di lettura), `ANTHROPIC_MODEL`
+- `SECRET_KEY`, `ANTHROPIC_API_KEY` (opzionale, solo ripiego di lettura), `ANTHROPIC_MODEL`, `REPORT_REPO_URL` (opzionale: dove puntano le segnalazioni dei layout)
 
 ## Testing policy
 

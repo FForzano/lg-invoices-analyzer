@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+{% macro row(f, kind) %}
+<div class="fld teach-row">
+  <label>{{ help.get(f, f) }}{{ ' *' if f in required }}
+    {% if f in found %}<span class="muted">già letto: {{ found[f] }}</span>{% endif %}
+    <span class="teach-input">
+      <input name="v_{{ f }}" value="{{ samples.get(f, '') }}" placeholder="{{ 'testo che compare nella bolletta' if kind == 'keyword' else 'valore come appare' }}" autocomplete="off">
+      {% if kind == 'keyword' %}<select name="c_{{ f }}" aria-label="Valore corrispondente">{% for c in choices[f] %}<option value="{{ c }}">{{ labels.get(c, c) }}</option>{% endfor %}</select>{% endif %}
+      <button type="button" class="use-sel">Usa la selezione</button>
+    </span>
+  </label>
+</div>
+{% endmacro %}
+<h1>Insegna a leggere la bolletta</h1>
+<p>Per ogni dato che vuoi far leggere all'app, <strong>seleziona il valore nel testo qui sotto</strong> e premi «Usa la selezione» accanto al campo (oppure scrivilo uguale a come appare). L'app ricava da sola <em>dove</em> cercarlo, cioè l'etichetta vicina, e lo riconoscerà anche nelle prossime bollette dello stesso fornitore, con valori diversi.</p>
+<p class="muted">Servono almeno i campi segnati con *. Il testo resta in questo server: non viene inviato da nessuna parte.</p>
+{% for key, message in errors.items() %}<p class="flash warn" role="alert">{{ message if key in ('_all', '_signature') else (help.get(key, key) ~ ': ' ~ message) }}</p>{% endfor %}
+
+<pre id="src" class="pdf-text" tabindex="0" aria-label="Testo della bolletta">{{ text }}</pre>
+
+<form method="post" action="{{ url_for('layouts.teach_save') }}" class="grid" id="teach">
+  <input type="hidden" name="pdf" value="{{ pdf }}">
+  <h2 class="full">Fornitore</h2>
+  <label>Nome del fornitore, come scritto nella bolletta<input name="signature" value="{{ supplier }}" required></label>
+  <label>Nome del layout (a tua scelta)<input name="name" value="{{ supplier }}"></label>
+  <h2 class="full">Dati da leggere</h2>
+  {% for f, kind in kinds.items() if f in required or f in ('supplier',) %}{{ row(f, kind) }}{% endfor %}
+  <details class="full"><summary>Altri dati, facoltativi</summary>
+    <div class="grid">{% for f, kind in kinds.items() if f not in required and f != 'supplier' %}{{ row(f, kind) }}{% endfor %}</div>
+  </details>
+  <div class="full actions"><button>Salva il layout e rileggi la bolletta</button><a class="btn secondary" href="{{ url_for('bills.new') }}">Annulla</a></div>
+</form>
+
+
+<script>
+(function () {
+  var src = document.getElementById('src'), last = '';
+  document.addEventListener('selectionchange', function () {
+    var s = window.getSelection(), t = s.toString().trim();
+    if (t && src.contains(s.anchorNode)) last = t.replace(/\s*\n\s*/g, ' ');
+  });
+  document.querySelectorAll('.use-sel').forEach(function (b) {
+    b.addEventListener('mousedown', function (e) { e.preventDefault(); }); // non perdere la selezione
+    b.addEventListener('click', function () { if (last) b.parentNode.querySelector('input').value = last; });
+  });
+})();
+</script>
+{% endblock %}

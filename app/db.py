@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 import dataclasses
+import json
 import sqlite3
 
 from flask import Flask, current_app, g, has_request_context, session
 
 from .migrations import migrate_database
+from .services.layouts import Layout
 from .services.proposal import Proposal, dump_terms, load_terms
 from .models import SYSTEM_FIELDS, Bill, Offer, columns
 from .services.seasonality import DEFAULT_INDEX_FACTORS
@@ -242,6 +244,31 @@ def save_proposal(p: Proposal) -> int:
 
 def delete_proposal(id: int) -> None:
     _delete("proposals", id, profile_id=profile_id())
+
+
+# --- layout di lettura insegnati dall'utente (globali: descrivono un fornitore, non un appartamento) ---
+
+def list_layouts() -> list[Layout]:
+    rows = get_db().execute("SELECT id, name, signature, rules FROM bill_layouts ORDER BY id")
+    return [Layout.from_json(json.dumps({"version": 1, "name": r["name"], "signature": r["signature"], "rules": json.loads(r["rules"])}), id=r["id"]) for r in rows]
+
+
+def get_layout(id: int) -> Layout | None:
+    return next((l for l in list_layouts() if l.id == id), None)
+
+
+def save_layout(layout: Layout) -> int:
+    """Un solo layout per fornitore: insegnarne un altro con la stessa firma lo sostituisce."""
+    db = get_db()
+    db.execute("DELETE FROM bill_layouts WHERE lower(signature) = lower(?)", (layout.signature,))
+    cur = db.execute("INSERT INTO bill_layouts (name, signature, rules) VALUES (?, ?, ?)",
+                     (layout.name, layout.signature, json.dumps([r.to_dict() for r in layout.rules], ensure_ascii=False)))
+    db.commit()
+    return cur.lastrowid
+
+
+def delete_layout(id: int) -> None:
+    _delete("bill_layouts", id)
 
 
 # --- impostazioni -----------------------------------------------------------

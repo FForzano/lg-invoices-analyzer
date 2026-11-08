@@ -13,7 +13,8 @@ import typing
 from pypdf import PdfReader
 
 from ..models import SYSTEM_FIELDS, Bill
-from .bill_parser import parse_bill_text
+from .bill_parser import REQUIRED, parse_bill_text
+from .layouts import Layout, apply_layouts, builtin_layouts
 
 DEFAULT_MODEL = "claude-sonnet-5-5"
 
@@ -78,22 +79,29 @@ def tool_schema() -> dict:
     }
 
 
-def extract_bill(path: str, client=None) -> tuple[dict, str]:
-    """Restituisce (campi, metodo) con metodo "regole" o "LLM". `client` è iniettabile per i test.
+def extract_bill(path: str, client=None, layouts: list[Layout] = ()) -> tuple[dict, str]:
+    """Restituisce (campi, metodo): "regole", «layout …» (forniti o insegnati) o "LLM". `client` è iniettabile per i test.
     In caso di fallimento solleva ExtractionError con i campi parziali già letti dalle regole."""
-    text = pdf_text(path).strip()
+    return extract_text(pdf_text(path).strip(), client, layouts)
+
+
+def extract_text(text: str, client=None, layouts: list[Layout] = ()) -> tuple[dict, str]:
     if not text:
         raise ExtractionError("Il PDF non contiene testo selezionabile")
     parsed = parse_bill_text(text)
     if parsed.complete:
         return parsed.fields, "regole"
+    fields, used = apply_layouts(text, parsed.fields, [*builtin_layouts(), *layouts])
+    if all(f in fields for f in REQUIRED):
+        return fields, f"layout «{', '.join(used)}»"
+    missing = [f for f in REQUIRED if f not in fields]
     if client is None and not available():
-        raise ExtractionError(f"lettura automatica incompleta (mancano: {', '.join(parsed.missing)})", parsed.fields)
+        raise ExtractionError(f"lettura automatica incompleta (mancano: {', '.join(missing)})", fields)
     try:
         llm_fields = _llm_extract(text, client)
     except ExtractionError as e:
-        raise ExtractionError(str(e), parsed.fields) from e
-    return {**llm_fields, **parsed.fields}, "LLM"  # i campi delle regole, controllati, prevalgono
+        raise ExtractionError(str(e), fields) from e
+    return {**llm_fields, **fields}, "LLM"  # i campi delle regole, controllati, prevalgono
 
 
 def _llm_extract(text: str, client) -> dict:

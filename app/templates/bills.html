@@ -5,6 +5,7 @@
 <div class="actions">
   <a class="btn secondary" href="{{ url_for('bills.new', commodity='power') }}">+ Luce</a>
   <a class="btn secondary" href="{{ url_for('bills.new', commodity='gas') }}">+ Gas</a>
+  <a class="btn secondary" href="{{ url_for('layouts.index') }}">Layout di lettura</a>
 </div>
 <div class="scroll"><table>
   <tr><th>Fornitura</th><th>Periodo</th><th class="num">Consumo{{ info('t_consumption') }}</th><th>Lettura{{ info('t_reading') }}</th><th class="num">Totale{{ info('total_eur') }}</th><th></th></tr>

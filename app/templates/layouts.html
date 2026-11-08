@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Layout di lettura</h1>
+<p>Un layout dice all'app dove trovare i dati nelle bollette di un fornitore. Le bollette dello stesso fornitore, anche con importi diversi, si leggono poi da sole, senza LLM. Per insegnarne uno nuovo carica una bolletta non riconosciuta: l'app ti propone di indicare i dati.</p>
+<div class="actions"><a class="btn secondary" href="{{ url_for('bills.new') }}">Carica una bolletta</a></div>
+<h2>Insegnati da te</h2>
+{% if mine %}
+<div class="scroll"><table>
+  <tr><th>Layout</th><th>Fornitore nel testo</th><th class="num">Regole</th><th></th></tr>
+  {% for l in mine %}
+  <tr><td>{{ l.name }}</td><td>{{ l.signature }}</td><td class="num">{{ l.rules | length }}</td>
+    <td><a href="{{ url_for('layouts.report', id=l.id) }}">Segnala agli sviluppatori</a>
+      <form method="post" action="{{ url_for('layouts.delete', id=l.id) }}" class="inline" onsubmit="return confirm('Eliminare?')"><button class="link">elimina</button></form></td></tr>
+  {% endfor %}
+</table></div>
+<p class="muted">«Segnala» mostra prima cosa verrebbe condiviso: solo etichette e formati, mai valori o dati personali. Se lo segnali, il tuo fornitore potrà essere letto da tutti senza insegnarlo.</p>
+{% else %}<p class="muted">Nessun layout ancora.</p>{% endif %}
+<h2>Forniti con l'app</h2>
+{% if builtin %}<ul>{% for l in builtin %}<li>{{ l.name }}</li>{% endfor %}</ul>
+{% else %}<p class="muted">Nessuno: oltre alla lettura predefinita, i layout arrivano dalle segnalazioni degli utenti.</p>{% endif %}
+{% endblock %}

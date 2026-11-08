@@ -2,6 +2,9 @@
 {% from "_macros.html" import field, select %}
 {% block content %}
 <h1>Nuova bolletta</h1>
+{% if teach_pdf %}
+<p class="flash info">Questo formato di bolletta non è ancora riconosciuto. <a href="{{ url_for('layouts.teach', pdf=teach_pdf) }}">Insegna all'app a leggerlo</a>: indichi dove sono i dati una volta sola e le prossime bollette dello stesso fornitore si leggeranno da sole.</p>
+{% endif %}
 {% if not v.get('pdf_path') %}
 <fieldset>
   <legend>Da PDF, consigliato <span class="muted">(lettura locale a regole{% if can_extract %}, con LLM come ripiego{% endif %})</span></legend>

@@ -40,8 +40,15 @@ Se hai già un'offerta attuale inserita a mano, le nuove bollette non la sovrasc
 ## Lettura delle bollette
 
 1. **Parser a regole** (locale, gratuito): legge le etichette standard ARERA e controlla la coerenza dei dati (es. le fasce devono sommare al consumo). Gestito con le bollette di Energia Pulita/Antenore; altri fornitori con lo stesso standard dovrebbero funzionare.
-2. **LLM, solo se il parser non trova i campi essenziali** (fornitura, periodo, consumo, totale) e solo se `ANTHROPIC_API_KEY` è impostata: in quel caso il testo della bolletta (dati personali) esce dal NAS. Con tutti i campi essenziali trovati l'LLM non viene mai chiamato.
-3. Altrimenti modulo manuale, precompilato con quanto letto.
+2. **Layout di lettura** (locale, gratuito): regole «etichetta → valore» per altri fornitori. Quelli forniti con l'app stanno in `app/layouts/*.json`; quelli che insegni tu sono salvati nel database.
+3. **LLM, solo se mancano ancora i campi essenziali** (fornitura, periodo, consumo, totale) e solo se `ANTHROPIC_API_KEY` è impostata: in quel caso il testo della bolletta (dati personali) esce dal NAS. Con tutti i campi essenziali trovati l'LLM non viene mai chiamato.
+4. Altrimenti modulo manuale, precompilato con quanto letto.
+
+### La tua bolletta non si legge?
+
+Carica il PDF da solo: l'app propone **«Insegna all'app a leggerlo»**. Selezioni nel testo del PDF i valori (periodo, consumo, totale…) e l'app ricava dove si trovano; dalla bolletta successiva dello stesso fornitore la lettura è automatica. In *Bollette → Layout di lettura* puoi vedere o eliminare i layout.
+
+Se vuoi che il tuo fornitore funzioni per tutti, *Segnala agli sviluppatori* mostra prima il file che verrebbe condiviso: **solo etichette e formati, mai valori, nomi o indirizzi** (le etichette con dati sospetti sono escluse). Non parte nulla in automatico: lo invii tu, per esempio con la segnalazione GitHub già compilata. Per chi mantiene il progetto: vedi `app/layouts/README.md`.
 
 ## Profili (più appartamenti)
 

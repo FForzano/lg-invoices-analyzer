@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Segnala il layout «{{ layout.name }}»</h1>
+<p>Questo è <strong>tutto</strong> quello che verrebbe condiviso. Controllalo: non parte nulla da solo, sei tu a inviarlo.</p>
+<ul>
+  <li><strong>Contiene:</strong> il nome del fornitore come scritto in bolletta, e per ogni dato l'etichetta accanto a cui si trova.</li>
+  <li><strong>Non contiene:</strong> importi, consumi, date, nomi, indirizzi, codici cliente o POD/PDR, né il PDF o il suo testo.</li>
+</ul>
+{% if dropped %}<p class="flash warn">Escluse perché l'etichetta sembra contenere dati personali: {{ dropped | join(', ') }}.</p>{% endif %}
+<pre class="pdf-text" id="report-json">{{ raw }}</pre>
+<div class="actions">
+  <a class="btn" href="{{ url_for('layouts.report', id=layout.id, download=1) }}">Scarica il file .json</a>
+  <button type="button" class="secondary-btn" id="copy">Copia</button>
+  {% if issue %}<a class="btn secondary" href="{{ issue }}" target="_blank" rel="noopener noreferrer">Apri una segnalazione su GitHub</a>{% endif %}
+</div>
+<p class="muted">La segnalazione si apre sul sito di GitHub già compilata: la rivedi e la invii tu, con il tuo account. Dopo una verifica (con un test su un testo di esempio) il layout entra nell'app per tutti.</p>
+<script>
+document.getElementById('copy').addEventListener('click', function () {
+  var b = this; navigator.clipboard.writeText(document.getElementById('report-json').textContent).then(function () { b.textContent = 'Copiato'; });
+});
+</script>
+{% endblock %}

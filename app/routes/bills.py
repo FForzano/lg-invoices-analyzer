@@ -46,15 +46,22 @@ def upload():
     if len(files) > 1:
         return _bulk_import(files)
     name, path = _save_pdf(files[0])
-    values = {"pdf_path": name, "commodity": request.form.get("commodity", "power")}
+    return prefill_form(name, path, request.form.get("commodity", "power"))
+
+
+def prefill_form(name: str, path: Path, commodity: str = "power") -> str:
+    """Modulo bolletta precompilato dalla lettura del PDF; se la lettura non basta offre di insegnare il layout."""
+    values = {"pdf_path": name, "commodity": commodity}
+    failed = False
     try:
-        fields, method = extraction.extract_bill(str(path))
+        fields, method = extraction.extract_bill(str(path), layouts=db.list_layouts())
         values.update(fields)
         flash(f"Dati letti con {method}: controllali prima di salvare.", "info")
     except extraction.ExtractionError as e:
         values.update(e.partial)
+        failed = True
         flash(f"Lettura non riuscita ({e}): completa il modulo a mano.", "warn")
-    return render_template("bill_form.html", v=values, can_extract=extraction.available())
+    return render_template("bill_form.html", v=values, can_extract=extraction.available(), teach_pdf=name if failed else None)
 
 
 def _bulk_import(files) -> Response:
@@ -63,17 +70,19 @@ def _bulk_import(files) -> Response:
     latest: dict[str, int] = {}  # fornitura -> id della bolletta importata con il periodo più recente
     latest_end: dict[str, str] = {}
     problems = []
+    layouts = db.list_layouts()
     for file in files:
         name, path = _save_pdf(file)
         try:
-            fields, _ = extraction.extract_bill(str(path))
+            fields, _ = extraction.extract_bill(str(path), layouts=layouts)
             bill = Bill(**fields, pdf_path=name).with_derived_consumption()
             key = (bill.commodity, bill.period_start, bill.period_end)
             if key in known:
                 raise ValueError("già presente")
         except (extraction.ExtractionError, PyPdfError, TypeError, ValueError) as e:
             path.unlink(missing_ok=True)
-            problems.append(f"{file.filename}: {e}")
+            hint = " Caricalo da solo per insegnare all'app a leggerlo." if isinstance(e, extraction.ExtractionError) else ""
+            problems.append(f"{file.filename}: {e}.{hint}")
             continue
         known.add(key)
         bill_id = db.add_bill(bill)

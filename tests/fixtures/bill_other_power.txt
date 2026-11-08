@@ -1,0 +1,10 @@
+LUCE ESEMPIO SPA
+Bolletta n. 4471
+Tipo fornitura  Energia elettrica
+Dal 01/03/2026 al 31/03/2026
+Consumo fatturato kWh 210,5
+Letture effettive
+Importo da pagare
+€ 88,40
+Potenza impegnata 3 kW
+Fattura intestata a Mario Verdi, via Roma 1

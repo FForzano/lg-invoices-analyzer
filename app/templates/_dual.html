@@ -1,16 +1,16 @@
 {# Verdetto luce+gas insieme. Parametro: dual (analysis.DualAnalysis) #}
-{% from "_macros.html" import eur, num, info %}
+{% from "_macros.html" import eur, num, info, icon %}
 {% set v = dual.verdict %}
 {% if v %}
 <section class="card commodity">
-  <h2>Luce e gas insieme</h2>
+  <h2>{{ icon('bolt') }}{{ icon('flame') }}Luce e gas insieme</h2>
   <div class="verdict {{ 'good' if v.worthwhile else '' }}">
     {% if v.worthwhile %}
-      <p class="verdict-label">Conviene un'offerta luce+gas</p>
+      <p class="verdict-label">{{ icon('check') }}Conviene un'offerta luce+gas</p>
       <p class="verdict-figure">{{ eur(v.saving) }} l'anno</p>
       <p class="verdict-note">Risparmio stimato del {{ num(v.saving_pct, 0) }}%.</p>
     {% else %}
-      <p class="verdict-label">Nessuna offerta luce+gas conviene</p>
+      <p class="verdict-label">{{ icon('minus') }}Nessuna offerta luce+gas conviene</p>
       <p class="verdict-note">Risparmio massimo {{ eur(v.saving) }} l'anno ({{ num(v.saving_pct, 0) }}%): troppo poco per cambiare.</p>
     {% endif %}
   </div>

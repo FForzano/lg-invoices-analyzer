@@ -188,6 +188,10 @@ Angoli appena arrotondati: 6px su campi, pulsanti e messaggi; 8px su riquadri (`
 ### Verdict
 - Blocco con fondo tenue (raggio 6px, nessuna ombra) in testa al riquadro: etichetta in grassetto («Conviene cambiare» / «Non conviene cambiare»), cifra del risparmio a 2rem, grassetto, cifre tabulari, nota sotto. L'esito si legge dal testo, non solo dal colore.
 
+### Icons
+- SVG inline dalla macro `icon()` in `_macros.html` (nessun font, nessuna risorsa esterna): tratto 1.75, `currentColor`, 1.25rem, `aria-hidden`. Servono a riconoscere, mai a decorare: fornitura nei titoli dei riquadri (fulmine, fiamma, quadrante; in grigio sommesso), esito nel verdetto (spunta / meno, nel colore dell'etichetta), triangolo negli avvisi. Il testo resta sempre presente.
+- Tastino (i): icona `info` blu senza bordo, dopo il termine che spiega (mai prima), con `U+2060` per non andare a capo da solo; area di tocco 44px.
+
 ### Details
 - `<details>` per calcoli, condizioni e spiegazioni (PUN/PSV); il sommario è blu, alto almeno 44px.
 

@@ -7,25 +7,26 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<nav>
-  <a href="{{ url_for('home.index') }}">Home</a>
-  <a href="{{ url_for('bills.index') }}">Bollette</a>
-  <a href="{{ url_for('bills.history_page') }}">Storico</a>
-  <a href="{{ url_for('offers.index') }}">Offerte</a>
-  <a href="{{ url_for('compare.index') }}">Confronto</a>
-  <a href="{{ url_for('settings.index') }}">Impostazioni</a>
+<nav aria-label="Principale">
+  {% set ep = request.endpoint or '' %}
+  <a href="{{ url_for('home.index') }}" {{ 'aria-current=page' if ep == 'home.index' }}>Home</a>
+  <a href="{{ url_for('bills.index') }}" {{ 'aria-current=page' if ep.startswith('bills.') and ep != 'bills.history_page' }}>Bollette</a>
+  <a href="{{ url_for('bills.history_page') }}" {{ 'aria-current=page' if ep == 'bills.history_page' }}>Storico</a>
+  <a href="{{ url_for('offers.index') }}" {{ 'aria-current=page' if ep.startswith('offers.') }}>Offerte</a>
+  <a href="{{ url_for('compare.index') }}" {{ 'aria-current=page' if ep.startswith('compare.') }}>Confronto</a>
+  <a href="{{ url_for('settings.index') }}" {{ 'aria-current=page' if ep.startswith('settings.') }}>Impostazioni</a>
   <form method="post" action="{{ url_for('profiles.switch') }}" class="profile-switch">
     <input type="hidden" name="next" value="{{ request.full_path if request.method == 'GET' else '' }}">
-    <select name="profile_id" onchange="this.form.submit()" aria-label="Profilo attivo">
+    <select name="profile_id" aria-label="Profilo attivo">
       {% for p in profiles %}<option value="{{ p.id }}" {{ 'selected' if p.id == profile.id }}>{{ p.name }}</option>{% endfor %}
     </select>
-    <noscript><button>Vai</button></noscript>
-    <a href="{{ url_for('profiles.index') }}">Profili</a>
+    <button>Cambia</button>
+    <a href="{{ url_for('profiles.index') }}" {{ 'aria-current=page' if ep.startswith('profiles.') }}>Profili</a>
   </form>
 </nav>
 <main>
   {% for category, message in get_flashed_messages(with_categories=true) %}
-    <div class="flash {{ category }}">{{ message }}</div>
+    <div class="flash {{ category }}" role="{{ 'alert' if category == 'warn' else 'status' }}">{{ message }}</div>
   {% endfor %}
   {% block content %}{% endblock %}
 </main>

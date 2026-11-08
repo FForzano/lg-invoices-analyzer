@@ -4,17 +4,30 @@
 {% if v %}
 <section class="card">
   <h2>Luce e gas insieme</h2>
-  <p class="headline {{ 'good' if v.worthwhile else '' }}">
-    {% if v.worthwhile %}Un'offerta luce+gas ti farebbe risparmiare circa <strong>{{ eur(v.saving) }} l'anno</strong> ({{ num(v.saving_pct, 0) }}%).
-    {% else %}Nessuna offerta luce+gas conviene: la migliore fa risparmiare solo <strong>{{ eur(v.saving) }} l'anno</strong> ({{ num(v.saving_pct, 0) }}%).{% endif %}
-  </p>
-  <p>Migliore: <strong>{{ v.best.power.offer.name }}</strong> + <strong>{{ v.best.gas.offer.name }}</strong> – {{ v.best.power.offer.supplier }}.<br>
+  <div class="verdict {{ 'good' if v.worthwhile else '' }}">
+    {% if v.worthwhile %}
+      <p class="verdict-label">Conviene un'offerta luce+gas</p>
+      <p class="verdict-figure">{{ eur(v.saving) }} l'anno</p>
+      <p class="verdict-note">Risparmio stimato del {{ num(v.saving_pct, 0) }}%.</p>
+    {% else %}
+      <p class="verdict-label">Nessuna offerta luce+gas conviene</p>
+      <p class="verdict-figure">{{ eur(v.saving) }} l'anno</p>
+      <p class="verdict-note">È il massimo che si risparmierebbe ({{ num(v.saving_pct, 0) }}%): troppo poco per cambiare.</p>
+    {% endif %}
+  </div>
+  <p>Migliore alternativa: <strong>{{ v.best.power.offer.name }}</strong> + <strong>{{ v.best.gas.offer.name }}</strong> – {{ v.best.power.offer.supplier }}.<br>
      Costo annuo stimato <strong>{{ eur(v.best.total) }}</strong> (luce {{ eur(v.best.power.estimate.total) }}, gas {{ eur(v.best.gas.estimate.total) }}).</p>
-  {% if v.beats_separate %}
-    <p class="muted">Meglio che cambiare separatamente le due forniture ({{ eur(v.separate_saving) }} l'anno).</p>
-  {% elif v.separate_saving > 0 %}
-    <p class="flash warn">Cambiando luce e gas separatamente, con le migliori offerte singole, risparmieresti di più: {{ eur(v.separate_saving) }} l'anno.</p>
+  {% if v.separate_saving > 0 %}
+    <div class="compare-pair" role="group" aria-label="Insieme o separate">
+      <div><span class="muted">Insieme</span><br><span class="num-big">{{ eur(v.saving) }}</span></div>
+      <div><span class="muted">Separate</span><br><span class="num-big">{{ eur(v.separate_saving) }}</span></div>
+    </div>
+    {% if v.beats_separate %}
+      <p class="muted">Cambiare insieme rende più che cambiare separatamente le due forniture.</p>
+    {% else %}
+      <p class="flash warn" role="alert">Cambiando luce e gas separatamente, con le migliori offerte singole, risparmieresti di più.</p>
+    {% endif %}
   {% endif %}
-  <p class="muted">Sconti e bonus (anche quelli «dual fuel») non sono inclusi, e il costo dipende da PUN/PSV per le parti indicizzate: il risparmio reale può essere diverso. <a href="{{ url_for('compare.dual') }}">Vedi tutte le offerte luce+gas</a></p>
+  <p><a href="{{ url_for('compare.dual') }}">Vedi tutte le offerte luce+gas</a></p>
 </section>
 {% endif %}

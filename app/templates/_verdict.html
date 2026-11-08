@@ -2,6 +2,7 @@
 {% from "_macros.html" import eur, num %}
 {% set label = 'Luce' if a.commodity == 'power' else 'Gas' %}
 {% set index = 'PUN' if a.commodity == 'power' else 'PSV' %}
+{% set unit = 'kWh' if a.commodity == 'power' else 'Smc' %}
 {% set v = a.verdict %}
 <section class="card">
   <h2>{{ label }}</h2>
@@ -9,44 +10,63 @@
     <p>Carica una bolletta di {{ label | lower }} per stimare il consumo annuo.</p>
   {% else %}
     {% if a.consumption.partial %}
-      <p class="flash warn">Ho solo {{ a.consumption.days_covered }} giorni di bollette: il consumo annuo è una proiezione con un profilo stagionale tipico e il verdetto è poco affidabile. Carica altre bollette (ideale 12 mesi, oppure una che riporti il consumo annuo).</p>
+      <p class="flash warn" role="alert">Ho solo {{ a.consumption.days_covered }} giorni di bollette: il consumo annuo è una proiezione con un profilo stagionale tipico e il verdetto è poco affidabile. Carica altre bollette (ideale 12 mesi, oppure una che riporti il consumo annuo).</p>
     {% endif %}
     {% if not a.has_current %}
       <p>Manca l'offerta attuale. Se carichi il PDF della bolletta la rilevo da sola; altrimenti <a href="{{ url_for('offers.new', commodity=a.commodity) }}">inseriscila a mano</a>.</p>
     {% elif not v %}
       <p>Nessuna offerta alternativa da confrontare. <a href="{{ url_for('offers.index') }}">Importa le offerte</a>.</p>
     {% else %}
-      <p class="headline {{ 'good' if v.worthwhile else '' }}">
-        {% if v.worthwhile %}Conviene cambiare: risparmieresti circa <strong>{{ eur(v.saving) }} l'anno</strong> ({{ num(v.saving_pct, 0) }}%).
-        {% else %}Non conviene: la migliore alternativa fa risparmiare solo <strong>{{ eur(v.saving) }} l'anno</strong> ({{ num(v.saving_pct, 0) }}%).{% endif %}
-      </p>
-      <p>Migliore: <strong>{{ v.best.offer.name }}</strong> – {{ v.best.offer.supplier }}.<br>
+      <div class="verdict {{ 'good' if v.worthwhile else '' }}">
+        {% if v.worthwhile %}
+          <p class="verdict-label">Conviene cambiare</p>
+          <p class="verdict-figure">{{ eur(v.saving) }} l'anno</p>
+          <p class="verdict-note">Risparmio stimato del {{ num(v.saving_pct, 0) }}%.</p>
+        {% else %}
+          <p class="verdict-label">Non conviene cambiare</p>
+          <p class="verdict-figure">{{ eur(v.saving) }} l'anno</p>
+          <p class="verdict-note">È il massimo che si risparmierebbe ({{ num(v.saving_pct, 0) }}%): troppo poco per cambiare.</p>
+        {% endif %}
+      </div>
+      <p>Migliore alternativa: <strong>{{ v.best.offer.name }}</strong> – {{ v.best.offer.supplier }}.<br>
          Costo annuo stimato <strong>{{ eur(v.best.estimate.total) }}</strong> contro <strong>{{ eur(v.current.estimate.total) }}</strong> con l'offerta attuale.</p>
-      {% set o = v.best.offer %}
-      <p class="muted">Condizioni importate: {{ 'prezzo fisso' if o.price_type == 'fixed' else 'indicizzato' }}
-        {%- if o.price_type == 'fixed' %} {{ num(o.price if o.price is not none else o.price_f1, 4) }} €/{{ 'kWh' if a.commodity == 'power' else 'Smc' }}{% else %}, spread {{ num(o.spread, 4) }}{% endif %},
-        quota fissa {{ eur(o.fixed_fee_month or 0) }}/mese{% if o.expires_on %}, valida fino al {{ o.expires_on }}{% endif %}. Verificale sul sito del venditore.</p>
       {% if (v.saving_range[1] - v.saving_range[0]) < 1 %}
         <p class="muted">Il risparmio non dipende dall'andamento del {{ index }}: anche l'offerta attuale è indicizzata.</p>
       {% elif v.worthwhile and not v.robust %}
-        <p class="flash warn">Il vantaggio dipende dall'andamento del {{ index }}: con prezzi dell'indice ±20% il risparmio va da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }}.</p>
-      {% else %}
-        <p class="muted">Con {{ index }} ±20%: da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }} l'anno.</p>
+        <p class="flash warn" role="alert">Il vantaggio dipende dall'andamento del {{ index }}: con prezzi dell'indice ±20% il risparmio va da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }}.</p>
       {% endif %}
-      <p class="muted"><a href="{{ url_for('compare.index', commodity=a.commodity) }}">Vedi tutte le offerte</a></p>
-    {% endif %}
-  {% endif %}
-  {% set pw = a.power_advice %}
-  {% if pw %}
-    <h3>Potenza impegnata</h3>
-    {% if pw.suggested %}
-      <p>Hai <strong>{{ num(pw.contracted, 1) }} kW</strong> e in {{ pw.months }} mesi il picco è stato <strong>{{ num(pw.peak, 1) }} kW</strong>:
-        potresti scendere a <strong>{{ num(pw.suggested, 1) }} kW</strong>{% if pw.saving_year %}, risparmiando circa <strong>{{ eur(pw.saving_year) }} l'anno</strong> di quota potenza{% endif %}.</p>
-      {% if pw.tight %}<p class="flash warn">Margine ridotto: il picco è vicino al limite del nuovo livello e un forno, un phon e una lavatrice insieme potrebbero far staccare il contatore.</p>{% endif %}
-      {% if pw.partial %}<p class="flash warn">Ho solo {{ pw.months }} mesi di picchi: carica una bolletta che riporti lo storico annuale prima di decidere (d'inverno i picchi sono di solito più alti).</p>{% endif %}
-      <p class="muted">La quota potenza è regolata e uguale per tutti i fornitori; l'importo è senza IVA. Il cambio di potenza può avere costi una tantum: chiedi al fornitore.</p>
-    {% else %}
-      <p class="muted">Hai {{ num(pw.contracted, 1) }} kW e il picco degli ultimi {{ pw.months }} mesi è {{ num(pw.peak, 1) }} kW: non c'è margine per ridurre la potenza.</p>
+      {% set o = v.best.offer %}
+      <details>
+        <summary>Dettagli del calcolo</summary>
+        <p class="muted">Con {{ index }} ±20%: risparmio da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }} l'anno.</p>
+        <p class="muted">Condizioni importate: {{ 'prezzo fisso' if o.price_type == 'fixed' else 'indicizzato' }}
+          {%- if o.price_type == 'fixed' %} {{ num(o.price if o.price is not none else o.price_f1, 4) }} €/{{ unit }}{% else %}, spread {{ num(o.spread, 4) }}{% endif %},
+          quota fissa {{ eur(o.fixed_fee_month or 0) }}/mese{% if o.expires_on %}, valida fino al {{ o.expires_on }}{% endif %}. Verificale sul sito del venditore.</p>
+        <p class="muted">
+          {% if a.commodity == 'power' %}<strong>PUN</strong>: prezzo all'ingrosso dell'energia elettrica in Italia. Un'offerta «indicizzata» lo segue, quindi la bolletta sale e scende con il mercato.
+          {% else %}<strong>PSV</strong>: prezzo all'ingrosso del gas in Italia. Un'offerta «indicizzata» lo segue, quindi la bolletta sale e scende con il mercato.{% endif %}
+          Il consumo è in {{ unit }}{% if a.commodity == 'gas' %} (standard metri cubi){% endif %}.
+        </p>
+      </details>
+      <p><a href="{{ url_for('compare.index', commodity=a.commodity) }}">Vedi tutte le offerte {{ label | lower }}</a></p>
     {% endif %}
   {% endif %}
 </section>
+{% set pw = a.power_advice %}
+{% if pw %}
+<section class="card">
+  <h2>Potenza impegnata</h2>
+  {% if pw.suggested %}
+    <p>Hai <strong>{{ num(pw.contracted, 1) }} kW</strong> e in {{ pw.months }} mesi il picco è stato <strong>{{ num(pw.peak, 1) }} kW</strong>:
+      potresti scendere a <strong>{{ num(pw.suggested, 1) }} kW</strong>{% if pw.saving_year %}, risparmiando circa <strong>{{ eur(pw.saving_year) }} l'anno</strong> di quota potenza{% endif %}.</p>
+    {% if pw.tight %}<p class="flash warn" role="alert">Margine ridotto: il picco è vicino al limite del nuovo livello e un forno, un phon e una lavatrice insieme potrebbero far staccare il contatore.</p>{% endif %}
+    {% if pw.partial %}<p class="flash warn" role="alert">Ho solo {{ pw.months }} mesi di picchi: carica una bolletta che riporti lo storico annuale prima di decidere (d'inverno i picchi sono di solito più alti).</p>{% endif %}
+    <details>
+      <summary>Cosa tenere presente</summary>
+      <p class="muted">La quota potenza è regolata e uguale per tutti i fornitori; l'importo è senza IVA. Il cambio di potenza può avere costi una tantum: chiedi al fornitore.</p>
+    </details>
+  {% else %}
+    <p class="muted">Hai {{ num(pw.contracted, 1) }} kW e il picco degli ultimi {{ pw.months }} mesi è {{ num(pw.peak, 1) }} kW: non c'è margine per ridurre la potenza.</p>
+  {% endif %}
+</section>
+{% endif %}

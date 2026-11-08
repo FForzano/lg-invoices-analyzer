@@ -134,5 +134,5 @@ def test_dual_fuel_offers_stay_out_of_single_ranking_and_appear_in_bundles(clien
     page = client.get("/compare/dual").text
     assert "Pacchetto luce" in page and "Pacchetto gas" in page
     home = client.get("/").text
-    assert "Luce e gas insieme" in home and "Un'offerta luce+gas ti farebbe risparmiare" in home
+    assert "Luce e gas insieme" in home and "Conviene un'offerta luce+gas" in home
     assert "(luce+gas)" in client.get("/offers").text

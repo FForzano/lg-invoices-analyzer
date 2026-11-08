@@ -1,9 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Bollette luce e gas <span class="muted">· {{ profile.name }}</span></h1>
-{% for level, text in alerts %}<div class="flash {{ 'warn' if level == 'warn' else 'info' }}">{{ text }}</div>{% endfor %}
+{% for level, text in alerts %}<div class="flash {{ 'warn' if level == 'warn' else 'info' }}" role="{{ 'alert' if level == 'warn' else 'status' }}">{{ text }}</div>{% endfor %}
+{% if not analyses | selectattr('consumption') | list %}
+<section class="card first-run">
+  <h2>Comincia da una bolletta</h2>
+  <p>Carica il PDF di una bolletta di luce o gas: leggo i consumi e l'offerta attuale, poi ti dico se conviene cambiare.</p>
+  <div class="actions"><a class="btn" href="{{ url_for('bills.new') }}">Carica la prima bolletta</a></div>
+</section>
+{% else %}
 {% for a in analyses %}{% include "_verdict.html" %}{% endfor %}
 {% include "_dual.html" %}
-<p class="muted">Stima della sola parte decisa dal fornitore (energia, quote fisse, sconti): trasporto, oneri, imposte, bonus sociale e canone TV non cambiano con il fornitore. Prima di cambiare verifica sempre le condizioni sul sito del venditore.</p>
-<p><a href="{{ url_for('bills.new') }}">+ Carica bolletta</a> · <a href="{{ url_for('offers.new') }}">+ Nuova offerta</a></p>
+<div class="actions">
+  <a class="btn" href="{{ url_for('bills.new') }}">Carica bolletta</a>
+  <a class="btn secondary" href="{{ url_for('offers.new') }}">Nuova offerta</a>
+</div>
+{% endif %}
+<p class="muted">Stima della sola parte decisa dal fornitore (energia, quote fisse, sconti): trasporto, oneri, imposte, bonus sociale e canone TV non cambiano con il fornitore. Sconti e bonus una tantum non sono inclusi. Prima di cambiare verifica sempre le condizioni sul sito del venditore.</p>
 {% endblock %}

@@ -37,6 +37,14 @@
     {{ field('dual_with', 'Offerta luce+gas: fonte dell\'altra metà', v) }}
     {{ field('zones', 'Zone di validità (vuoto = ovunque)', v) }}
   </div></fieldset>
+
+  <fieldset class="full"><legend>Durata e condizioni</legend><div class="grid">
+    {{ field('duration_months', 'Durata delle condizioni (mesi)', v, 'number', step='1') }}
+    {{ field('started_on', 'Attivata il (offerta attuale)', v, 'date') }}
+    <label class="full">Condizioni del venditore (una per riga)<textarea name="conditions" rows="3">{{ v.get('conditions') or '' }}</textarea></label>
+    <label class="full">Cosa cambia a fine periodo<textarea name="after_term" rows="3">{{ v.get('after_term') or '' }}</textarea></label>
+  </div>
+  <p class="muted">Con durata e data di attivazione, se l'offerta è «attuale» ti avviso prima che finiscano le condizioni economiche.</p></fieldset>
   <div class="full"><button>Salva</button></div>
 </form>
 {% endblock %}

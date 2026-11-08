@@ -30,6 +30,14 @@ OFFER_FIXED, OFFER_INDEXED = "01", "02"  # TIPO_OFFERTA (02 sempre con indice PU
 DISP_PASSTHROUGH = "14"  # TIPO_DISPACCIAMENTO "CdispD": dispacciamento al costo regolato, fuori dal prezzo
 FASCE_SINGLE, FASCE_F1F2F3 = "01", "03"  # TIPOLOGIA_FASCE
 UM_EUR_YEAR, UM_EUR_KWH, UM_EUR_SMC = "01", "03", "04"  # UNITA_MISURA; gli altri (02, 05) non sono gestiti
+COND_LIMITING = "01"  # LIMITANTE: condizione che restringe chi può sottoscrivere (pagamento, nuovi clienti...)
+DURATION_NONE, DURATION_OTHER = -1, 99  # DURATA in mesi: -1 indeterminata, 99 altro
+# frase del venditore su cosa succede a fine periodo ("Trascorsi 24 mesi ..."): solo testo da mostrare, mai nei calcoli
+AFTER_TERM = re.compile(
+    r"\b(trascors\w+|decors\w+|al termine|alla scadenza|scadut\w+)\b[^.]{0,60}\b(\d+|dodici|ventiquattro|trentasei)\b[^.]{0,20}\b(mesi|anni?)\b",
+    re.I,
+)
+MAX_TEXT = 500
 SOURCE_PREFIX = "arera:"
 UNPAIRED = SOURCE_PREFIX + "?"  # offerta luce+gas non ancora abbinata alla sua metà (vedi `pair_dual_fuel`)
 MAX_ENERGY_PRICE = {"power": 1.5, "gas": 5.0}  # oltre è un errore di unità del venditore
@@ -156,6 +164,7 @@ def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
     passthrough = commodity == "power" and any(
         d.findtext(NS + "TIPO_DISPACCIAMENTO") == DISP_PASSTHROUGH for d in el.findall(NS + "Dispacciamento")
     )
+    conditions, after_term = _condition_texts(el)
     common = dict(
         dispatching_extra=passthrough,
         commodity=commodity,
@@ -164,6 +173,9 @@ def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
         fixed_fee_month=round(yearly_fee / 12, 4),
         expires_on=_expiry(_t(el, "ValiditaOfferta/DATA_FINE")),
         zones=_zones(el.find(NS + "ZoneOfferta")),
+        duration_months=_duration(_t(el, "DettaglioOfferta/DURATA")),
+        conditions=conditions,
+        after_term=after_term,
         source=SOURCE_PREFIX + (_t(el, "IdentificativiOfferta/COD_OFFERTA") or "?"),
         dual_with=None if single == "SI" else _dual_link(el),
     )
@@ -217,6 +229,30 @@ def pair_dual_fuel(offers: list[Offer]) -> tuple[list[Offer], int]:
 
     kept = [replace(o, dual_with=partner[o.source]) if o.dual_with else o for o in offers if not o.dual_with or o.source in partner]
     return kept, len(offers) - len(kept)
+
+
+def _duration(raw: str | None) -> int | None:
+    try:
+        months = int(raw or "")
+    except ValueError:
+        return None
+    return months if 0 < months < DURATION_OTHER else None
+
+
+def _condition_texts(el: ET.Element) -> tuple[str | None, str | None]:
+    """(condizioni limitanti, frase sul dopo-periodo) come testo del venditore, accorciato; solo da mostrare."""
+    limiting: list[str] = []
+    after: list[str] = []
+    for c in el.findall(NS + "CondizioniContrattuali"):
+        text = " ".join((c.findtext(NS + "DESCRIZIONE") or "").split())
+        if not text:
+            continue
+        text = text if len(text) <= MAX_TEXT else text[:MAX_TEXT].rstrip() + "…"
+        if AFTER_TERM.search(text):
+            after.append(text)
+        elif c.findtext(NS + "LIMITANTE") == COND_LIMITING and text not in limiting:
+            limiting.append(text)
+    return "\n".join(limiting[:6]) or None, "\n".join(after[:2]) or None
 
 
 def _expiry(raw: str | None) -> str | None:

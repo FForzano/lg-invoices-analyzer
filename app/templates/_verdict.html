@@ -36,12 +36,20 @@
         <p class="flash warn" role="alert">Il vantaggio dipende dall'andamento del {{ index }}: con prezzi dell'indice ±20% il risparmio va da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }}.</p>
       {% endif %}
       {% set o = v.best.offer %}
+      {% if o.duration_months %}
+        <p class="muted">Condizioni economiche valide {{ o.duration_months }} mesi: dopo, il venditore può cambiare il prezzo. Se la attivi, marcala come «attuale» con la data di attivazione: ti avviso prima della fine.</p>
+      {% endif %}
       <details>
         <summary>Dettagli del calcolo</summary>
         <p class="muted">Con {{ index }} ±20%: risparmio da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }} l'anno.</p>
         <p class="muted">Condizioni importate: {{ 'prezzo fisso' if o.price_type == 'fixed' else 'indicizzato' }}
           {%- if o.price_type == 'fixed' %} {{ num(o.price if o.price is not none else o.price_f1, 4) }} €/{{ unit }}{% else %}, spread {{ num(o.spread, 4) }}{% endif %},
           quota fissa {{ eur(o.fixed_fee_month or 0) }}/mese{% if o.expires_on %}, valida fino al {{ o.expires_on }}{% endif %}. Verificale sul sito del venditore.</p>
+        {% if o.conditions %}
+          <p class="muted"><strong>Condizioni dichiarate dal venditore</strong> (da verificare sul suo sito):</p>
+          <ul class="muted">{% for line in o.conditions.split('\n') %}<li>{{ line }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% if o.after_term %}<p class="muted"><strong>Dopo il periodo</strong>: {{ o.after_term.replace('\n', ' ') }}</p>{% endif %}
         <p class="muted">
           {% if a.commodity == 'power' %}<strong>PUN</strong>: prezzo all'ingrosso dell'energia elettrica in Italia. Un'offerta «indicizzata» lo segue, quindi la bolletta sale e scende con il mercato.
           {% else %}<strong>PSV</strong>: prezzo all'ingrosso del gas in Italia. Un'offerta «indicizzata» lo segue, quindi la bolletta sale e scende con il mercato.{% endif %}

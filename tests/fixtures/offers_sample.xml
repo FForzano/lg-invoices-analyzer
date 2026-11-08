@@ -16,10 +16,13 @@
   </offerta>
   <offerta>
     <IdentificativiOfferta><PIVA_UTENTE>111</PIVA_UTENTE><COD_OFFERTA>FIX1</COD_OFFERTA></IdentificativiOfferta>
-    <DettaglioOfferta><TIPO_CLIENTE>01</TIPO_CLIENTE><OFFERTA_SINGOLA>SI</OFFERTA_SINGOLA><TIPO_OFFERTA>01</TIPO_OFFERTA><NOME_OFFERTA>Fissa</NOME_OFFERTA></DettaglioOfferta>
+    <DettaglioOfferta><TIPO_CLIENTE>01</TIPO_CLIENTE><OFFERTA_SINGOLA>SI</OFFERTA_SINGOLA><TIPO_OFFERTA>01</TIPO_OFFERTA><NOME_OFFERTA>Fissa</NOME_OFFERTA><DURATA>24</DURATA></DettaglioOfferta>
     <ValiditaOfferta><DATA_FINE>31/12/2027_23:59:59</DATA_FINE></ValiditaOfferta>
     <TipoPrezzo><TIPOLOGIA_FASCE>01</TIPOLOGIA_FASCE></TipoPrezzo>
     <Dispacciamento><TIPO_DISPACCIAMENTO>14</TIPO_DISPACCIAMENTO><NOME>CdispD</NOME></Dispacciamento>
+    <CondizioniContrattuali><TIPOLOGIA_CONDIZIONE>01</TIPOLOGIA_CONDIZIONE><DESCRIZIONE>Valida solo con addebito su conto.</DESCRIZIONE><LIMITANTE>01</LIMITANTE></CondizioniContrattuali>
+    <CondizioniContrattuali><TIPOLOGIA_CONDIZIONE>99</TIPOLOGIA_CONDIZIONE><DESCRIZIONE>Trascorsi 24 mesi di fornitura il prezzo sarà sostituito dalla formula indicizzata.</DESCRIZIONE><LIMITANTE>02</LIMITANTE></CondizioniContrattuali>
+    <CondizioniContrattuali><TIPOLOGIA_CONDIZIONE>03</TIPOLOGIA_CONDIZIONE><DESCRIZIONE>Il contratto è a tempo indeterminato.</DESCRIZIONE><LIMITANTE>02</LIMITANTE></CondizioniContrattuali>
     <ComponenteImpresa><NOME>Energia</NOME><TIPOLOGIA>01</TIPOLOGIA><MACROAREA>04</MACROAREA>
       <IntervalloPrezzi><FASCIA_COMPONENTE>01</FASCIA_COMPONENTE><PREZZO>0.13</PREZZO><UNITA_MISURA>03</UNITA_MISURA></IntervalloPrezzi></ComponenteImpresa>
   </offerta>

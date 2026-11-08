@@ -136,3 +136,40 @@ def test_dual_fuel_offers_stay_out_of_single_ranking_and_appear_in_bundles(clien
     home = client.get("/").text
     assert "Luce e gas insieme" in home and "Conviene un'offerta luce+gas" in home
     assert "(luce+gas)" in client.get("/offers").text
+
+
+def test_offer_terms_survive_edit_and_mark_current(client):
+    data = {"commodity": "gas", "supplier": "S", "name": "Fix 24", "price_type": "fixed", "price": "0.555",
+            "duration_months": "24", "conditions": "Solo nuovi clienti\nAddebito su conto", "after_term": "Trascorsi 24 mesi il prezzo cambia"}
+    client.post("/offers/save", data=data)
+    page = client.get("/offers/1").text
+    assert 'value="24"' in page and "Solo nuovi clienti" in page and "Trascorsi 24 mesi" in page
+    # salvare di nuovo dal form (anche marcandola attuale con la data) non deve perdere i testi
+    form = {**data, "is_current": "on", "started_on": "2026-11-08"}
+    client.post("/offers/save", data={**form, "id": "1"})
+    offer = [o for o in db_offers(client) if o.is_current][0]
+    assert offer.duration_months == 24 and offer.conditions.endswith("Addebito su conto") and offer.started_on == "2026-11-08"
+
+
+def db_offers(client):
+    from app import db
+    with client.application.test_request_context("/"):
+        return db.list_offers()
+
+
+def test_home_shows_duration_and_seller_conditions(client, monkeypatch):
+    import io
+    import re
+    from pathlib import Path
+    from app.services import extraction
+
+    monkeypatch.setattr(extraction, "pdf_text", lambda p: (Path(__file__).parent / "fixtures" / "bill_gas.txt").read_text())
+    r = client.post("/bills/upload", data={"commodity": "gas", "pdf": (io.BytesIO(b"%PDF"), "b.pdf")}, content_type="multipart/form-data")
+    form = dict(re.findall(r'name="(\w+)"[^>]*?value="([^"]*)"', r.text))
+    form["commodity"] = "gas"
+    client.post("/bills", data=form)
+    client.post("/offers/save", data={"commodity": "gas", "supplier": "Rivale", "name": "Fix 24", "price_type": "fixed", "price": "0.10",
+                                      "duration_months": "24", "conditions": "Solo nuovi clienti", "after_term": "Trascorsi 24 mesi il prezzo cambia"})
+    home = client.get("/").text
+    assert "Condizioni economiche valide 24 mesi" in home and "ti avviso prima della fine" in home
+    assert "Solo nuovi clienti" in home and "Trascorsi 24 mesi il prezzo cambia" in home

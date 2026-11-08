@@ -28,6 +28,11 @@ def test_parse_sample():
     assert fix.dispatching_extra and not idx.dispatching_extra
     assert unit_price(fix, Assumptions(0.12, 0.4, 3.0, dispatching_extra=0.019)) == pytest.approx(0.149)
 
+    # durata e testi del venditore: solo da mostrare; le condizioni non limitanti e senza dopo-periodo non entrano
+    assert fix.duration_months == 24 and idx.duration_months is None
+    assert fix.conditions == "Valida solo con addebito su conto."
+    assert fix.after_term.startswith("Trascorsi 24 mesi") and idx.conditions is None and idx.after_term is None
+
 
 def test_discover_urls_only_trusts_expected_host():
     html = (

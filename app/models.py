@@ -71,6 +71,10 @@ class Offer:
     is_current: bool = False
     source: str | None = None
     dual_with: str | None = None  # offerta luce+gas: `source` dell'altra metà, valida solo se sottoscritte insieme
+    duration_months: int | None = None  # durata delle condizioni economiche; None = indeterminata o non nota
+    started_on: str | None = None  # attivazione (offerta attuale): serve per avvisare prima della fine del periodo
+    conditions: str | None = None  # condizioni limitanti dichiarate dal venditore (una per riga), solo da mostrare
+    after_term: str | None = None  # cosa cambia a fine periodo secondo il venditore, solo da mostrare
     zones: str | None = None  # se limitata: codici ISTAT separati da virgola (R08 regione, P038 provincia, C038008 comune)
     # componenti formula indicizzata luce
     loss_pct: float | None = None

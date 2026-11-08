@@ -5,7 +5,7 @@ import dataclasses
 import json
 import sqlite3
 
-from flask import Flask, current_app, g, has_request_context, session
+from flask import Flask, current_app, g, has_request_context, request
 
 from .migrations import migrate_database
 from .services.layouts import Layout
@@ -74,9 +74,10 @@ def _delete(table: str, id: int, **scope) -> None:
 # --- profili -----------------------------------------------------------------
 
 def profile_id() -> int:
-    """Profilo attivo: quello scelto nella sessione, se esiste ancora, altrimenti il primo."""
+    """Profilo attivo: quello indicato dal client, se esiste ancora, altrimenti il primo."""
     if "profile_id" not in g:
-        wanted = session.get("profile_id") if has_request_context() else None
+        # il front-end manda il profilo scelto nell'header `X-Profile-Id` (niente cookie: l'app nativa non li ha affidabili)
+        wanted = request.headers.get("X-Profile-Id", type=int) if has_request_context() else None
         row = get_db().execute("SELECT id FROM profiles WHERE id = ?", (wanted,)).fetchone() if wanted else None
         g.profile_id = row["id"] if row else get_db().execute("SELECT min(id) FROM profiles").fetchone()[0]
     return g.profile_id

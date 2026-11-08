@@ -106,43 +106,43 @@ def test_builtin_layouts_are_loaded_from_json_files(tmp_path, monkeypatch):
 def _upload(client, monkeypatch, text):
     monkeypatch.setattr(extraction, "pdf_text", lambda path: text)
     import io
-    return client.post("/bills/upload", data={"pdf": (io.BytesIO(b"%PDF-1.4"), "b.pdf"), "commodity": "power"}, content_type="multipart/form-data")
+    return client.post("/api/bills/upload", data={"pdf": (io.BytesIO(b"%PDF-1.4"), "b.pdf"), "commodity": "power"}, content_type="multipart/form-data").json["prefill"]
 
 
 def test_teach_flow_then_next_bill_is_read_automatically(client, monkeypatch):
-    r = _upload(client, monkeypatch, TEXT.strip())
-    assert "Insegna all&#39;app a leggerlo" in r.text or "Insegna all'app a leggerlo" in r.text
-    import re
-    pdf = re.search(r"pdf=([0-9a-f]{32}\.pdf)", r.text).group(1)
-    assert client.get(f"/layouts/pdf/{pdf}").mimetype == "application/pdf"  # lo stesso PDF già caricato, mostrato nella pagina
-    page = client.get(f"/layouts/teach?pdf={pdf}")
-    assert page.status_code == 200 and "Importo da pagare" in page.text and 'name="v_total_eur"' in page.text
+    pre = _upload(client, monkeypatch, TEXT.strip())
+    pdf = pre["teach_pdf"]  # il formato non è riconosciuto: l'app propone di insegnarlo
+    assert pdf and any("Lettura non riuscita" in m["text"] for m in pre["messages"])
+    assert client.get(f"/api/layouts/pdf/{pdf}").mimetype == "application/pdf"  # lo stesso PDF già caricato, mostrato nella pagina
+    info = client.get(f"/api/layouts/teach?pdf={pdf}").json
+    assert "Importo da pagare" in info["text"] and "total_eur" in info["kinds"] and "total_eur" in info["required"]
 
-    bad = client.post("/layouts/teach", data={"pdf": pdf, "signature": "Luce Esempio SPA", "v_total_eur": "99,99"})
-    assert bad.status_code == 400 and "non compare" in bad.text
+    bad = client.post("/api/layouts/teach", json={"pdf": pdf, "signature": "Luce Esempio SPA", "values": {"total_eur": "99,99"}})
+    assert bad.status_code == 400 and "non compare" in str(bad.json["errors"])
 
-    data = {"pdf": pdf, "signature": "Luce Esempio SPA", "name": "Luce Esempio"}
-    data |= {f"v_{f}": s for f, (s, _) in SAMPLES.items()} | {f"c_{f}": c for f, (_, c) in SAMPLES.items() if c}
-    ok = client.post("/layouts/teach", data=data)
-    assert ok.status_code == 200 and 'value="88.4"' in ok.text and "Layout" in ok.text
+    data = {"pdf": pdf, "signature": "Luce Esempio SPA", "name": "Luce Esempio",
+            "values": {f: s for f, (s, _) in SAMPLES.items()}, "choices": {f: c for f, (_, c) in SAMPLES.items() if c}}
+    ok = client.post("/api/layouts/teach", json=data)
+    assert ok.status_code == 200 and ok.json["prefill"]["values"]["total_eur"] == 88.4
+    assert any("Layout" in m["text"] for m in ok.json["prefill"]["messages"])
 
     again = _upload(client, monkeypatch, TEXT.replace("88,40", "12,00").strip())
-    assert 'value="12.0"' in again.text and "layout" in again.text
+    assert again["values"]["total_eur"] == 12.0 and any("layout" in m["text"] for m in again["messages"])
 
-    listing = client.get("/layouts").text
-    assert "Luce Esempio" in listing
-    report = client.get("/layouts/1/report")
-    assert "88,40" not in report.text and "Mario" not in report.text and "issues/new" in report.text
-    assert client.get("/layouts/1/report?download=1").mimetype == "application/json"
-    client.post("/layouts/1/delete")
-    assert "Luce Esempio" not in client.get("/layouts").text
+    assert "Luce Esempio" in [l["name"] for l in client.get("/api/layouts").json["mine"]]
+    report = client.get("/api/layouts/1/report").json
+    assert "88,40" not in report["raw"] and "Mario" not in report["raw"] and "issues/new" in report["issue"]
+    assert client.get("/api/layouts/1/report?download=1").mimetype == "application/json"
+    client.delete("/api/layouts/1")
+    assert client.get("/api/layouts").json["mine"] == []
 
 
 def test_teach_rejects_unknown_pdf_names(client):
-    assert client.get("/layouts/teach?pdf=../../etc/passwd").status_code == 404
-    assert client.get("/layouts/teach").status_code == 404
+    assert client.get("/api/layouts/teach?pdf=../../etc/passwd").status_code == 404
+    assert client.get("/api/layouts/teach").status_code == 404
 
 
 def test_image_only_pdf_explains_what_to_do_and_does_not_offer_teaching(client, monkeypatch):
-    page = _upload(client, monkeypatch, "").text
-    assert "immagine" in page and "PDF digitale" in page and "Insegna" not in page
+    pre = _upload(client, monkeypatch, "")
+    text = " ".join(m["text"] for m in pre["messages"])
+    assert "immagine" in text and "PDF digitale" in text and pre["teach_pdf"] is None

@@ -1,227 +1,271 @@
 ---
 name: Bollette self-hosted
-description: Sportello chiaro per il confronto delle offerte luce/gas: sistema, piatto, un solo accento blu, colore solo per l'esito.
+description: Lo sportello con il timbro: confronto onesto di luce e gas su foglio menta con pannelli bianchi, un solo accento teal, timbro ambra solo quando conviene cambiare.
 colors:
-  paper: "#f6f7f9"
-  surface: "#ffffff"
-  ink: "#1d2330"
-  mute: "#5f6675"
-  rule: "#d9dce3"
-  accent-blue: "#1a66e0"
+  mint-sheet: "#e8f1ef"
+  panel-white: "#ffffff"
+  ink: "#1b2a28"
+  mute: "#4b5c59"
+  rule: "#c5d6d2"
+  edge: "#d9e6e3"
+  calm-tint: "#eef4f2"
+  teal: "#0f766e"
+  teal-deep: "#0b5953"
+  teal-soft: "#d3ebe7"
+  on-teal: "#ffffff"
   notice-yellow: "#fff3cd"
   good-green: "#17722f"
+  good-tint: "#e1f3e6"
   bad-red: "#c62828"
-  good-tint: "#e9f5ec"
-  calm-tint: "#eef0f4"
-  paper-night: "#14171f"
-  surface-night: "#1a1e29"
-  ink-night: "#e6e8ee"
-  mute-night: "#9aa3b5"
-  rule-night: "#303646"
-  accent-blue-night: "#6aa3ff"
+  stamp-amber: "#fcd34d"
+  stamp-ink: "#111111"
+  mint-sheet-night: "#0d1716"
+  panel-night: "#152322"
+  ink-night: "#e3efec"
+  mute-night: "#9bb2ad"
+  rule-night: "#2f4542"
+  edge-night: "#223633"
+  calm-tint-night: "#1b2c2a"
+  teal-night: "#4fd1c0"
+  teal-deep-night: "#7fe3d6"
+  teal-soft-night: "#1c3834"
+  on-teal-night: "#04201d"
   notice-yellow-night: "#4a3d10"
   good-green-night: "#4cc473"
+  good-tint-night: "#17301f"
   bad-red-night: "#ff7b72"
-  good-tint-night: "#16301f"
-  calm-tint-night: "#232838"
 typography:
-  body:
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 400
-    lineHeight: 1.5
+  display:
+    fontFamily: "Figtree, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, sans-serif"
+    fontSize: "2.5rem"
+    fontWeight: 800
+    lineHeight: 1.15
+    letterSpacing: "-0.015em"
   headline:
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, sans-serif"
+    fontFamily: "Figtree, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, sans-serif"
+    fontSize: "2rem"
+    fontWeight: 800
+    lineHeight: 1.15
+    letterSpacing: "-0.02em"
+  title:
+    fontFamily: "Figtree, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, sans-serif"
     fontSize: "1.25rem"
+    fontWeight: 700
+    lineHeight: 1.3
+  body:
+    fontFamily: "Figtree, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, sans-serif"
+    fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.5
   label:
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 400
+    fontFamily: "Figtree, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, sans-serif"
+    fontSize: "0.8rem"
+    fontWeight: 700
     lineHeight: 1.5
-  nav:
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 500
-    lineHeight: 1.5
+    letterSpacing: "0.04em"
 rounded:
-  sm: "6px"
-  md: "8px"
+  block: "8px"
+  field: "12px"
+  card: "12px"
+  sheet: "16px"
+  pill: "999px"
 spacing:
-  xs: "0.2rem"
-  sm: "0.4rem"
+  xs: "0.25rem"
+  sm: "0.5rem"
   md: "0.75rem"
   lg: "1rem"
+  xl: "1.25rem"
+  sidebar: "15rem"
+  bar: "4.25rem"
 components:
   button-primary:
-    backgroundColor: "{colors.accent-blue}"
-    textColor: "#ffffff"
-    rounded: "{rounded.sm}"
-    padding: "0.4rem 0.5rem"
+    backgroundColor: "{colors.teal}"
+    textColor: "{colors.on-teal}"
+    rounded: "{rounded.field}"
+    padding: "0.5rem 1.4rem"
+    height: "44px"
+  button-primary-hover:
+    backgroundColor: "{colors.teal-deep}"
+  button-secondary:
+    backgroundColor: "{colors.teal-soft}"
+    textColor: "{colors.teal}"
+    rounded: "{rounded.field}"
+    padding: "0.5rem 1.4rem"
+    height: "44px"
   input:
-    backgroundColor: "{colors.paper}"
+    backgroundColor: "{colors.panel-white}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.sm}"
-    padding: "0.4rem 0.5rem"
+    rounded: "{rounded.field}"
+    padding: "0.5rem 0.8rem"
+    height: "44px"
   card:
-    backgroundColor: "{colors.paper}"
+    backgroundColor: "{colors.panel-white}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.md}"
-    padding: "0.25rem 1rem"
-  flash-warn:
-    backgroundColor: "{colors.notice-yellow}"
+    rounded: "{rounded.card}"
+    padding: "0.25rem 1.25rem 0.75rem"
+  tab-pill:
+    backgroundColor: "{colors.panel-white}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.sm}"
-    padding: "0.6rem 0.9rem"
+    rounded: "{rounded.pill}"
+    padding: "0.4rem 1.2rem"
+    height: "44px"
+  tab-pill-current:
+    backgroundColor: "{colors.teal}"
+    textColor: "{colors.on-teal}"
+  tag:
+    backgroundColor: "{colors.calm-tint}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.pill}"
+    padding: "0.15rem 0.75rem"
+  tag-current:
+    backgroundColor: "{colors.teal-soft}"
+    textColor: "{colors.teal-deep}"
+  verdict-block:
+    backgroundColor: "{colors.good-tint}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.block}"
+    padding: "0.9rem 1.1rem 1rem"
+  stamp:
+    backgroundColor: "{colors.stamp-amber}"
+    textColor: "{colors.stamp-ink}"
+    rounded: "{rounded.block}"
+    padding: "0.2rem 0.8rem 0.3rem"
+  nav-item-current:
+    backgroundColor: "{colors.teal-soft}"
+    textColor: "{colors.teal}"
+    rounded: "{rounded.block}"
+    height: "3.5rem"
 ---
 
 # Design System: Bollette self-hosted
 
 ## Overview
 
-**Creative North Star: "Lo sportello chiaro"**
+**Creative North Star: "Lo sportello con il timbro"**
 
-Un modulo ufficiale fatto bene: ordinato, affidabile, leggibile da chi non è tecnico. L'interfaccia non vende nulla; presenta un verdetto e i numeri che lo sostengono, in italiano, con tono sobrio. Usa i font e i controlli del sistema, bordi sottili al posto delle ombre e una sola voce cromatica.
+Il sistema deriva dal "quaderno con gli adesivi" di Formando PerCorsi (stesso foglio colorato, pannelli bianchi, ombre morbide, un adesivo che premia) e lo riinterpreta per un confronto di bollette: invece di un quaderno, uno sportello dove si porta il modulo e si riceve un esito. Si distingue dal prodotto fratello per il font (Figtree, non D-DIN, che è commerciale) e per il gesto firma: il timbro ambra, che compare in un solo caso.
 
-Il colore dice l'esito, non decora: il blu segna link e azione, verde e rosso dicono se conviene, il giallo avvisa; le informazioni restano neutre. Tutto il resto è carta e inchiostro. Il tema scuro segue le preferenze del sistema e ha una controparte per ogni colore.
-
-La direzione dichiarata è «piatto ma più morbido»: la struttura resta piatta e senza ombre, e le prossime modifiche possono allargare un poco raggi e spaziature. I valori qui sotto sono quelli attuali.
+Il foglio è menta (#e8f1ef), i pannelli sono bianchi e sollevati da ombre morbide. Un solo accento teal guida: titoli di pagina, azioni, posizione corrente. Verde e rosso dicono solo l'esito (conviene, non conviene, variazione di costo) e mai decorano. Tono sobrio: niente enfasi commerciale, il colore non promette più di quanto il testo dichiari.
 
 **Key Characteristics:**
-- Font di sistema, nessun web font, nessuna risorsa esterna.
-- Un solo accento (blu); verde/rosso/giallo solo per l'esito.
-- Piatto ma non su un solo piano: nessuna ombra, la profondità viene dal tono (pagina grigio chiarissimo, riquadri bianchi) e da bordi da 1px.
-- Colonna unica fino a 60rem, pensata anche per il telefono.
-- Numeri tabulari allineati a destra.
+- Foglio menta, pannelli bianchi, ombre morbide a due strati tinte di teal.
+- Un solo accento (teal), usato per guidare; il colore dell'esito è un'altra voce.
+- Il timbro ambra ruotato appare solo sulla cifra di "Conviene cambiare".
+- Figtree variabile self-hosted, peso 800 per titoli e cifre, numeri tabulari.
+- Mobile prima: barra di azioni in basso e foglio "Altro"; da 64rem barra laterale.
+- Tema scuro che segue il sistema, con una controparte teal per ogni token.
 
 ## Colors
 
-Carta e inchiostro neutri con un blu funzionale; la palette ha una versione scura speculare.
+Menta fredda e pannelli bianchi con un teal profondo; ambra solo per il timbro.
 
 ### Primary
-- **Blu funzionale** (`#1a66e0`, notte `#6aa3ff`): contrasto 4,8:1 sulla pagina in chiaro: link e pulsante principale. Nient'altro.
+- **Teal da sportello** (#0f766e): titoli di pagina (nella variante profonda), pulsanti, link, anello di focus, pagina corrente nella navigazione, tab attiva, bordo superiore di 4px su barra alta e barra laterale, logo.
+- **Teal profondo** (#0b5953): titoli h1, hover dei pulsanti, testo dei tag "attuale".
+- **Teal tenue** (#d3ebe7): riempimento di stato corrente (voce di navigazione, riga attuale, tag attuale), pulsanti secondari, icona nel titolo di fornitura.
+
+### Tertiary
+- **Timbro ambra** (#fcd34d) con **inchiostro del timbro** (#111111): solo la cifra del risparmio nel verdetto "Conviene cambiare".
 
 ### Neutral
-- **Carta** (`#f6f7f9`, notte `#14171f`): sfondo pagina.
-- **Superficie** (`#ffffff`, notte `#1a1e29`): riquadri, gruppi di campi, campi e menu. Dà profondità senza ombre.
-- **Inchiostro** (`#1d2330`, notte `#e6e8ee`): testo e voci di navigazione.
-- **Grigio sommesso** (`#5f6675`, notte `#9aa3b5`, un blu-grigio senza la deriva viola precedente): note, etichette secondarie (`.muted`, 0.875rem).
-- **Filo** (`#d9dce3`, notte `#303646`): bordi, righe di tabella, separatori.
-
-### Semantic
-- **Verde esito** (`#17722f`, notte `#4cc473`): risparmio, «conviene».
-- **Rosso esito** (`#c62828`, notte `#ff7b72`): costo in più, azioni distruttive (pulsante `link`).
-- **Tinta verdetto** (`#e9f5ec` / neutra `#eef0f4`, notte `#16301f` / `#1d212c`): fondo del solo blocco del verdetto, verde se conviene, neutro se non conviene.
-- **Giallo avviso** (`#fff3cd`, notte `#4a3d10`): sfondo dei messaggi `warn`.
+- **Foglio menta** (#e8f1ef): sfondo della pagina.
+- **Pannello bianco** (#ffffff): card, tabelle, campi, barre di navigazione.
+- **Inchiostro verde** (#1b2a28): testo; **Grigio salvia** (#4b5c59): testo secondario e intestazioni di tabella.
+- **Filo** (#c5d6d2) per bordi dei campi; **Bordo tenue** (#d9e6e3) per card e separatori; **Tinta calma** (#eef4f2) per intestazioni di tabella, hover di riga, riquadri di confronto, tag neutri.
+- **Avviso giallo** (#fff3cd): messaggi di cautela e tag "da verificare".
+- **Verde esito** (#17722f) su **tinta verde** (#e1f3e6) e **Rosso esito** (#c62828): solo l'esito e le variazioni di costo.
+- Tema scuro: ogni token ha la sua controparte (foglio #0d1716, pannello #152322, teal #4fd1c0, teal profondo #7fe3d6), nel frontmatter con suffisso `-night`. Non verificato visivamente.
 
 ### Named Rules
-**The Outcome-Only Color Rule.** Verde, rosso e giallo compaiono solo per comunicare un esito o un avviso, mai come decorazione.
-**The One Voice Rule.** Il blu è l'unico accento: resta su link, azione primaria e il segno «attuale».
+**The One Guide Rule.** Il teal guida (titoli, azioni, posizione corrente) e niente altro; verde e rosso non sono mai accenti, indicano solo l'esito.
+**The Stamp Only Rule.** L'ambra esiste solo come timbro sulla cifra di "Conviene cambiare". Nessun'altra superficie usa l'ambra; i messaggi di cautela usano l'avviso giallo.
+**The Color Plus Text Rule.** Ogni stato espresso con il colore è ripetuto dal testo ("Conviene cambiare", "Non conviene cambiare", "attuale").
 
 ## Typography
 
-**Display/Body/Label Font:** `system-ui, sans-serif`
+**Display Font:** Figtree variabile (con system-ui, Segoe UI, Roboto)
+**Body Font:** Figtree (stessa famiglia)
+**Label/Mono Font:** nessuno; solo il testo estratto dal PDF usa il monospace di sistema.
 
-**Character:** nativa e neutra; ogni dispositivo mostra il proprio font di sistema, quindi niente da scaricare e nessun carattere «di marca».
+**Character:** Geometrica, aperta, amichevole ma ferma. Figtree è servito da `frontend/src/fonts` (sottoinsieme latino, OFL, nessuna CDN), pesi 300-900.
 
 ### Hierarchy
-- **Titolo pagina** (700, 1.75rem, 1.2, tracking -0.01em): `h1`; il profilo attivo è un sottotitolo da 0.875rem sotto.
-- **Titolo sezione** (600, 1.25rem): `h2`; stessa dimensione per l'etichetta del verdetto («Conviene cambiare», 700).
-- **Etichetta di gruppo** (600, 0.8rem, maiuscolo, tracking 0.06em, grigio sommesso): titoli dei gruppi nei form.
-- **Titolo di riquadro in Home** (`.card.commodity`: 600, 1.25rem, inchiostro) con sotto una riga di contesto `.card-meta` (consumo annuo, giorni di bollette). Sopra i riquadri, una frase di sintesi (`.summary`, 600, 1.25rem). Nel «Non conviene» la cifra grande non c'è: il risparmio massimo sta nella nota.
-- **Verdetto** (700, 2rem; 2.5rem da 40rem in su, tracking -0.015em, cifre tabulari): la cifra del risparmio.
-- **Body** (400, 1rem = la dimensione scelta dall'utente nel browser, 1.5; 1.55 con tracking 0.005em in tema scuro): tutto il resto. Paragrafi e liste a 70ch al massimo; titoli con `text-wrap: balance`, testo con `text-wrap: pretty`.
-- **Nav** (500, 1rem; 700 per la pagina corrente): voci del menu principale.
-- **Note e etichette dei campi** (400, 0.875rem; le note in grigio sommesso): `.muted`, `label`.
-- **Intestazioni di tabella** (600, 0.8rem, maiuscolo, tracking 0.04em, grigio sommesso).
-- **Numeri** (`font-variant-numeric: tabular-nums`, a destra): ogni colonna di cifre (`.num`).
+- **Display** (800, 2rem su telefono, 2.5rem da 40rem, 1.15): la cifra del risparmio nel verdetto.
+- **Headline** (800, 2rem, 1.15, -0.02em; 1.75rem sotto 40rem): h1 di pagina, in teal profondo.
+- **Title** (700, 1.25rem, 1.3): h2 di sezione e riga di sintesi; titolo di fornitura 1.5rem/800.
+- **Body** (400, 1rem, 1.5): testo corrente, righe fino a 70ch (58ch per il testo secondario).
+- **Label** (700, 0.8rem, 0.04em, maiuscolo): intestazioni di tabella e titoli di sezione dentro le card; secondario 0.875rem.
 
 ### Named Rules
-**The Scale Rule.** Sei dimensioni e quattro pesi, e nessun valore nuovo senza un ruolo nuovo: 0.8 (etichette maiuscole, intestazioni, segni), 0.875 (note, etichette dei campi), 1 (testo), 1.25 (titoli di sezione), 1.75 (titolo di pagina), 2–2.5 (cifra del verdetto); pesi 400, 500, 600, 700. Le dimensioni sono in `rem` per rispettare le impostazioni dell'utente.
-**The Tabular Rule.** Importi e consumi usano cifre tabulari e allineamento a destra, così si confrontano in colonna.
+**The Tabular Rule.** Ogni importo e ogni colonna numerica usa cifre tabulari, allineate a destra in tabella.
+**The Heavy Numbers Rule.** I numeri che sostengono il verdetto sono 800; il corpo resta 400.
 
 ## Layout
 
-Una colonna centrata, `max-width: 60rem`, padding 1rem (0.75rem sotto 40rem); il menu si allinea alla stessa colonna. Ordine della Home: prima i verdetti (luce, gas, luce+gas), uno accanto all'altro; dopo i consigli secondari (potenza impegnata); in fondo le azioni e l'avvertenza unica. Le azioni rare stanno in cima in un `<details>` (aggiorna o importa il catalogo, aperto solo se il catalogo è vuoto), non sotto 50 righe di tabella.
+Mobile prima. Contenuto centrato, massimo 60rem; padding 1rem (0.75rem sotto 40rem), 2rem da 64rem. Ritmo in multipli di 0.25rem: gap 0.5/0.75/1rem, padding card 1.25rem.
 
-Il selettore del profilo compare solo se i profili sono più d'uno; con uno solo restano il link «Profili» a destra e nessun sottotitolo sotto il titolo: sul telefono si risparmia una riga di menu. Il cambio di fornitura (Luce / Gas / Luce + gas insieme) in Confronto e Storico usa schede (`.tabs`), non link separati da puntini.
-
-I moduli sono griglie `repeat(auto-fill, minmax(14rem, 1fr))` con gap 0.75rem; `.full` occupa la riga intera e i gruppi hanno un titolo `h2`. Le tabelle stanno in un contenitore `.scroll` che occupa tutta la colonna e scorre in orizzontale sul telefono. Nei riquadri dei verdetti «Dettagli del calcolo» e «Vedi tutte le offerte» stanno sulla stessa riga (`.card-links`) quando c'è spazio, e i dettagli aperti prendono tutta la larghezza. Nella pagina Profili ogni profilo è un riquadro (nome e «Rinomina» in riga, poi conteggio e azioni) e non una tabella: sul telefono le azioni restano a portata. Ritmo verticale: margini da 1rem tra riquadri e fieldset.
+Navigazione: da telefono, barra di azioni fissa in basso (4.25rem) con Home, Bollette, Offerte, Confronto e Altro; "Altro" apre un foglio che sale dal basso (Storico, Proposta, Guida, Impostazioni, Profili, cambio profilo) con velo scuro. Sopra, una barra alta con logo e bordo superiore teal di 4px. Da 64rem (>=64rem) la barra diventa una barra laterale sinistra di 15rem, con logo, voci in colonna e cambio profilo in fondo; la barra alta scompare. Griglie di campi `auto-fill` da 14rem; riquadri di confronto `auto-fit` da 10rem. Le tabelle scorrono in orizzontale dentro un pannello. Area di tocco minima 44px.
 
 ## Elevation & Depth
 
-Piatto per scelta, ma non su un solo piano. Nessuna ombra: la profondità viene dal tono (pagina grigio chiarissimo, riquadri e gruppi di campi su Superficie) e da bordi di 1px nel colore Filo. Gli stati cambiano colore, non quota.
+Sistema ibrido: il foglio è piatto, i pannelli e gli elementi premibili si sollevano con ombre morbide, a due strati e tinte di teal. L'ombra è strutturale per card, tabelle, campi raggruppati e barre; l'ombra alta compare in risposta (hover, popover, foglio "Altro", barra dei passi).
+
+### Shadow Vocabulary
+- **Pannello** (`box-shadow: 0 1px 2px rgb(15 60 56 / .06), 0 6px 18px rgb(15 60 56 / .08)`): card, tabelle, grafici, barre di navigazione, tab a pillola, timbro.
+- **Sollevato** (`box-shadow: 0 2px 4px rgb(15 60 56 / .1), 0 12px 28px rgb(15 60 56 / .16)`): hover di pulsanti e tab (con `translateY(-1px)`), popover di spiegazione, foglio "Altro", barra dei passi.
+- **Barra in basso** (`box-shadow: 0 -2px 12px rgb(15 60 56 / .12)`): barra mobile; nel tema scuro diventa un filo di 1px.
+- Tema scuro: stesse ombre in nero (.4/.35 e .5/.5).
 
 ### Named Rules
-**The Flat-By-Default Rule.** «Piatto» vuol dire senza ombre né sfocature, non su un solo piano: per distinguere un blocco usa la Superficie, un bordo o uno spazio.
+**The Soft Lift Rule.** Le ombre sono sempre morbide e diffuse, mai con scostamento netto; si alzano al passaggio, tornano piatte alla pressione.
 
 ## Shapes
 
-Angoli appena arrotondati: 6px su campi, pulsanti e messaggi; 8px su riquadri (`.card`) e fieldset. Nessuna forma decorativa, nessuna pillola. Bordi sempre da 1px.
+Forme morbide e coerenti: 12px per campi, pulsanti, card, tabelle e popover; 8px per il blocco del verdetto, il timbro, i riquadri di confronto e le voci della barra; 16px per il foglio "Altro" (angoli superiori) e l'angolo basso della barra laterale; pillole complete (999px) per tag e tab. Bordo di 1px in bordo tenue sui pannelli; il timbro ha un bordo di 2px d'inchiostro ed è ruotato di -2 gradi. Icone a tratto uniforme (1.75), in SVG inline che segue il colore del testo.
 
 ## Components
 
 ### Buttons
-- **Shape:** 6px, senza bordo.
-- **Primary:** fondo blu, testo bianco in chiaro e quasi nero (`#0b1220`) in scuro per mantenere contrasto 4,5:1, padding 0.4rem 0.5rem, font ereditato.
-- **Link-style (distruttivo):** `button.link`, senza fondo né padding, testo grigio sommesso; diventa rosso solo al passaggio del mouse o con il focus. Il rosso sta per l'intenzione di cancellare, non per ogni riga; la conferma resta.
-- **Focus:** anello blu da 2px con scarto 2px su ogni elemento (`:focus-visible`). Altezza minima 44px. `a.btn` ha lo stesso aspetto per le azioni in forma di link.
+- **Shape:** angoli da 12px, minimo 44px di altezza, 6rem di larghezza minima.
+- **Primary:** fondo teal, testo bianco, peso 700, padding 0.5rem 1.4rem.
+- **Hover / Focus:** fondo teal profondo, sale di 1px con ombra sollevata; alla pressione torna piatto. Focus: anello teal di 2px con scostamento di 2px. Transizione 0.15s, disattivata con riduzione del movimento.
+- **Secondary:** fondo teal tenue, testo teal. **Link:** testo grigio, diventa rosso solo per azioni distruttive.
 
-### Inputs / Fields
-- **Style:** bordo Filo 1px, fondo Carta, testo Inchiostro, raggio 6px, font ereditato.
-- **Label:** colonna con gap 0.2rem, 0.875rem, sopra il campo.
-- **Focus:** anello blu da 2px (`:focus-visible`).
+### Chips
+- **Tag:** pillola, fondo tinta calma, 0.8rem. "Attuale" in teal tenue con testo teal profondo; "da verificare" in avviso giallo. Il testo ripete sempre lo stato.
+- **Tab:** pillole bianche con ombra pannello; la corrente è piena teal con testo bianco, peso 700.
 
 ### Cards / Containers
-- **Corner Style:** 8px, bordo Filo 1px, padding 0.25rem 1rem, margine 1rem. Nessuna ombra.
+- **Corner Style:** 12px. **Background:** pannello bianco, bordo tenue 1px, ombra pannello. **Padding:** 0.25rem 1.25rem 0.75rem. Titoli di sezione interni in label maiuscolo grigio; titolo di fornitura con icona in cerchio teal tenue.
 
-### Messages (flash)
-- Riquadro 6px, padding 0.6rem 0.9rem; `warn` su giallo; `info` senza fondo, con bordo Filo e testo sommesso da 0.875rem.
+### Inputs / Fields
+- **Style:** 44px, bordo filo 1px, fondo pannello, 12px. **Focus:** bordo teal più anello 2px. Il tastino (i) apre un popover con bordo teal e ombra sollevata.
+
+### Modals
+Come in Formando PerCorsi (`frontend/src/components/Modal.tsx`). Sotto 1024px una modale di contenuto è un **foglio dal basso**: bianco, angoli superiori da 8px, alto il 95% (`compact` = alto quanto il contenuto), fondo nero al 50%, sale in 500ms; titolo centrato da 1.5rem. Da 1024px diventa un **riquadro centrale**: angoli 12px, padding 32px, ombra «sopra tutto», fondo grigio scuro al 75%, titolo in accento da 1.25rem. Le **conferme** (`ConfirmModal`, via `useConfirm()`) sono sempre centrali, con «Annulla» tenue e l'azione piena (rossa se distruttiva) affiancati.
+Si chiudono tutte con lo stesso `CloseButton`: cerchio tenue da 48px con X in accento (tratto 3), pieno al passaggio. Esc e clic sullo sfondo chiudono; il fuoco resta dentro e torna dov'era.
+Si usano dove serve interrompere o proteggere il fuoco: conferme di eliminazione, spiegazioni dei tastini (i), «Dettagli del calcolo», menu «Altro» su telefono, nome del profilo, import del catalogo. Moduli lunghi e la pagina «Insegna» restano pagine.
 
 ### Navigation
-- Sotto 48rem le voci stanno dietro il pulsante «Menu» (elenco verticale, pagina corrente su fondo neutro, Esc chiude).
-- Riga in alto su Superficie con bordo inferiore Filo; voci in Inchiostro, peso 500, area di tocco almeno 44px; la pagina corrente (`aria-current=page`) è in grassetto con sottolineatura blu da 3px. Selettore profilo con pulsante «Cambia» solo se i profili sono più d'uno; altrimenti solo il link «Profili» a destra.
+- Voce corrente: fondo teal tenue e testo teal; inattive in grigio salvia. Mobile: icona sopra etichetta 0.75rem/700 in altezza 3.5rem. Desktop: icona e etichetta in riga, 1rem, hover in tinta calma. Foglio "Altro" con animazione di salita 0.3s.
 
-### Tabs
-- Per cambiare vista dentro una pagina (Luce / Gas / Luce + gas insieme): riga con filo Filo sotto, voci alte 44px, quella corrente in grassetto con sottolineatura blu da 3px.
-
-### Verdict
-- Blocco con fondo tenue (raggio 6px, nessuna ombra) in testa al riquadro: etichetta in grassetto («Conviene cambiare» / «Non conviene cambiare»), cifra del risparmio a 2rem, grassetto, cifre tabulari, nota sotto. L'esito si legge dal testo, non solo dal colore.
-
-### Icons
-- SVG inline dalla macro `icon()` in `_macros.html` (nessun font, nessuna risorsa esterna): tratto 1.75, `currentColor`, 1.25rem, `aria-hidden`. Servono a riconoscere, mai a decorare: fornitura nei titoli dei riquadri (fulmine, fiamma, quadrante; in grigio sommesso), esito nel verdetto (spunta / meno, nel colore dell'etichetta), triangolo negli avvisi. Il testo resta sempre presente.
-- Tastino (i): icona `info` blu senza bordo, dopo il termine che spiega (mai prima), con `U+2060` per non andare a capo da solo; area di tocco 44px.
-
-### Charts
-- Chart.js locale (`static/vendor`), una serie per grafico in blu accento (dati, non decorazione), griglia in Filo, nessuna legenda; barre più chiare = lettura stimata. Il dettaglio sta nella tabella sotto.
-
-### Details
-- `<details>` per calcoli, condizioni e spiegazioni (PUN/PSV); il sommario è blu, alto almeno 44px.
-
-### Tags (segni di stato)
-- Piccolo riquadro da 0.8rem, raggio 6px, padding 0.2rem 0.6rem, con il testo in grassetto 600: il colore dice lo stato, il testo lo ripete.
-- **attuale** (`.tag.current`): testo e bordo blu; la riga corrispondente prende il tono neutro (`tr.current`).
-- **da verificare**, per esempio «stimata» (`.tag.warn`): fondo Giallo avviso, testo Inchiostro, senza bordo.
-
-### Tables
-- Celle allineate a sinistra, padding 0.4rem 0.6rem, solo bordo inferiore; colonne numeriche a destra con cifre tabulari. Passando il mouse la riga prende il tono neutro; la riga dell'offerta attuale lo ha sempre.
-- Su telefono la prima colonna può andare a capo. Un filo di 1px blu sul bordo da cui la tabella scorre (animazione a scorrimento, senza gradienti) segnala che c'è altro; dove il browser non la supporta resta solo il testo tagliato.
-
-### Pager
-- Riga flessibile con gap 0.75rem (`.pager`).
+### Verdict Block (firma)
+Blocco da 8px sotto il titolo di fornitura. "Non conviene": tinta calma, etichetta con icona meno. "Conviene cambiare": tinta verde, etichetta verde con icona spunta, e la cifra del risparmio (display, 800) timbrata: fondo ambra, inchiostro nero, bordo 2px, 8px, ombra pannello, rotazione -2 gradi, animazione unica di timbratura di 0.35s (da -7 gradi e scala 1.3), disattivata con riduzione del movimento. Compare solo oltre la soglia di risparmio.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** usare i token `--bg`, `--surface`, `--fg`, `--muted`, `--line`, `--accent`, `--warn`, `--good`, `--bad` e fornire sempre il valore scuro.
-- **Do** mostrare l'esito in verde o rosso e accompagnarlo con testo (non solo colore).
-- **Do** mantenere bordi da 1px e raggi 6px/8px; eventuali ammorbidimenti restano piccoli e uniformi.
-- **Do** riusare le macro di `_macros.html` per numeri ed euro.
+- **Do** usare il teal (#0f766e) per titoli, azioni e posizione corrente; teal tenue (#d3ebe7) per gli stati correnti.
+- **Do** riservare verde e rosso all'esito e ripetere l'esito a parole.
+- **Do** mostrare il timbro ambra solo sulla cifra di "Conviene cambiare", una volta sola per verdetto.
+- **Do** dare ai pannelli ombra morbida e raggio 12px; 8px al blocco del verdetto; pillole a tag e tab.
+- **Do** servire Figtree da `frontend/src/fonts` e usare cifre tabulari per ogni importo.
+- **Do** dare a ogni nuovo token chiaro la sua controparte scura.
+- **Do** mantenere aree di tocco da 44px e la barra in basso su telefono.
 
 ### Don't:
-- **Don't** introdurre ombre, gradienti, web font o risorse da CDN.
-- **Don't** mettere i riquadri sullo stesso tono della pagina: usano `--surface`.
-- **Don't** usare il blu per decorare titoli o riquadri.
-- **Don't** usare colori semantici come ornamento.
-- **Don't** aggiungere un tono commerciale (badge «offerta!», urgenza, enfasi promozionale): il confronto deve restare sobrio e dichiarare incertezza ed esclusioni.
+- **Don't** usare l'ambra, né una rotazione o un'animazione di timbratura, per altro che non sia "Conviene cambiare".
+- **Don't** usare verde o rosso come accenti decorativi.
+- **Don't** caricare font o risorse da CDN, né riusare D-DIN (licenza commerciale).
+- **Don't** usare ombre con scostamento netto o bordi spessi sui pannelli (il 2px del timbro e della barra dei passi sono eccezioni dichiarate).
+- **Don't** aggiungere un secondo accento accanto al teal.

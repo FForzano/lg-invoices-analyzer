@@ -80,8 +80,8 @@ def test_recent_levels_are_deseasonalized():
 def test_use_recent_adopts_values(client):
     with client.application.app_context():
         db.save_settings({"pun_recent": 0.185, "psv_recent": 0.7, "recent_until": "2026-09"})
-    assert "0.185" in client.get("/settings").text or "0,185" in client.get("/settings").text
-    client.post("/settings/use-recent")
+    assert client.get("/api/settings").json["settings"]["pun_recent"] == 0.185
+    client.post("/api/settings/use-recent")
     with client.application.app_context():
         s = db.get_settings()
         assert s["pun"] == 0.185 and s["psv"] == 0.7
@@ -89,24 +89,21 @@ def test_use_recent_adopts_values(client):
 
 def test_bill_detection_respects_adopted_recent_prices(client, monkeypatch):
     import io
-    import re
     from pathlib import Path
     from app.services import extraction
 
     monkeypatch.setattr(extraction, "pdf_text", lambda p: (Path(__file__).parent / "fixtures" / "bill_power.txt").read_text())
 
     def upload():
-        r = client.post("/bills/upload", data={"commodity": "power", "pdf": (io.BytesIO(b"%PDF"), "b.pdf")}, content_type="multipart/form-data")
-        form = dict(re.findall(r'name="(\w+)"[^>]*?value="([^"]*)"', r.text))
-        form["commodity"] = "power"
-        client.post("/bills", data=form)
+        r = client.post("/api/bills/upload", data={"commodity": "power", "pdf": (io.BytesIO(b"%PDF"), "b.pdf")}, content_type="multipart/form-data")
+        client.post("/api/bills", json={**r.json["prefill"]["values"], "commodity": "power"})
 
     with client.application.app_context():
         db.save_settings({"pun_recent": 0.185, "psv_recent": 0.7, "recent_until": "2026-09"})
     upload()  # recenti non adottati: PUN ricavato dalla bolletta
     with client.application.app_context():
         assert db.get_settings()["pun"] != 0.12 and db.get_settings()["pun"] != 0.185
-    client.post("/settings/use-recent")
+    client.post("/api/settings/use-recent")
     upload()  # adottati: la bolletta non li sovrascrive
     with client.application.app_context():
         assert db.get_settings()["pun"] == 0.185

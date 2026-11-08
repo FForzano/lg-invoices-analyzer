@@ -1,6 +1,6 @@
 # Bollette self-hosted
 
-> **EN:** a self-hosted web app (Flask + SQLite, one Docker container) for Italian households: upload your electricity and gas bills (PDF, read locally, no cloud needed), import the public offers from the Italian regulator's open-data portal, and find out whether switching supplier would save you money over a year. The UI and docs are in Italian.
+> **EN:** a self-hosted web app (Flask API + React front-end, SQLite, one Docker container) for Italian households: upload your electricity and gas bills (PDF, read locally, no cloud needed), import the public offers from the Italian regulator's open-data portal, and find out whether switching supplier would save you money over a year. The UI and docs are in Italian.
 
 App web per raccogliere le bollette di luce e gas, ricavare il consumo annuo e stimare il costo annuo delle offerte di mercato (solo la parte decisa dal fornitore), con il risparmio rispetto all'offerta attuale.
 
@@ -9,18 +9,30 @@ App web per raccogliere le bollette di luce e gas, ricavare il consumo annuo e s
 Per installarla su un NAS o home server (compose, permessi, backup, aggiornamento offerte) vedi [`deploy/`](deploy/README.md).
 
 ```bash
-# sviluppo
-uv sync && uv run flask --app "app:create_app()" run --debug
+# sviluppo: API Flask (porta 5001; la 5000 su macOS è occupata da AirPlay) + front-end Vite con ricarica a caldo
+uv sync && uv run flask --app "app:create_app()" run --debug --port 5001
+cd frontend && npm install && npm run dev      # http://localhost:5173, inoltra /api a Flask
+
+# oppure un solo server: compila il front-end e lascia che Flask lo serva
+cd frontend && npm install && npm run build && cd ..
+uv run flask --app "app:create_app()" run --debug --port 5001   # http://localhost:5001
 
 # Docker (NAS)
 cp .env.example .env   # opzionale: ANTHROPIC_API_KEY, solo come ripiego di lettura PDF
 docker compose up --build   # http://localhost:8080, dati in ./data
 ```
 
+## Struttura
+
+- `app/` — Flask: API JSON sotto `/api` (`app/api/`), logica di dominio in `app/services/`, SQLite. Serve anche il front-end compilato.
+- `frontend/` — React + TypeScript + Vite + Tailwind. Il design è descritto in `DESIGN.md`. In Docker viene compilato in uno stadio Node e copiato nell'immagine.
+- L'app non ha ancora un login (pensata per la rete di casa); i punti dove aggiungerlo sono `authenticate()` in `app/api/__init__.py`, `RequireAuth` e `setAuthHeaders` nel front-end.
+
 ## Test
 
 ```bash
-uv run pytest
+uv run pytest                        # backend e API
+cd frontend && npm test && npm run build   # front-end (tipi, test, build)
 ```
 
 ## Come si usa

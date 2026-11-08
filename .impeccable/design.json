@@ -1,234 +1,141 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-08T12:30:00Z",
+  "generatedAt": "2026-11-08T14:00:00Z",
   "title": "Design System: Bollette self-hosted",
   "extensions": {
     "colorMeta": {
-      "accent-blue": {
-        "role": "primary",
-        "displayName": "Blu funzionale",
-        "canonical": "#1a66e0",
-        "tonalRamp": [
-          "#0b2a5c",
-          "#124291",
-          "#1757c4",
-          "#1a66e0",
-          "#4c8af0",
-          "#79a8f4",
-          "#a8c6f8",
-          "#d6e3fc"
-        ]
-      },
-      "paper": {
-        "role": "neutral",
-        "displayName": "Carta",
-        "canonical": "#f6f7f9",
-        "tonalRamp": [
-          "#1d2330",
-          "#3a4152",
-          "#5b6272",
-          "#85899a",
-          "#b0b3c0",
-          "#d0d2dc",
-          "#e8e9ef",
-          "#f6f7f9"
-        ]
-      },
-      "good-green": {
-        "role": "semantic",
-        "displayName": "Verde esito",
-        "canonical": "#17722f",
-        "tonalRamp": [
-          "#0a3a19",
-          "#105423",
-          "#176a2d",
-          "#1a7f37",
-          "#3f9a58",
-          "#6db783",
-          "#a1d2b0",
-          "#d4ecdb"
-        ]
-      },
-      "bad-red": {
-        "role": "semantic",
-        "displayName": "Rosso esito",
-        "canonical": "#c62828",
-        "tonalRamp": [
-          "#5c1010",
-          "#8a1a1a",
-          "#aa2222",
-          "#c62828",
-          "#d85a5a",
-          "#e48b8b",
-          "#efb9b9",
-          "#f8e0e0"
-        ]
-      },
-      "good-tint": {
-        "role": "semantic",
-        "displayName": "Tinta verdetto verde",
-        "canonical": "#e9f5ec",
-        "tonalRamp": [
-          "#16301f",
-          "#1f4a2e",
-          "#2d6b43",
-          "#5c9c72",
-          "#9cc7ab",
-          "#c4e0cd",
-          "#e9f5ec",
-          "#f6fbf7"
-        ]
-      },
-      "calm-tint": {
-        "role": "neutral",
-        "displayName": "Tinta verdetto neutra",
-        "canonical": "#eef0f4",
-        "tonalRamp": [
-          "#1d212c",
-          "#343a48",
-          "#565d6d",
-          "#7f8696",
-          "#aab0bd",
-          "#cdd1da",
-          "#eef0f4",
-          "#f8f9fb"
-        ]
-      },
-      "surface": {
-        "role": "neutral",
-        "displayName": "Superficie",
-        "canonical": "#ffffff",
-        "tonalRamp": [
-          "#1a1e29",
-          "#303646",
-          "#5f6675",
-          "#9aa3b5",
-          "#d9dce3",
-          "#eef0f4",
-          "#f6f7f9",
-          "#ffffff"
-        ]
-      }
+      "teal": { "role": "primary", "displayName": "Teal da sportello", "canonical": "#0f766e", "tonalRamp": ["#04201d", "#073a36", "#0b5953", "#0f766e", "#2f9a90", "#6fbfb6", "#a8dbd5", "#d3ebe7"] },
+      "teal-deep": { "role": "primary", "displayName": "Teal profondo", "canonical": "#0b5953", "tonalRamp": ["#04201d", "#073a36", "#0b5953", "#0f766e", "#2f9a90", "#6fbfb6", "#a8dbd5", "#d3ebe7"] },
+      "teal-soft": { "role": "primary", "displayName": "Teal tenue", "canonical": "#d3ebe7", "tonalRamp": ["#0b5953", "#0f766e", "#3f9a91", "#78bdb5", "#a8d6d0", "#c0e2dd", "#d3ebe7", "#e6f4f1"] },
+      "stamp-amber": { "role": "tertiary", "displayName": "Timbro ambra", "canonical": "#fcd34d", "tonalRamp": ["#5c4503", "#8a6806", "#b8890a", "#e0a912", "#fcd34d", "#fddf80", "#feebaa", "#fef6d5"] },
+      "mint-sheet": { "role": "neutral", "displayName": "Foglio menta", "canonical": "#e8f1ef", "tonalRamp": ["#0d1716", "#1b2a28", "#4b5c59", "#8aa09b", "#c5d6d2", "#d9e6e3", "#e8f1ef", "#f4f9f8"] },
+      "panel-white": { "role": "neutral", "displayName": "Pannello bianco", "canonical": "#ffffff", "tonalRamp": ["#152322", "#1b2a28", "#4b5c59", "#9aaaa6", "#d9e6e3", "#eef4f2", "#f7faf9", "#ffffff"] },
+      "good-green": { "role": "outcome", "displayName": "Verde esito", "canonical": "#17722f", "tonalRamp": ["#0a3017", "#0f4a20", "#17722f", "#3c9552", "#6fb783", "#a3d3b0", "#e1f3e6", "#f0f9f2"] },
+      "bad-red": { "role": "outcome", "displayName": "Rosso esito", "canonical": "#c62828", "tonalRamp": ["#5a1010", "#8a1b1b", "#c62828", "#d95858", "#e68787", "#f0b3b3", "#f8d9d9", "#fcecec"] }
     },
     "typographyMeta": {
-      "headline": {
-        "displayName": "Verdetto",
-        "purpose": "Frase del verdetto in Home."
-      },
-      "body": {
-        "displayName": "Testo",
-        "purpose": "Tutto il contenuto."
-      },
-      "title": {
-        "displayName": "Titolo di sezione",
-        "purpose": "Etichetta maiuscola da 0.8rem per riquadri e gruppi di campi."
-      }
+      "display": { "displayName": "Display", "purpose": "La cifra del risparmio nel verdetto." },
+      "headline": { "displayName": "Headline", "purpose": "h1 di pagina, in teal profondo." },
+      "title": { "displayName": "Title", "purpose": "Titoli di sezione e riga di sintesi." },
+      "body": { "displayName": "Body", "purpose": "Testo corrente, fino a 70ch." },
+      "label": { "displayName": "Label", "purpose": "Intestazioni di tabella e titoli di sezione nelle card." }
     },
-    "shadows": [],
-    "motion": [],
+    "shadows": [
+      { "name": "panel", "value": "0 1px 2px rgb(15 60 56 / .06), 0 6px 18px rgb(15 60 56 / .08)", "purpose": "Card, tabelle, grafici, barre, tab, timbro." },
+      { "name": "lift", "value": "0 2px 4px rgb(15 60 56 / .1), 0 12px 28px rgb(15 60 56 / .16)", "purpose": "Hover, popover, foglio Altro, barra dei passi." },
+      { "name": "bottom-bar", "value": "0 -2px 12px rgb(15 60 56 / .12)", "purpose": "Barra di azioni mobile." }
+    ],
+    "motion": [
+      { "name": "press", "value": "0.15s ease (background, transform, box-shadow)", "purpose": "Pulsanti e tab: sale di 1px in hover." },
+      { "name": "sheet", "value": "0.3s cubic-bezier(.16,1,.3,1)", "purpose": "Il foglio Altro sale dal basso." },
+      { "name": "stamp", "value": "0.35s cubic-bezier(.16,1,.3,1)", "purpose": "Timbratura unica della cifra in Conviene cambiare, da -7deg e scala 1.3 a -2deg." }
+    ],
     "breakpoints": [
-      {
-        "name": "narrow",
-        "value": "40rem"
-      }
+      { "name": "narrow", "value": "23rem" },
+      { "name": "compact", "value": "40rem" },
+      { "name": "desktop", "value": "64rem" }
     ]
   },
   "components": [
     {
-      "name": "Primary Button",
+      "name": "Pulsante primario",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Azione principale di un modulo.",
-      "html": "<button class=\"ds-btn\">Salva</button>",
-      "css": ".ds-btn { font: inherit; min-height:44px; padding: .4rem .9rem; border: 0; border-radius: 6px; background: var(--accent, #1a66e0); color: var(--on-accent, #fff); cursor: pointer; } .ds-btn:focus-visible { outline:2px solid var(--accent,#1a66e0); outline-offset:2px; }"
+      "description": "Azione principale, teal pieno.",
+      "html": "<button class=\"ds-btn\">Calcola</button>",
+      "css": ".ds-btn { font: 700 1rem Figtree, system-ui, sans-serif; min-height: 44px; padding: .5rem 1.4rem; border: 0; border-radius: 12px; background: #0f766e; color: #fff; cursor: pointer; transition: background-color .15s, transform .15s, box-shadow .15s; } .ds-btn:hover { background: #0b5953; transform: translateY(-1px); box-shadow: 0 2px 4px rgb(15 60 56 / .1), 0 12px 28px rgb(15 60 56 / .16); } .ds-btn:active { transform: none; box-shadow: none; } .ds-btn:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }"
     },
     {
-      "name": "Input",
+      "name": "Pulsante secondario",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Azione di supporto, teal tenue.",
+      "html": "<a class=\"ds-btn-2\" href=\"#\">Importa</a>",
+      "css": ".ds-btn-2 { display: inline-flex; align-items: center; font: 700 1rem Figtree, system-ui, sans-serif; min-height: 44px; padding: .5rem 1.4rem; border-radius: 12px; background: #d3ebe7; color: #0f766e; text-decoration: none; } .ds-btn-2:hover { color: #0b5953; } .ds-btn-2:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Campo",
       "kind": "input",
       "refersTo": "input",
-      "description": "Campo con etichetta sopra.",
-      "html": "<label class=\"ds-field\">Consumo annuo (kWh)<input class=\"ds-input\" value=\"2.700\"></label>",
-      "css": ".ds-field { display:flex; flex-direction:column; font-size:.9rem; gap:.2rem; } .ds-input { font: inherit; padding:.4rem .5rem; border:1px solid var(--line, #d9dce3); border-radius:6px; background: var(--bg, #ffffff); color: var(--fg, #1d2330); }"
+      "description": "Campo di testo da 44px.",
+      "html": "<label class=\"ds-label\">Consumo annuo<input class=\"ds-input\" value=\"\"></label>",
+      "css": ".ds-label { display: flex; flex-direction: column; gap: .2rem; font: 500 .875rem Figtree, system-ui, sans-serif; color: #1b2a28; } .ds-input { font: inherit; min-height: 44px; padding: .5rem .8rem; border: 1px solid #c5d6d2; border-radius: 12px; background: #fff; color: #1b2a28; } .ds-input:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; border-color: #0f766e; }"
+    },
+    {
+      "name": "Tab a pillola",
+      "kind": "chip",
+      "refersTo": "tab-pill",
+      "description": "Filtro/sezione; la corrente è teal piena.",
+      "html": "<div class=\"ds-tabs\"><a href=\"#\">Luce</a><a href=\"#\" aria-current=\"page\">Gas</a></div>",
+      "css": ".ds-tabs { display: flex; gap: .5rem; font-family: Figtree, system-ui, sans-serif; } .ds-tabs a { display: inline-flex; align-items: center; min-height: 44px; padding: .4rem 1.2rem; border-radius: 999px; background: #fff; color: #1b2a28; text-decoration: none; font-weight: 500; box-shadow: 0 1px 2px rgb(15 60 56 / .06), 0 6px 18px rgb(15 60 56 / .08); transition: transform .15s, box-shadow .15s; } .ds-tabs a:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgb(15 60 56 / .1), 0 12px 28px rgb(15 60 56 / .16); } .ds-tabs a[aria-current=page] { background: #0f766e; color: #fff; font-weight: 700; } .ds-tabs a:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }"
     },
     {
       "name": "Card",
       "kind": "card",
       "refersTo": "card",
-      "description": "Riquadro con bordo sottile, senza ombra.",
-      "html": "<div class=\"ds-card\"><p>Conviene cambiare: risparmi circa <span class=\"ds-good\">120 €</span> l'anno.</p></div>",
-      "css": ".ds-card { border:1px solid var(--line, #d9dce3); border-radius:8px; padding:.25rem 1rem; margin:1rem 0; } .ds-good { color: var(--good, #17722f); }"
+      "description": "Pannello bianco su foglio menta.",
+      "html": "<section class=\"ds-card\"><h2>Luce</h2><p>Consumo annuo 2 700 kWh</p></section>",
+      "css": ".ds-card { font-family: Figtree, system-ui, sans-serif; background: #fff; color: #1b2a28; border: 1px solid #d9e6e3; border-radius: 12px; padding: .25rem 1.25rem .75rem; box-shadow: 0 1px 2px rgb(15 60 56 / .06), 0 6px 18px rgb(15 60 56 / .08); } .ds-card h2 { font-size: 1.5rem; font-weight: 800; margin: .75rem 0 .15rem; }"
     },
     {
-      "name": "Flash warn",
-      "kind": "custom",
-      "refersTo": "flash-warn",
-      "description": "Avviso su fondo giallo.",
-      "html": "<div class=\"ds-flash\">Stima poco affidabile: meno di 330 giorni coperti.</div>",
-      "css": ".ds-flash { padding:.6rem .9rem; border-radius:6px; background: var(--warn, #fff3cd); color: var(--fg, #1d2330); }"
-    },
-    {
-      "name": "Verdict",
-      "kind": "custom",
-      "refersTo": "card",
-      "description": "Blocco del verdetto: etichetta, cifra del risparmio, nota.",
-      "html": "<div class=\"ds-verdict\"><p class=\"ds-verdict-label\">Conviene cambiare</p><p class=\"ds-verdict-figure\">302,77 € l'anno</p><p>Risparmio stimato del 52%.</p></div>",
-      "css": ".ds-verdict { border-radius:6px; padding:.75rem 1rem; background: var(--good-bg, #e9f5ec); } .ds-verdict p { margin:0; } .ds-verdict-label { font-weight:700; font-size:1.15rem; color: var(--good, #17722f); } .ds-verdict-figure { font-size:2rem; font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums; }"
-    },
-    {
-      "name": "Tag",
+      "name": "Tag attuale",
       "kind": "chip",
-      "refersTo": "flash-warn",
-      "description": "Segno di stato: «attuale» (blu a contorno) o «da verificare» (giallo).",
-      "html": "<span class=\"ds-tag ds-tag-current\"><strong>attuale</strong></span> <span class=\"ds-tag ds-tag-warn\"><strong>stimata</strong></span>",
-      "css": ".ds-tag { display:inline-block; padding:.2rem .6rem; border:1px solid var(--line, #d9dce3); border-radius:6px; font-size:.8rem; line-height:1.5; } .ds-tag strong { font-weight:600; } .ds-tag-current { color: var(--accent, #1a66e0); border-color: var(--accent, #1a66e0); } .ds-tag-warn { background: var(--warn, #fff3cd); border-color: transparent; color: var(--fg, #1d2330); }"
+      "refersTo": "tag-current",
+      "description": "Pillola di stato; il testo ripete lo stato.",
+      "html": "<span class=\"ds-tag\">attuale</span>",
+      "css": ".ds-tag { display: inline-block; padding: .15rem .75rem; border-radius: 999px; background: #d3ebe7; color: #0b5953; font: .8rem/1.5 Figtree, system-ui, sans-serif; }"
+    },
+    {
+      "name": "Voce di navigazione (mobile)",
+      "kind": "nav",
+      "refersTo": "nav-item-current",
+      "description": "Barra di azioni in basso: icona sopra etichetta, corrente in teal tenue.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" aria-current=\"page\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m4 11 8-7 8 7\"/><path d=\"M6 10v10h12V10\"/></svg><span>Home</span></a><a href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 3h12v18l-3-2-3 2-3-2-3 2z\"/><path d=\"M9 8h6M9 12h6\"/></svg><span>Bollette</span></a></nav>",
+      "css": ".ds-nav { display: flex; gap: .15rem; padding: .35rem .5rem; background: #fff; box-shadow: 0 -2px 12px rgb(15 60 56 / .12); font-family: Figtree, system-ui, sans-serif; } .ds-nav a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem; min-height: 3.5rem; border-radius: 8px; color: #4b5c59; font-size: .75rem; font-weight: 700; text-decoration: none; } .ds-nav a:hover { color: #0f766e; } .ds-nav a[aria-current=page] { background: #d3ebe7; color: #0f766e; } .ds-nav a:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Verdetto: Conviene cambiare",
+      "kind": "custom",
+      "refersTo": "stamp",
+      "description": "Blocco verde con la cifra timbrata in ambra: unico uso dell'ambra.",
+      "html": "<div class=\"ds-verdict\"><p class=\"ds-vl\">Conviene cambiare</p><p class=\"ds-fig\">123,45 € l'anno</p><p class=\"ds-note\">Risparmio stimato del 12%.</p></div>",
+      "css": ".ds-verdict { font-family: Figtree, system-ui, sans-serif; background: #e1f3e6; color: #1b2a28; border-radius: 8px; padding: .9rem 1.1rem 1rem; } .ds-vl { margin: 0; font-weight: 800; font-size: 1.25rem; color: #17722f; } .ds-fig { display: inline-block; margin: .55rem 0 .45rem; padding: .2rem .8rem .3rem; font-size: 2rem; font-weight: 800; line-height: 1.15; letter-spacing: -.015em; font-variant-numeric: tabular-nums; background: #fcd34d; color: #111; border: 2px solid #111; border-radius: 8px; box-shadow: 0 1px 2px rgb(15 60 56 / .06), 0 6px 18px rgb(15 60 56 / .08); transform: rotate(-2deg); transform-origin: left center; animation: ds-stamp .35s cubic-bezier(.16,1,.3,1) both; } .ds-note { margin: 0; } @keyframes ds-stamp { from { transform: rotate(-7deg) scale(1.3); opacity: 0; } to { transform: rotate(-2deg); opacity: 1; } } @media (prefers-reduced-motion: reduce) { .ds-fig { animation: none; } }"
     }
   ],
   "narrative": {
-    "northStar": "Lo sportello chiaro",
-    "overview": "Un modulo ufficiale fatto bene: ordinato, affidabile, leggibile da chi non è tecnico. Il colore dice l'esito, non decora.",
+    "northStar": "Lo sportello con il timbro",
+    "overview": "Il sistema deriva dal \"quaderno con gli adesivi\" di Formando PerCorsi e lo riinterpreta per un confronto di bollette: uno sportello dove si porta il modulo e si riceve un esito. Foglio menta (#e8f1ef), pannelli bianchi con ombre morbide, un solo accento teal (#0f766e) che guida; verde e rosso dicono solo l'esito. Il timbro ambra ruotato compare solo sulla cifra di Conviene cambiare. Figtree variabile self-hosted; mobile con barra di azioni in basso e foglio Altro, da 64rem barra laterale di 15rem; tema scuro che segue il sistema (non verificato visivamente).",
     "keyCharacteristics": [
-      "Font di sistema",
-      "Un solo accento blu",
-      "Piatto, bordi da 1px",
-      "Colonna unica fino a 60rem",
-      "Numeri tabulari a destra"
+      "Foglio menta, pannelli bianchi, ombre morbide a due strati tinte di teal.",
+      "Un solo accento (teal), usato per guidare; il colore dell'esito è un'altra voce.",
+      "Il timbro ambra ruotato appare solo sulla cifra di \"Conviene cambiare\".",
+      "Figtree variabile self-hosted, peso 800 per titoli e cifre, numeri tabulari.",
+      "Mobile prima: barra di azioni in basso e foglio \"Altro\"; da 64rem barra laterale.",
+      "Tema scuro che segue il sistema, con una controparte teal per ogni token."
     ],
     "rules": [
-      {
-        "name": "The Outcome-Only Color Rule",
-        "body": "Verde, rosso e giallo compaiono solo per comunicare un esito o un avviso, mai come decorazione.",
-        "section": "colors"
-      },
-      {
-        "name": "The One Voice Rule",
-        "body": "Il blu è l'unico accento: resta su link e azione primaria.",
-        "section": "colors"
-      },
-      {
-        "name": "The Tabular Rule",
-        "body": "Importi e consumi usano cifre tabulari e allineamento a destra.",
-        "section": "typography"
-      },
-      {
-        "name": "The Flat-By-Default Rule",
-        "body": "Non aggiungere ombre né sfocature; per distinguere un blocco usa un bordo o uno spazio.",
-        "section": "elevation"
-      }
+      { "name": "The One Guide Rule", "body": "Il teal guida (titoli, azioni, posizione corrente) e niente altro; verde e rosso non sono mai accenti, indicano solo l'esito.", "section": "colors" },
+      { "name": "The Stamp Only Rule", "body": "L'ambra esiste solo come timbro sulla cifra di \"Conviene cambiare\". Nessun'altra superficie usa l'ambra; i messaggi di cautela usano l'avviso giallo.", "section": "colors" },
+      { "name": "The Color Plus Text Rule", "body": "Ogni stato espresso con il colore è ripetuto dal testo.", "section": "colors" },
+      { "name": "The Tabular Rule", "body": "Ogni importo e ogni colonna numerica usa cifre tabulari, allineate a destra in tabella.", "section": "typography" },
+      { "name": "The Heavy Numbers Rule", "body": "I numeri che sostengono il verdetto sono 800; il corpo resta 400.", "section": "typography" },
+      { "name": "The Soft Lift Rule", "body": "Le ombre sono sempre morbide e diffuse, mai con scostamento netto; si alzano al passaggio, tornano piatte alla pressione.", "section": "elevation" }
     ],
     "dos": [
-      "Do usare i token --bg, --fg, --muted, --line, --accent, --warn, --info, --good, --bad con il valore scuro.",
-      "Do accompagnare l'esito colorato con testo.",
-      "Do mantenere bordi da 1px e raggi 6px/8px.",
-      "Do riusare le macro di _macros.html."
+      "Do usare il teal (#0f766e) per titoli, azioni e posizione corrente; teal tenue (#d3ebe7) per gli stati correnti.",
+      "Do riservare verde e rosso all'esito e ripetere l'esito a parole.",
+      "Do mostrare il timbro ambra solo sulla cifra di \"Conviene cambiare\", una volta sola per verdetto.",
+      "Do dare ai pannelli ombra morbida e raggio 12px; 8px al blocco del verdetto; pillole a tag e tab.",
+      "Do servire Figtree da `static/fonts` e usare cifre tabulari per ogni importo.",
+      "Do dare a ogni nuovo token chiaro la sua controparte scura.",
+      "Do mantenere aree di tocco da 44px e la barra in basso su telefono."
     ],
     "donts": [
-      "Don't introdurre ombre, gradienti, web font o CDN.",
-      "Don't usare il blu per decorare.",
-      "Don't usare colori semantici come ornamento.",
-      "Don't aggiungere tono commerciale.",
-      "Don't usare le tinte del verdetto fuori dal blocco del verdetto.",
-      "Don't mettere i riquadri sullo stesso tono della pagina: usano --surface.",
-      "Don't colorare di rosso ogni azione di cancellazione a riposo: il rosso compare solo con l'intenzione (hover/focus)."
+      "Don't usare l'ambra, né una rotazione o un'animazione di timbratura, per altro che non sia \"Conviene cambiare\".",
+      "Don't usare verde o rosso come accenti decorativi.",
+      "Don't caricare font o risorse da CDN, né riusare D-DIN (licenza commerciale).",
+      "Don't usare ombre con scostamento netto o bordi spessi sui pannelli (il 2px del timbro e della barra dei passi sono eccezioni dichiarate).",
+      "Don't aggiungere un secondo accento accanto al teal."
     ]
   }
 }

@@ -5,5 +5,5 @@
 set -euo pipefail
 
 URL="${URL:-http://localhost:8090}"
-curl -fsS --max-time 300 -X POST "$URL/offers/import-arera" -o /dev/null
+curl -fsS --max-time 300 -X POST "$URL/api/offers/import-arera" -o /dev/null
 echo "$(date): offerte aggiornate"

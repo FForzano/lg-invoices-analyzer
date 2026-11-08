@@ -1,0 +1,47 @@
+// Forme delle risposte di /api (vedi app/api/*). Le dataclass del backend sono serializzate così come sono.
+export type Commodity = 'power' | 'gas';
+export type MessageLevel = 'info' | 'warn';
+export interface Message { level: MessageLevel; text: string }
+
+export interface Profile { id: number; name: string; region: string; province: string; comune: string; default_power_kw: number; bills?: number }
+
+export interface Bill {
+  id: number; commodity: Commodity; period_start: string; period_end: string; supplier: string | null;
+  consumption: number | null; reading_type: string | null; total_eur: number | null; pdf_path: string | null;
+}
+export interface Offer {
+  id: number | null; commodity: Commodity; supplier: string; name: string; price_type: 'fixed' | 'indexed';
+  expires_on: string | null; is_current: boolean; dual_with: string | null; source: string | null;
+  duration_months: number | null; conditions: string | null; after_term: string | null;
+  [key: string]: unknown;
+}
+export interface Estimate { energy: number; fixed_fee: number; power_fee: number; discount: number; total: number }
+export interface Ranked { offer: Offer; estimate: Estimate; saving: number | null }
+export interface Bundle { power: Ranked; gas: Ranked; total: number; saving: number | null }
+export interface Consumption { total: number; bands: [number, number, number] | null; power_kw: number | null; source: string; days_covered: number; partial: boolean }
+export interface Assumptions { pun: number; psv: number; default_power_kw: number; loss_pct: number; dispatching_extra: number }
+export interface Verdict {
+  current: Ranked; best: Ranked; saving: number; saving_pct: number; saving_range: [number, number]; worthwhile: boolean; robust: boolean;
+}
+export interface DualVerdict { best: Bundle; saving: number; saving_pct: number; separate_saving: number; worthwhile: boolean; beats_separate: boolean }
+export interface ProposalVerdict {
+  proposal: Estimate; current: Estimate; saving: number; saving_pct: number; saving_steady: number; saving_range: [number, number]; worthwhile: boolean; robust: boolean;
+}
+export interface PowerAdvice { contracted: number; peak: number; months: number; suggested: number | null; saving_year: number | null; partial: boolean; tight: boolean }
+export interface Analysis {
+  commodity: Commodity; settings: Settings; consumption: Consumption | null; assumptions: Assumptions | null; skipped: string[];
+  verdict: Verdict | null; has_current: boolean; power_advice: PowerAdvice | null; season_multiplier: number;
+}
+export type Settings = Record<string, number | string>;
+export interface PageInfo { number: number; pages: number; total: number }
+export interface HistoryRow { bill: Bill; unit_cost: number | null; consumption_yoy: number | null; unit_cost_yoy: number | null }
+export interface ChartData { labels: string[]; consumption: (number | null)[]; total: (number | null)[]; unit_cost: (number | null)[]; estimated: boolean[] }
+export interface Rule { field: string; kind: string; anchor: string; side: string; index: number; value: string | null }
+export interface Layout { id: number | null; name: string; signature: string; rules: Rule[]; builtin: boolean }
+export interface TeachInfo {
+  pdf: string; text: string; kinds: Record<string, string>; found: Record<string, string>; samples: Record<string, string>;
+  errors: Record<string, string>; help: Record<string, string>; required: string[]; choices: Record<string, string[]>;
+  labels: Record<string, string>; supplier: string;
+}
+export interface Prefill { values: Record<string, unknown>; teach_pdf: string | null; messages: Message[] }
+export interface ProposalValues { id: number | null; contact: string | null; received_on: string | null; notes: string | null; created_at?: string; [key: string]: unknown }

@@ -1,20 +1,22 @@
 import os
 from pathlib import Path
 
-from flask import Flask
+from flask import Flask, abort, jsonify, send_from_directory
 
 from . import db
-from .glossary import HELP
+
+# Il front-end React compilato (frontend/dist). In Docker è copiato in /srv/frontend/dist; sovrascrivibile con FRONTEND_DIR.
+DEFAULT_FRONTEND = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
 
-def create_app(data_dir: str | None = None) -> Flask:
-    app = Flask(__name__)
+def create_app(data_dir: str | None = None, frontend_dir: str | None = None) -> Flask:
+    app = Flask(__name__, static_folder=None)
     data = Path(data_dir or os.environ.get("DATA_DIR", "data"))
     app.config.update(
-        SECRET_KEY=os.environ.get("SECRET_KEY", "dev"),
         DATA_DIR=data,
         DB_PATH=data / "bollette.db",
         PDF_DIR=data / "pdf",
+        FRONTEND_DIR=Path(frontend_dir or os.environ.get("FRONTEND_DIR", DEFAULT_FRONTEND)),
         MAX_CONTENT_LENGTH=100 * 1024 * 1024,
     )
     try:
@@ -26,15 +28,31 @@ def create_app(data_dir: str | None = None) -> Flask:
             "(in Docker di default uid 1000, gid 100: `chown 1000:100 <cartella>`) oppure imposta `user:` nel compose."
         ) from e
 
-    from .routes import bills, compare, guide, home, layouts, offers, profiles, proposal, settings, verdict
+    from .api import bp as api_bp
+    from .api import offers as api_offers
 
-    for module in (home, bills, layouts, offers, compare, proposal, guide, settings, profiles, verdict):
-        app.register_blueprint(module.bp)
+    app.register_blueprint(api_bp)
 
-    app.jinja_env.globals["HELP"] = HELP
+    @app.get("/health")
+    def health():
+        """Per healthcheck del container: nessuna query, risponde se l'app è su."""
+        return "ok"
 
-    @app.context_processor
-    def _profiles():
-        return {"profiles": db.list_profiles(), "profile": db.current_profile()}
+    # URL storico usato dagli script di aggiornamento già installati (cron sul NAS): resta valido
+    app.add_url_rule("/offers/import-arera", "legacy_import_arera", lambda: api_offers.import_arera(), methods=["POST"])
+
+    @app.get("/", defaults={"path": ""})
+    @app.get("/<path:path>")
+    def frontend(path: str):
+        """File statici del front-end; ogni altro percorso è una pagina dell'app React (routing lato client)."""
+        root: Path = app.config["FRONTEND_DIR"]
+        if path.startswith("api/"):
+            return jsonify(error="Non trovato."), 404
+        if not (root / "index.html").is_file():
+            abort(503, "Front-end non compilato: esegui `npm run build` in frontend/ (o usa `npm run dev`).")
+        target = (root / path).resolve()
+        if path and target.is_file() and root.resolve() in target.parents:
+            return send_from_directory(root, path, max_age=31536000 if path.startswith("assets/") else 0)
+        return send_from_directory(root, "index.html", max_age=0)
 
     return app

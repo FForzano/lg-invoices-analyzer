@@ -173,3 +173,35 @@ def test_home_shows_duration_and_seller_conditions(client, monkeypatch):
     home = client.get("/").text
     assert "Condizioni economiche valide 24 mesi" in home and "ti avviso prima della fine" in home
     assert "Solo nuovi clienti" in home and "Trascorsi 24 mesi il prezzo cambia" in home
+
+
+def test_proposal_form_judges_against_current_offer(client):
+    client.post("/bills", data={
+        "commodity": "gas", "period_start": "2026-01-01", "period_end": "2026-12-31",
+        "mc": "1000", "coeff_c": "1", "annual_consumption": "1000",
+    })
+    client.post("/offers/save", data={"commodity": "gas", "supplier": "S", "name": "Att", "price_type": "fixed", "price": "0.80", "is_current": "on"})
+    assert client.get("/proposal").status_code == 200
+    base = {"commodity": "gas", "price_type": "fixed"}
+    good = client.post("/proposal", data={**base, "price": "0.60"}).text
+    assert "Conviene" in good and "200,00 €" in good
+    bad = client.post("/proposal", data={**base, "price": "0.90"}).text
+    assert "Non conviene" in bad
+    assert client.post("/proposal", data=base).status_code == 400  # manca il prezzo
+    assert "Proposta ricevuta" not in client.get("/offers").text  # non viene salvata
+
+
+def test_proposal_save_and_contract_checklist(client):
+    form = {"commodity": "gas", "price_type": "fixed", "price": "0,55", "supplier": "Acme", "one_off_discount": "50",
+            "contact": "Mario, 3 nov", "notes": "Nessuna penale di recesso"}
+    r = client.post("/proposal/save", data=form)
+    assert r.status_code == 302
+    page = client.get(r.headers["Location"]).text
+    assert "Acme" in page and "0,55 €/Smc" in page and "50 €" in page and "Nessuna penale" in page and "Mario" in page
+    assert "Acme" in client.get("/proposal/saved").text
+    assert 'value="0.55"' in client.get("/proposal?from=1").text  # riparte dai dati salvati
+    r = client.post("/proposal/save", data={**form, "id": "1", "price": "0,60"})
+    assert "0,6 €/Smc" in client.get(r.headers["Location"]).text and client.get("/proposal/saved").text.count("Acme") == 1
+    assert "Acme" not in client.get("/offers").text  # non entra nel catalogo
+    client.post("/proposal/1/delete")
+    assert client.get("/proposal/1").status_code == 404

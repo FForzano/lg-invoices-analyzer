@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, select, eur, num %}
+{% block content %}
+<h1>Valuta una proposta</h1>
+<p class="muted">Un operatore ti propone un'offerta che non trovi nel catalogo? Inserisci quello che ti dice (anche solo i campi che conosci) e la confronto con la tua offerta attuale. Salvala per ritrovarla e controllare il contratto prima di firmare.</p>
+<form method="post" action="{{ url_for('proposal.index') }}" class="grid">
+  <input type="hidden" name="id" value="{{ id or '' }}">
+  {{ select('commodity', 'Fornitura', v, [('power', 'Luce'), ('gas', 'Gas')], required=true) }}
+  {{ field('supplier', 'Fornitore (facoltativo)', v) }}
+  {{ select('price_type', 'Tipo di prezzo', v, [('fixed', 'Fisso'), ('indexed', 'Indicizzato (PUN/PSV + spread)')], required=true) }}
+  {{ field('duration_months', 'Durata delle condizioni (mesi)', v, 'number', step='1') }}
+
+  <fieldset class="full"><legend>Prezzo energia (€/kWh o €/Smc, IVA e imposte escluse)</legend><div class="grid">
+    {{ field('price', 'Prezzo fisso', v, 'number') }}
+    {{ field('price_f1', 'Fisso F1 (luce)', v, 'number') }}
+    {{ field('price_f2', 'Fisso F2 (luce)', v, 'number') }}
+    {{ field('price_f3', 'Fisso F3 (luce)', v, 'number') }}
+    {{ field('spread', 'Spread su PUN/PSV (indicizzato)', v, 'number') }}
+    {{ field('avg_price', 'Prezzo medio dichiarato (se dato)', v, 'number') }}
+  </div>
+  <p class="muted">Indicizzato: per la luce, se te li comunicano, aggiungi anche dispacciamento, perdite di rete e oneri di capacità qui sotto.</p></fieldset>
+
+  <fieldset class="full"><legend>Altre voci</legend><div class="grid">
+    {{ field('fixed_fee_month', 'Quota fissa (€/mese)', v, 'number') }}
+    {{ field('power_fee_kw_month', 'Quota potenza (€/kW/mese)', v, 'number') }}
+    {{ field('one_off_discount', 'Sconti/bonus una tantum (€, primo anno)', v, 'number') }}
+    {{ field('loss_pct', 'Perdite di rete (%) – luce', v, 'number') }}
+    {{ field('dispatching', 'Dispacciamento (€/kWh) – luce', v, 'number') }}
+    {{ field('capacity', 'Oneri di capacità (€/kWh) – luce', v, 'number') }}
+    <label>Dispacciamento/capacità fatturati a parte<input type="checkbox" name="dispatching_extra" {{ 'checked' if v.get('dispatching_extra') in (true, 1, 'on', '1') }}></label>
+    {{ field('gas_mgmt', 'Gestione variabile (€/Smc) – gas', v, 'number') }}
+    {{ field('pcs_adjustment', 'Adeguamento PCS (€/Smc) – gas', v, 'number') }}
+  </div></fieldset>
+  <fieldset class="full"><legend>Da ricordare per il contratto</legend><div class="grid">
+    {{ field('contact', 'Chi l\'ha proposta / riferimento chiamata', v) }}
+    {{ field('received_on', 'Data della proposta', v, 'date') }}
+    <label class="full">Cos'altro ti hanno promesso a voce<textarea name="notes" rows="3">{{ v.get('notes') or '' }}</textarea></label>
+  </div></fieldset>
+  <div class="full actions">
+    <button>Valuta</button>
+    <button class="secondary" formaction="{{ url_for('proposal.save') }}">{{ 'Aggiorna' if id else 'Salva' }} la proposta</button>
+    <a href="{{ url_for('proposal.saved') }}">Proposte salvate{% if saved_count %} ({{ saved_count }}){% endif %}</a>
+  </div>
+</form>
+
+{% if offer %}
+<h2>Risultato</h2>
+{% include "_proposal_result.html" %}
+{% endif %}
+{% endblock %}

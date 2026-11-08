@@ -5,11 +5,12 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from . import db
+from .models import Offer
 from .services.consumption import Consumption, annual_consumption
 from .services.power import PowerAdvice, power_advice
 from .services.seasonality import consumption_profile, season_multiplier
-from .services.pricing import Assumptions, Bundle, Location, Ranked, compare, pair_bundles
-from .services.verdict import DualVerdict, Verdict, make_dual_verdict, make_verdict
+from .services.pricing import Assumptions, Bundle, Estimate, Location, Ranked, compare, estimate, pair_bundles
+from .services.verdict import DualVerdict, Verdict, ProposalVerdict, judge_proposal, make_dual_verdict, make_verdict
 
 
 @dataclass
@@ -64,3 +65,15 @@ class DualAnalysis:
 def analyze_dual(power: Analysis, gas: Analysis) -> DualAnalysis:
     bundles = pair_bundles(power.dual_ranked, gas.dual_ranked)
     return DualAnalysis(bundles, make_dual_verdict(bundles, power.verdict, gas.verdict))
+
+
+def evaluate_proposal(commodity: str, proposal: Offer, today: date | None = None) -> tuple[Analysis, Estimate | None, ProposalVerdict | None]:
+    """Stima una proposta non salvata e la confronta con l'offerta attuale (verdetto None se manca).
+    Solleva ValueError se alla proposta mancano i prezzi."""
+    base = analyze(commodity, today)
+    if base.consumption is None:
+        return base, None, None
+    est = estimate(proposal, base.consumption, base.assumptions)
+    current = next((o for o in db.list_offers(commodity) if o.is_current), None)
+    verdict = judge_proposal(proposal, current, base.consumption, base.assumptions) if current else None
+    return base, est, verdict

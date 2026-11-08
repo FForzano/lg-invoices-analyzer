@@ -6,7 +6,7 @@ from datetime import date
 
 from ..models import Offer
 from .consumption import Consumption
-from .pricing import Assumptions, Bundle, Location, Ranked, compare
+from .pricing import Assumptions, Bundle, Estimate, Location, Ranked, compare, estimate
 
 MIN_SAVING_EUR = 30.0  # sotto questa soglia (o sotto il 5%) il cambio non vale lo sforzo
 MIN_SAVING_PCT = 5.0
@@ -76,4 +76,38 @@ def make_dual_verdict(bundles: list[Bundle], power: Verdict | None, gas: Verdict
     return DualVerdict(
         best=best, saving=best.saving, saving_pct=pct, separate_saving=separate,
         worthwhile=best.saving >= MIN_SAVING_EUR and pct >= MIN_SAVING_PCT,
+    )
+
+
+@dataclass(frozen=True)
+class ProposalVerdict:
+    """Proposta ricevuta (es. al telefono) contro l'offerta attuale."""
+    proposal: Estimate
+    current: Estimate
+    saving: float  # primo anno, bonus compresi
+    saving_pct: float
+    saving_steady: float  # senza gli sconti una tantum di entrambe: quanto si risparmia dal secondo anno
+    saving_range: tuple[float, float]  # con PUN/PSV -20% e +20%
+    worthwhile: bool
+    robust: bool
+
+
+def judge_proposal(proposal: Offer, current: Offer, c: Consumption, a: Assumptions) -> ProposalVerdict:
+    """Può sollevare ValueError se all'offerta mancano campi per il calcolo."""
+    def saving(assumptions: Assumptions) -> float:
+        return estimate(current, c, assumptions).total - estimate(proposal, c, assumptions).total
+
+    cur, prop = estimate(current, c, a), estimate(proposal, c, a)
+    s = cur.total - prop.total
+    pct = s / cur.total * 100 if cur.total else 0.0
+    scenarios = [saving(replace(a, pun=a.pun * f, psv=a.psv * f)) for f in SENSITIVITY]
+
+    def ok(x: float) -> bool:
+        return x >= MIN_SAVING_EUR and (x / cur.total * 100 if cur.total else 0) >= MIN_SAVING_PCT
+
+    return ProposalVerdict(
+        proposal=prop, current=cur, saving=s, saving_pct=pct,
+        saving_steady=s - cur.discount + prop.discount,
+        saving_range=(min(scenarios), max(scenarios)),
+        worthwhile=ok(s), robust=all(ok(x) for x in scenarios),
     )

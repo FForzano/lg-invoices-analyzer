@@ -14,6 +14,7 @@
   <a href="{{ url_for('bills.history_page') }}" {{ 'aria-current=page' if ep == 'bills.history_page' }}>Storico</a>
   <a href="{{ url_for('offers.index') }}" {{ 'aria-current=page' if ep.startswith('offers.') }}>Offerte</a>
   <a href="{{ url_for('compare.index') }}" {{ 'aria-current=page' if ep.startswith('compare.') }}>Confronto</a>
+  <a href="{{ url_for('proposal.index') }}" {{ 'aria-current=page' if ep.startswith('proposal.') }}>Proposta</a>
   <a href="{{ url_for('settings.index') }}" {{ 'aria-current=page' if ep.startswith('settings.') }}>Impostazioni</a>
   {% if profiles | length > 1 %}
   <form method="post" action="{{ url_for('profiles.switch') }}" class="profile-switch">

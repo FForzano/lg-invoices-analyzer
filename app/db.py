@@ -7,6 +7,7 @@ import sqlite3
 from flask import Flask, current_app, g, has_request_context, session
 
 from .migrations import migrate_database
+from .services.proposal import Proposal, dump_terms, load_terms
 from .models import SYSTEM_FIELDS, Bill, Offer, columns
 from .services.seasonality import DEFAULT_INDEX_FACTORS
 
@@ -107,7 +108,7 @@ def delete_profile(id: int) -> list[str]:
     """Elimina il profilo con bollette e offerte attuali. Restituisce i PDF da cancellare dal disco."""
     db = get_db()
     pdfs = [r["pdf_path"] for r in db.execute("SELECT pdf_path FROM bills WHERE profile_id = ? AND pdf_path IS NOT NULL", (id,))]
-    for table in ("bills", "offers"):
+    for table in ("bills", "offers", "proposals"):
         db.execute(f"DELETE FROM {table} WHERE profile_id = ?", (id,))
     db.execute("DELETE FROM profiles WHERE id = ?", (id,))
     db.commit()
@@ -201,6 +202,46 @@ def delete_offer(id: int) -> None:
     db = get_db()
     db.execute("DELETE FROM offers WHERE id = ? AND (profile_id IS NULL OR profile_id = ?)", (id, profile_id()))
     db.commit()
+
+
+# --- proposte ricevute -------------------------------------------------------
+
+def _proposal(row: sqlite3.Row) -> Proposal:
+    return Proposal(load_terms(row["terms"]), row["id"], row["contact"], row["received_on"], row["notes"], row["created_at"])
+
+
+def list_proposals() -> list[Proposal]:
+    rows = get_db().execute("SELECT * FROM proposals WHERE profile_id = ? ORDER BY id DESC", (profile_id(),))
+    return [_proposal(r) for r in rows]
+
+
+def get_proposal(id: int) -> Proposal | None:
+    row = get_db().execute("SELECT * FROM proposals WHERE id = ? AND profile_id = ?", (id, profile_id())).fetchone()
+    return _proposal(row) if row else None
+
+
+def save_proposal(p: Proposal) -> int:
+    db = get_db()
+    args = (p.offer.commodity, dump_terms(p.offer), p.contact, p.received_on, p.notes)
+    if p.id is None:
+        cur = db.execute(
+            "INSERT INTO proposals (commodity, terms, contact, received_on, notes, profile_id) VALUES (?, ?, ?, ?, ?, ?)",
+            (*args, profile_id()),
+        )
+        p.id = cur.lastrowid
+    else:
+        cur = db.execute(
+            "UPDATE proposals SET commodity = ?, terms = ?, contact = ?, received_on = ?, notes = ? WHERE id = ? AND profile_id = ?",
+            (*args, p.id, profile_id()),
+        )
+        if not cur.rowcount:
+            raise LookupError(f"Proposta {p.id} non trovata")
+    db.commit()
+    return p.id
+
+
+def delete_proposal(id: int) -> None:
+    _delete("proposals", id, profile_id=profile_id())
 
 
 # --- impostazioni -----------------------------------------------------------

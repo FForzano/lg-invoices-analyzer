@@ -25,9 +25,9 @@ def create_app(data_dir: str | None = None) -> Flask:
             "(in Docker di default uid 1000, gid 100: `chown 1000:100 <cartella>`) oppure imposta `user:` nel compose."
         ) from e
 
-    from .routes import bills, compare, home, offers, profiles, settings, verdict
+    from .routes import bills, compare, home, offers, profiles, proposal, settings, verdict
 
-    for module in (home, bills, offers, compare, settings, profiles, verdict):
+    for module in (home, bills, offers, compare, proposal, settings, profiles, verdict):
         app.register_blueprint(module.bp)
 
     @app.context_processor

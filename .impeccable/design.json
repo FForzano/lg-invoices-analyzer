@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T12:00:00Z",
+  "title": "Design System: Bollette self-hosted",
+  "extensions": {
+    "colorMeta": {
+      "accent-blue": {
+        "role": "primary",
+        "displayName": "Blu funzionale",
+        "canonical": "#1f6feb",
+        "tonalRamp": [
+          "#0b2a5c",
+          "#124291",
+          "#1757c4",
+          "#1f6feb",
+          "#4c8af0",
+          "#79a8f4",
+          "#a8c6f8",
+          "#d6e3fc"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Carta",
+        "canonical": "#fafafa",
+        "tonalRamp": [
+          "#1d2330",
+          "#3a4152",
+          "#5b6272",
+          "#85899a",
+          "#b0b3c0",
+          "#d0d2dc",
+          "#e8e9ef",
+          "#fafafa"
+        ]
+      },
+      "good-green": {
+        "role": "semantic",
+        "displayName": "Verde esito",
+        "canonical": "#1a7f37",
+        "tonalRamp": [
+          "#0a3a19",
+          "#105423",
+          "#176a2d",
+          "#1a7f37",
+          "#3f9a58",
+          "#6db783",
+          "#a1d2b0",
+          "#d4ecdb"
+        ]
+      },
+      "bad-red": {
+        "role": "semantic",
+        "displayName": "Rosso esito",
+        "canonical": "#c62828",
+        "tonalRamp": [
+          "#5c1010",
+          "#8a1a1a",
+          "#aa2222",
+          "#c62828",
+          "#d85a5a",
+          "#e48b8b",
+          "#efb9b9",
+          "#f8e0e0"
+        ]
+      },
+      "good-tint": {
+        "role": "semantic",
+        "displayName": "Tinta verdetto verde",
+        "canonical": "#e9f5ec",
+        "tonalRamp": [
+          "#16301f",
+          "#1f4a2e",
+          "#2d6b43",
+          "#5c9c72",
+          "#9cc7ab",
+          "#c4e0cd",
+          "#e9f5ec",
+          "#f6fbf7"
+        ]
+      },
+      "calm-tint": {
+        "role": "neutral",
+        "displayName": "Tinta verdetto neutra",
+        "canonical": "#eef0f4",
+        "tonalRamp": [
+          "#1d212c",
+          "#343a48",
+          "#565d6d",
+          "#7f8696",
+          "#aab0bd",
+          "#cdd1da",
+          "#eef0f4",
+          "#f8f9fb"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Verdetto",
+        "purpose": "Frase del verdetto in Home."
+      },
+      "body": {
+        "displayName": "Testo",
+        "purpose": "Tutto il contenuto."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [
+      {
+        "name": "narrow",
+        "value": "40rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Azione principale di un modulo.",
+      "html": "<button class=\"ds-btn\">Salva</button>",
+      "css": ".ds-btn { font: inherit; min-height:44px; padding: .4rem .9rem; border: 0; border-radius: 6px; background: var(--accent, #1f6feb); color: var(--on-accent, #fff); cursor: pointer; } .ds-btn:focus-visible { outline:2px solid var(--accent,#1f6feb); outline-offset:2px; }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo con etichetta sopra.",
+      "html": "<label class=\"ds-field\">Consumo annuo (kWh)<input class=\"ds-input\" value=\"2.700\"></label>",
+      "css": ".ds-field { display:flex; flex-direction:column; font-size:.9rem; gap:.2rem; } .ds-input { font: inherit; padding:.4rem .5rem; border:1px solid var(--line, #ddddee); border-radius:6px; background: var(--bg, #fafafa); color: var(--fg, #1d2330); }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Riquadro con bordo sottile, senza ombra.",
+      "html": "<div class=\"ds-card\"><p>Conviene cambiare: risparmi circa <span class=\"ds-good\">120 €</span> l'anno.</p></div>",
+      "css": ".ds-card { border:1px solid var(--line, #ddddee); border-radius:8px; padding:.25rem 1rem; margin:1rem 0; } .ds-good { color: var(--good, #1a7f37); }"
+    },
+    {
+      "name": "Flash warn",
+      "kind": "custom",
+      "refersTo": "flash-warn",
+      "description": "Avviso su fondo giallo.",
+      "html": "<div class=\"ds-flash\">Stima poco affidabile: meno di 330 giorni coperti.</div>",
+      "css": ".ds-flash { padding:.6rem .9rem; border-radius:6px; background: var(--warn, #fff3cd); color: var(--fg, #1d2330); }"
+    },
+    {
+      "name": "Verdict",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Blocco del verdetto: etichetta, cifra del risparmio, nota.",
+      "html": "<div class=\"ds-verdict\"><p class=\"ds-verdict-label\">Conviene cambiare</p><p class=\"ds-verdict-figure\">302,77 € l'anno</p><p>Risparmio stimato del 52%.</p></div>",
+      "css": ".ds-verdict { border-radius:6px; padding:.75rem 1rem; background: var(--good-bg, #e9f5ec); } .ds-verdict p { margin:0; } .ds-verdict-label { font-weight:700; font-size:1.15rem; color: var(--good, #1a7f37); } .ds-verdict-figure { font-size:2rem; font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Lo sportello chiaro",
+    "overview": "Un modulo ufficiale fatto bene: ordinato, affidabile, leggibile da chi non è tecnico. Il colore dice l'esito, non decora.",
+    "keyCharacteristics": [
+      "Font di sistema",
+      "Un solo accento blu",
+      "Piatto, bordi da 1px",
+      "Colonna unica fino a 60rem",
+      "Numeri tabulari a destra"
+    ],
+    "rules": [
+      {
+        "name": "The Outcome-Only Color Rule",
+        "body": "Verde, rosso, giallo e azzurro compaiono solo per comunicare un esito o un avviso, mai come decorazione.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Voice Rule",
+        "body": "Il blu è l'unico accento: resta su link e azione primaria.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Importi e consumi usano cifre tabulari e allineamento a destra.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Non aggiungere ombre né sfocature; per distinguere un blocco usa un bordo o uno spazio.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do usare i token --bg, --fg, --muted, --line, --accent, --warn, --info, --good, --bad con il valore scuro.",
+      "Do accompagnare l'esito colorato con testo.",
+      "Do mantenere bordi da 1px e raggi 6px/8px.",
+      "Do riusare le macro di _macros.html."
+    ],
+    "donts": [
+      "Don't introdurre ombre, gradienti, web font o CDN.",
+      "Don't usare il blu per decorare.",
+      "Don't usare colori semantici come ornamento.",
+      "Don't aggiungere tono commerciale.",
+      "Don't usare le tinte del verdetto fuori dal blocco del verdetto."
+    ]
+  }
+}

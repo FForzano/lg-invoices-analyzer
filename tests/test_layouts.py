@@ -141,3 +141,8 @@ def test_teach_flow_then_next_bill_is_read_automatically(client, monkeypatch):
 def test_teach_rejects_unknown_pdf_names(client):
     assert client.get("/layouts/teach?pdf=../../etc/passwd").status_code == 404
     assert client.get("/layouts/teach").status_code == 404
+
+
+def test_image_only_pdf_explains_what_to_do_and_does_not_offer_teaching(client, monkeypatch):
+    page = _upload(client, monkeypatch, "").text
+    assert "immagine" in page and "PDF digitale" in page and "Insegna" not in page

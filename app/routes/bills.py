@@ -59,7 +59,7 @@ def prefill_form(name: str, path: Path, commodity: str = "power") -> str:
         flash(f"Dati letti con {method}: controllali prima di salvare.", "info")
     except extraction.ExtractionError as e:
         values.update(e.partial)
-        failed = True
+        failed = not isinstance(e, extraction.NoTextError)  # su un'immagine non c'è niente da insegnare
         flash(f"Lettura non riuscita ({e}): completa il modulo a mano.", "warn")
     return render_template("bill_form.html", v=values, can_extract=extraction.available(), teach_pdf=name if failed else None)
 
@@ -81,7 +81,7 @@ def _bulk_import(files) -> Response:
                 raise ValueError("già presente")
         except (extraction.ExtractionError, PyPdfError, TypeError, ValueError) as e:
             path.unlink(missing_ok=True)
-            hint = " Caricalo da solo per insegnare all'app a leggerlo." if isinstance(e, extraction.ExtractionError) else ""
+            hint = " Caricalo da solo per insegnare all'app a leggerlo." if isinstance(e, extraction.ExtractionError) and not isinstance(e, extraction.NoTextError) else ""
             problems.append(f"{file.filename}: {e}.{hint}")
             continue
         known.add(key)

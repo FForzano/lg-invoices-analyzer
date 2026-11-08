@@ -56,6 +56,10 @@ class ExtractionError(Exception):
         self.partial = partial or {}
 
 
+class NoTextError(ExtractionError):
+    """PDF fatto di sole immagini (scansione, fac-simile): non c'è testo da leggere né da insegnare."""
+
+
 def available() -> bool:
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
@@ -87,7 +91,7 @@ def extract_bill(path: str, client=None, layouts: list[Layout] = ()) -> tuple[di
 
 def extract_text(text: str, client=None, layouts: list[Layout] = ()) -> tuple[dict, str]:
     if not text:
-        raise ExtractionError("Il PDF non contiene testo selezionabile")
+        raise NoTextError("Il PDF è un'immagine, senza testo da leggere. Scarica dal sito o dall'area clienti del fornitore la bolletta in PDF digitale (non una scansione o una foto)")
     parsed = parse_bill_text(text)
     if parsed.complete:
         return parsed.fields, "regole"

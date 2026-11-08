@@ -3,7 +3,7 @@ import uuid
 from flask import current_app, jsonify, request, send_file
 from pypdf.errors import PyPdfError
 
-from .. import db, forms
+from .. import auth, db, forms
 from ..models import COMMODITIES, UNIT, Bill, Offer
 from ..services import extraction
 from ..services.bill_parser import parse_offer_terms
@@ -40,7 +40,7 @@ def _detect_current_offer(bill_id: int, bills: list[Bill]) -> str:
     key, value = ("pun", terms.pun) if terms.pun else ("psv", terms.psv)
     settings = db.get_settings()
     adopted_recent = settings.get(key + "_recent") == settings[key]  # l'utente ha scelto i prezzi recenti: non toccarli
-    if bill.period_end >= latest and value and not adopted_recent:
+    if bill.period_end >= latest and value and not adopted_recent and auth.is_admin():  # PUN/PSV sono globali: non li cambia chi carica una bolletta
         factor = db.get_index_factors()[key][int(bill.period_end[5:7]) - 1]  # il mese in bolletta non è un mese medio
         db.save_settings({key: round(value / factor, 6)})
         message += f" {key.upper()} medio annuo assunto: {value / factor:.4f} ({value:.4f} del mese ÷ {factor:.2f} stagionalità)."

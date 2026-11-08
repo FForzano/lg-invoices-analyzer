@@ -8,6 +8,7 @@ import click
 from flask import Flask
 
 from . import db
+from .services import arera, catalog
 from .migrations import migrate_database, sqlite_path
 
 # ordine di copia: prima le tabelle da cui le altre dipendono
@@ -68,3 +69,14 @@ def register(app: Flask) -> None:
             storage.put(name, path.read_bytes())
             sent += 1
         click.echo(f"Caricati {sent} PDF su {storage}; già presenti: {len(names) - sent - missing}; non trovati in {folder}: {missing}.")
+
+    @app.cli.command("import-offers")
+    def import_offers() -> None:
+        """Aggiorna dal Portale Offerte ARERA il catalogo delle offerte e i prezzi storici di PUN/PSV, senza passare dal web.
+        Con il login attivo è il modo più semplice per il cron: `docker exec bollette flask --app app import-offers`."""
+        try:
+            messages = catalog.refresh_catalog()
+        except arera.AreraError as e:
+            raise click.ClickException(str(e)) from None
+        for m in messages:
+            click.echo(m["text"])

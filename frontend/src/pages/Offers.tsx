@@ -6,6 +6,7 @@ import { useAction } from '../lib/useAction';
 import { commodityLabel } from '../lib/format';
 import type { Offer, PageInfo } from '../lib/types';
 import { useApp } from '../context/AppContext';
+import { useIsAdmin } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { Actions, Button, DangerLink, ErrorBox, H1, LinkButton, Loading, Muted, Pager, Scroll, SoftButton, Tag, usePage } from '../components/ui';
 import { Modal } from '../components/Modal';
@@ -53,6 +54,7 @@ export default function Offers() {
   const [catalog, setCatalog] = useState(false);
   const confirm = useConfirm();
   const { run } = useAction();
+  const admin = useIsAdmin();
   const { data, error, loading, reload } = useQuery<{ items: Offer[]; page: PageInfo; q: string; catalog_empty: boolean }>('/offers', { q, page });
 
   const remove = async (o: Offer) => {
@@ -66,11 +68,11 @@ export default function Offers() {
       <Actions>
         <LinkButton to="/offers/new?commodity=power" soft>+ Luce</LinkButton>
         <LinkButton to="/offers/new?commodity=gas" soft>+ Gas</LinkButton>
-        <SoftButton onClick={() => setCatalog(true)}>Aggiorna o importa il catalogo</SoftButton>
+        {admin && <SoftButton onClick={() => setCatalog(true)}>Aggiorna o importa il catalogo</SoftButton>}
       </Actions>
       <CatalogModal open={catalog} onClose={() => setCatalog(false)} onDone={reload} />
       {loading && !data ? <Loading /> : error || !data ? <ErrorBox error={error!} /> : <>
-        {data.catalog_empty && <Muted className="mb-3">Il catalogo è vuoto: importa le offerte dal Portale Offerte per poterle confrontare.</Muted>}
+        {data.catalog_empty && <Muted className="mb-3">Il catalogo è vuoto: {admin ? 'importa le offerte dal Portale Offerte' : 'chiedi a un amministratore di importare le offerte dal Portale Offerte'} per poterle confrontare.</Muted>}
         {(data.page.total > 0 || q) && (
           <form className="my-2 flex flex-wrap gap-2" role="search" onSubmit={(e) => { e.preventDefault(); setParams(term ? { q: term } : {}); }}>
             <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Cerca fornitore o offerta" aria-label="Cerca fornitore o offerta" className={`${fieldClass} max-w-xs flex-1`} />
@@ -86,7 +88,7 @@ export default function Offers() {
               <td className={td}><Link className="font-bold text-accent underline" to={`/offers/${o.id}`}>{o.name}</Link>{o.dual_with && <span className="text-sm text-muted"> (luce+gas)</span>}</td>
               <td className={td}>{o.price_type === 'fixed' ? 'fisso' : 'indicizzato'}</td><td className={td}>{o.expires_on ?? '–'}</td>
               <td className={td}>{o.is_current && <Tag kind="current">attuale</Tag>}</td>
-              <td className={td}><DangerLink onClick={() => void remove(o)}>elimina</DangerLink></td>
+              <td className={td}>{(admin || o.profile_id != null) && <DangerLink onClick={() => void remove(o)}>elimina</DangerLink>}</td>
             </tr>))}
             {!data.items.length && <tr><td colSpan={7} className={`${td} text-muted`}>Nessuna offerta.</td></tr>}
           </tbody></table></Scroll>

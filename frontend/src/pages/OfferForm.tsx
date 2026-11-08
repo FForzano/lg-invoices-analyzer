@@ -5,6 +5,7 @@ import { useQuery } from '../lib/useQuery';
 import { useAction } from '../lib/useAction';
 import type { Offer } from '../lib/types';
 import { useApp } from '../context/AppContext';
+import { useIsAdmin } from '../context/AuthContext';
 import { AreaField, Button, CheckField, ErrorBox, Field, FieldGrid, Group, H1, LinkButton, Loading, Muted, SelectField, useForm } from '../components/ui';
 
 export default function OfferForm() {
@@ -13,6 +14,7 @@ export default function OfferForm() {
   const navigate = useNavigate();
   const { flash } = useApp();
   const { run, busy } = useAction();
+  const admin = useIsAdmin();
   const { data, error, loading } = useQuery<{ offer: Offer }>(id ? `/offers/${id}` : null);
   const form = useForm<Record<string, unknown>>({ commodity: params.get('commodity') === 'gas' ? 'gas' : 'power', price_type: 'fixed' });
   useEffect(() => { if (data) form.reset(data.offer as Record<string, unknown>); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [data]);
@@ -20,7 +22,9 @@ export default function OfferForm() {
   const save = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      const r = id ? await api.put<WithMessages>(`/offers/${id}`, form.values) : await api.post<WithMessages>('/offers', form.values);
+      // chi non è amministratore non tocca il catalogo: la sua offerta è sempre «l'attuale» del suo profilo
+      const values = admin ? form.values : { ...form.values, is_current: true };
+      const r = id ? await api.put<WithMessages>(`/offers/${id}`, values) : await api.post<WithMessages>('/offers', values);
       flash(r.messages); navigate('/offers');
     });
   };
@@ -37,7 +41,8 @@ export default function OfferForm() {
           <Field form={form} name="name" label="Nome offerta" required help="name" />
           <SelectField form={form} name="price_type" label="Tipo di prezzo" options={[['fixed', 'Fisso'], ['indexed', 'Indicizzato']]} required help="price_type" />
           <Field form={form} name="expires_on" label="Scadenza" type="date" help="expires_on" />
-          <CheckField form={form} name="is_current" label="Offerta attuale" help="is_current" />
+          {admin ? <CheckField form={form} name="is_current" label="Offerta attuale" help="is_current" />
+            : <Muted className="col-span-full">Questa sarà la tua offerta attuale. Il catalogo delle offerte lo gestiscono gli amministratori.</Muted>}
           <Group legend="Prezzo energia (€/kWh o €/Smc)">
             <Field form={form} name="price" label="Prezzo fisso" type="number" help="price" /><Field form={form} name="price_f1" label="Fisso F1 (luce)" type="number" help="price_f1" />
             <Field form={form} name="price_f2" label="Fisso F2 (luce)" type="number" help="price_f2" /><Field form={form} name="price_f3" label="Fisso F3 (luce)" type="number" help="price_f3" />

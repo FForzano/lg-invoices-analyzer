@@ -101,14 +101,14 @@ export function useForm<T extends Record<string, unknown>>(initial: T) {
 export type Form = ReturnType<typeof useForm<Record<string, unknown>>>;
 const str = (v: unknown) => (v === null || v === undefined ? '' : String(v));
 
-interface FieldProps { form: Form; name: string; label: string; type?: 'text' | 'number' | 'date'; step?: string; required?: boolean; help?: string; placeholder?: string; full?: boolean }
-export function Field({ form, name, label, type = 'text', step = 'any', required, help, placeholder, full }: FieldProps) {
+interface FieldProps { form: Form; name: string; label: string; type?: 'text' | 'number' | 'date'; step?: string; required?: boolean; help?: string; placeholder?: string; full?: boolean; disabled?: boolean }
+export function Field({ form, name, label, type = 'text', step = 'any', required, help, placeholder, full, disabled }: FieldProps) {
   return (
     <div className={full ? 'col-span-full' : ''}>
       <label className="flex flex-col gap-1 text-sm font-medium">
         <span>{label}{required && <span aria-hidden> *</span>}{help && <InfoButton term={help} name={label} />}</span>
-        <input name={name} type={type} step={type === 'number' ? step : undefined} value={str(form.values[name])} required={required} placeholder={placeholder}
-          onChange={(e) => form.set(name, e.target.value)} className={fieldClass} />
+        <input name={name} type={type} step={type === 'number' ? step : undefined} value={str(form.values[name])} required={required} placeholder={placeholder} disabled={disabled}
+          onChange={(e) => form.set(name, e.target.value)} className={`${fieldClass} disabled:cursor-not-allowed disabled:bg-calm disabled:text-muted`} />
       </label>
     </div>
   );

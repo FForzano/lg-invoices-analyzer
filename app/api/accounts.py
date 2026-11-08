@@ -17,27 +17,50 @@ def _need_auth() -> None:
 
 @bp.get("/auth/session")
 def auth_session():
-    """Pubblico: dice al front-end se serve il login e, se il token inviato è valido, chi sei."""
+    """Pubblico: dice al front-end se serve il login e, se il cookie di accesso è valido, chi sei."""
     if not auth.enabled():
         return jsonify(auth_enabled=False, user=None)
-    token = auth.current_token()
-    user = auth.user_from_token(token) if token else None
+    user = auth.user_from_access_token(request.cookies.get(auth.ACCESS_COOKIE, ""))
     return jsonify(auth_enabled=True, user=auth.public(user) if user else None)
+
+
+def _with_session(user: dict, refresh: str, **extra):
+    resp = jsonify(user=auth.public(user), **extra)
+    auth.set_session_cookies(resp, user, refresh)
+    return resp
 
 
 @bp.post("/auth/login")
 def auth_login():
+    """I token non vengono mai restituiti nel corpo: arrivano solo come cookie HttpOnly."""
     _need_auth()
     data = _body()
-    user, token = auth.login(str(data.get("email", "")), str(data.get("password", "")))
-    return jsonify(token=token, user=auth.public(user))
+    user, refresh = auth.login(str(data.get("email", "")), str(data.get("password", "")))
+    return _with_session(user, refresh)
+
+
+@bp.post("/auth/refresh")
+def auth_refresh():
+    """Scambia il refresh token (cookie) con un access token nuovo e un nuovo refresh token (rotazione)."""
+    _need_auth()
+    try:
+        user, refresh = auth.rotate_refresh(request.cookies.get(auth.REFRESH_COOKIE, ""))
+    except ApiError as e:
+        resp = jsonify(error=e.text)
+        resp.status_code = e.status
+        auth.clear_session_cookies(resp)
+        return resp
+    return _with_session(user, refresh)
 
 
 @bp.post("/auth/logout")
 def auth_logout():
+    """Chiude questo accesso (la famiglia di refresh token) e cancella i cookie."""
     _need_auth()
-    auth.end_session(auth.current_token())
-    return jsonify(ok=True)
+    auth.end_family(request.cookies.get(auth.REFRESH_COOKIE, ""))
+    resp = jsonify(ok=True)
+    auth.clear_session_cookies(resp)
+    return resp
 
 
 @bp.get("/auth/me")
@@ -57,18 +80,19 @@ def auth_update_me():
 
 @bp.post("/auth/password")
 def auth_password():
-    """Cambio password: serve quella attuale. Le altre sessioni (altri dispositivi) vengono chiuse."""
+    """Cambio password: serve quella attuale. Gli altri dispositivi vengono scollegati; questo resta dentro con un access token nuovo."""
     _need_auth()
     data = _body()
-    from werkzeug.security import check_password_hash
-
-    if not check_password_hash(g.user["password_hash"], str(data.get("current_password", ""))):
+    if not auth.verify_password(g.user["password_hash"], str(data.get("current_password", "")))[0]:
         raise ApiError("La password attuale non è corretta.", 400)
     new = auth.check_password(data.get("new_password", ""))
     if new == data.get("current_password"):
         raise ApiError("La nuova password deve essere diversa da quella attuale.")
-    auth.set_password(g.user["id"], new, keep_token=auth.current_token())
-    return jsonify(user=auth.public(auth.get_user(g.user["id"])), messages=[msg("info", "Password cambiata. Gli altri dispositivi dovranno accedere di nuovo.")])
+    auth.set_password(g.user["id"], new, keep_family=auth.current_family())
+    user = auth.get_user(g.user["id"])
+    resp = jsonify(user=auth.public(user), messages=[msg("info", "Password cambiata. Gli altri dispositivi dovranno accedere di nuovo.")])
+    auth.set_access_cookie(resp, user)  # il token_version è cambiato: quello vecchio non vale più
+    return resp
 
 
 # --- gestione utenti (amministratori) -----------------------------------------
@@ -113,7 +137,7 @@ def update_user(id: int):
 @bp.post("/users/<int:id>/password")
 @auth.admin_required
 def reset_password(id: int):
-    """Reimposta la password di un utente: nuova provvisoria, da cambiare al prossimo accesso; le sue sessioni si chiudono."""
+    """Reimposta la password di un utente: nuova provvisoria, da cambiare al prossimo accesso; i suoi accessi si chiudono."""
     _need_auth()
     _target(id)
     auth.set_password(id, auth.check_password(_body().get("password", "")), must_change=True)

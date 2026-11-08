@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { api, setOnUnauthorized, setToken, type WithMessages } from '../lib/api';
+import { api, setOnUnauthorized } from '../lib/api';
 import type { User } from '../lib/types';
 
 interface AuthState {
@@ -20,22 +20,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const load = useCallback(async () => {
     try {
       const s = await api.get<{ auth_enabled: boolean; user: User | null }>('/auth/session');
-      if (!s.user) setToken(null);
-      setState({ enabled: s.auth_enabled, user: s.user }); setError(null);
+      let user = s.user;
+      if (s.auth_enabled && !user) {  // l'access token dura pochi minuti: se c'è ancora il refresh token, si rientra senza password
+        try { user = (await api.post<{ user: User }>('/auth/refresh')).user; } catch { user = null; }
+      }
+      setState({ enabled: s.auth_enabled, user }); setError(null);
     } catch (e) { setError(e instanceof Error ? e.message : 'Errore'); }
   }, []);
   useEffect(() => { void load(); }, [load]);
-  // token scaduto o revocato mentre si usa l'app: si torna alla schermata di accesso
-  useEffect(() => setOnUnauthorized(() => { setToken(null); setState((s) => s && { ...s, user: null }); }), []);
+  // sessione scaduta o revocata mentre si usa l'app: si torna alla schermata di accesso
+  useEffect(() => setOnUnauthorized(() => setState((s) => s && { ...s, user: null })), []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const r = await api.post<{ token: string; user: User }>('/auth/login', { email, password });
-    setToken(r.token);
+    const r = await api.post<{ user: User }>('/auth/login', { email, password });  // i token arrivano come cookie HttpOnly
     setState((s) => s && { ...s, user: r.user });
   }, []);
   const logout = useCallback(async () => {
-    try { await api.post('/auth/logout'); } catch { /* il token va tolto comunque */ }
-    setToken(null);
+    try { await api.post('/auth/logout'); } catch { /* si esce comunque dall'app; al prossimo contatto il server revocherà */ }
     setState((s) => s && { ...s, user: null });
   }, []);
   const setUser = useCallback((user: User) => setState((s) => s && { ...s, user }), []);
@@ -53,4 +54,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-export type { WithMessages };
+/** Con il login spento l'app è a utente unico e tutto è permesso; acceso, catalogo e ipotesi su PUN/PSV sono degli amministratori. */
+export const useIsAdmin = () => { const { enabled, user } = useAuth(); return !enabled || Boolean(user?.is_admin); };

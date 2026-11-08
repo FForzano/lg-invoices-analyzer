@@ -63,12 +63,26 @@ d'ambiente (nel `.env`); si possono usare separatamente.
 
 | Funzione | Variabili |
 |---|---|
-| **Login** | `AUTH_ENABLED=true`. Al primo avvio nasce un amministratore: `ADMIN_EMAIL` (default `admin@bollette.local`) e `ADMIN_PASSWORD` (se non la imposti è `admin` e al primo accesso viene chiesto di cambiarla). Da *Utenti* l'amministratore crea gli altri account; ognuno ha i **suoi profili** (quante case vuole) e cambia nome, email e password da *Account*. I profili già esistenti passano all'amministratore. `SESSION_DAYS` (default 30) = durata dell'accesso. |
+| **Login** | `AUTH_ENABLED=true`. Al primo avvio nasce un amministratore: `ADMIN_EMAIL` (default `admin@bollette.local`) e `ADMIN_PASSWORD` (se non la imposti è `admin` e al primo accesso viene chiesto di cambiarla). Da *Utenti* l'amministratore crea gli altri account; ognuno ha i **suoi profili** (quante case vuole) e cambia nome, email e password da *Account*. I profili già esistenti passano all'amministratore. Il **catalogo offerte** e le ipotesi su **PUN/PSV** (e perdite/dispacciamento) li gestiscono solo gli amministratori e il cron; gli altri utenti inseriscono la propria offerta attuale. Dettagli di sicurezza sotto. |
 | **PostgreSQL** | `DATABASE_URL=postgresql://utente:password@host:5432/bollette` (database già creato; le tabelle le crea l'app). Senza: `sqlite:///` nella cartella dati. |
 | **PDF su S3 / MinIO / R2** | `STORAGE_DRIVER=s3`, `S3_BUCKET`, `S3_ENDPOINT_URL` (vuoto per AWS), `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` (senza: catena standard di AWS, es. ruolo IAM), `S3_PREFIX` (cartella nel bucket), `S3_ADDRESSING=path\|virtual` (con un endpoint è «path», come vuole MinIO). Senza: `STORAGE_PATH`, default `DATA_DIR/pdf`. |
 
-Con il login attivo, il cron di aggiornamento offerte non ha un account: imposta `CRON_TOKEN` e mandalo come
-`Authorization: Bearer <token>` (vale solo per quell'operazione; `deploy/refresh-offers.example.sh` lo fa se `CRON_TOKEN` è impostato).
+**Aggiornamento offerte con il login attivo.** Il cron non ha un account. Il modo più semplice è il comando, che non passa dal web
+e quindi non ha token da custodire:
+
+```bash
+docker exec bollette flask --app app import-offers      # es. una volta a settimana, da cron dell'host
+```
+
+In alternativa, via HTTP (`deploy/refresh-offers.example.sh`): imposta `CRON_TOKEN` nel container e nello script; il token vale solo per quell'operazione.
+
+**Come funziona l'accesso.** Password con **Argon2id**. Dopo l'accesso il browser riceve due cookie `HttpOnly` + `SameSite=Strict`
+(+ `Secure` in HTTPS): un **access token JWT** da 15 minuti e un **refresh token** che cambia a ogni rinnovo (*rotation*). Se un refresh
+token già usato ricompare, qualcuno l'ha copiato: l'intero accesso viene revocato. JavaScript non legge i cookie, quindi un XSS non li ruba;
+le richieste che modificano dati richiedono un header che un altro sito non può aggiungere (anti-CSRF). Cambiare o reimpostare la password
+scollega subito gli altri dispositivi. La chiave dei JWT (`SECRET_KEY`) se manca viene generata e conservata nel database.
+Dopo 5 password errate l'account si blocca per 15 minuti. Metti comunque l'app dietro **HTTPS** se la raggiungi fuori casa.
+
 
 **Passare a PostgreSQL o S3 con dati già presenti** (una volta, con la nuova configurazione nel `.env`):
 

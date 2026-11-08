@@ -1,6 +1,6 @@
 from flask import jsonify, request
 
-from .. import db
+from .. import auth, db
 from . import ApiError, bp, msg
 
 
@@ -20,10 +20,12 @@ def get_settings():
 @bp.put("/settings")
 def put_settings():
     data = request.get_json(silent=True) or {}
+    # PUN, PSV e le altre ipotesi valgono per tutti i profili: le cambiano solo gli amministratori; gli altri salvano località e potenza
+    own = db.PROFILE_SETTINGS if not auth.is_admin() else tuple(db.SETTING_DEFAULTS)
     try:
         db.save_settings({
             k: _code(data[k]) if isinstance(default, str) else float(str(data[k]).replace(",", "."))
-            for k, default in db.SETTING_DEFAULTS.items()
+            for k, default in db.SETTING_DEFAULTS.items() if k in own
         })
     except (KeyError, ValueError):
         raise ApiError("Valori non validi.") from None
@@ -31,6 +33,7 @@ def put_settings():
 
 
 @bp.post("/settings/use-recent")
+@auth.admin_required
 def use_recent():
     s = db.get_settings()
     if "pun_recent" not in s:

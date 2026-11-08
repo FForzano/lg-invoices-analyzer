@@ -26,7 +26,7 @@ docker compose up --build   # http://localhost:8080, dati in ./data
 
 - `app/` — Flask: API JSON sotto `/api` (`app/api/`), logica di dominio in `app/services/`, SQLite. Serve anche il front-end compilato. Database (`database.py`, SQLite o PostgreSQL), storage dei PDF (`storage.py`, cartella o S3) e login (`auth.py`) si scelgono con variabili d'ambiente (`config.py`).
 - `frontend/` — React + TypeScript + Vite + Tailwind. Il design è descritto in `DESIGN.md`. In Docker viene compilato in uno stadio Node e copiato nell'immagine.
-- Il login è opzionale (`AUTH_ENABLED`, spento di default): token `Bearer` nell'header, controllato in `authenticate()` (`app/api/__init__.py` → `app/auth.py`); nel front-end `AuthContext`, `RequireAuth` e `lib/api.ts`.
+- Il login è opzionale (`AUTH_ENABLED`, spento di default): Argon2id, access JWT breve + refresh a rotazione in cookie HttpOnly, controllati in `authenticate()` (`app/api/__init__.py` → `app/auth.py`); nel front-end `AuthContext`, `RequireAuth` e `lib/api.ts` (rinnovo trasparente). Catalogo e PUN/PSV: solo admin e cron (`flask --app app import-offers`).
 
 ## Test
 
@@ -64,7 +64,7 @@ Se vuoi che il tuo fornitore funzioni per tutti, *Segnala agli sviluppatori* mos
 
 ## Profili (più appartamenti)
 
-Un **profilo** è un appartamento, con le sue bollette, la sua offerta attuale, la località e la potenza di default. Si crea e si cambia da *Profili* (o dal menu); la scelta resta nel browser. Con il login attivo ogni **account** ha i suoi profili (quanti vuole) e non vede quelli degli altri. Il catalogo delle offerte (importate o inserite a mano) e le ipotesi su PUN/PSV sono condivisi. Cancellare un profilo elimina le sue bollette e i PDF. I dati esistenti passano nel profilo «Casa».
+Un **profilo** è un appartamento, con le sue bollette, la sua offerta attuale, la località e la potenza di default. Si crea e si cambia da *Profili* (o dal menu); la scelta resta nel browser. Con il login attivo ogni **account** ha i suoi profili (quanti vuole) e non vede quelli degli altri; catalogo offerte e PUN/PSV restano condivisi ma li modificano solo gli amministratori. Il catalogo delle offerte (importate o inserite a mano) e le ipotesi su PUN/PSV sono condivisi. Cancellare un profilo elimina le sue bollette e i PDF. I dati esistenti passano nel profilo «Casa».
 
 ## Offerte
 

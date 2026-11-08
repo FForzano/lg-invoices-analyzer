@@ -121,7 +121,9 @@ class TestPostgres:
         with psycopg.connect(pg_url) as conn:
             cols = lambda t: {r[0] for r in conn.execute("SELECT column_name FROM information_schema.columns WHERE table_name = %s", (t,))}  # noqa: E731
             assert cols("bills") == set(columns(Bill)) and cols("offers") == set(columns(Offer))
-            assert conn.execute("SELECT max(version) FROM schema_version").fetchone()[0] == 12
+            from app.migrations import migration_files
+
+            assert conn.execute("SELECT max(version) FROM schema_version").fetchone()[0] == migration_files("postgres")[-1][0]
 
     def test_full_flow(self, pg_url, tmp_path):
         app = create_app(str(tmp_path), DATABASE_URL=pg_url)
@@ -142,12 +144,17 @@ class TestPostgres:
     def test_auth_and_migrations_twice(self, pg_url, tmp_path):
         create_app(str(tmp_path), DATABASE_URL=pg_url)
         app = create_app(str(tmp_path), DATABASE_URL=pg_url, AUTH_ENABLED=True, ADMIN_PASSWORD="una-password-lunga")  # secondo avvio: niente da migrare
-        c = app.test_client()
-        token = c.post("/api/auth/login", json={"email": "admin@bollette.local", "password": "una-password-lunga"}).json["token"]
-        h = {"Authorization": f"Bearer {token}"}
-        assert [p["name"] for p in c.get("/api/profiles", headers=h).json["profiles"]] == ["Casa"]
+        c, h = app.test_client(), {"X-Requested-With": "bollette"}
+        assert c.post("/api/auth/login", json={"email": "admin@bollette.local", "password": "una-password-lunga"}, headers=h).status_code == 200
+        assert [p["name"] for p in c.get("/api/profiles").json["profiles"]] == ["Casa"]
         assert c.post("/api/users", json={"name": "A", "email": "a@b.it", "password": "password-lunga"}, headers=h).status_code == 201
         assert c.post("/api/users", json={"name": "A", "email": "a@b.it", "password": "password-lunga"}, headers=h).status_code == 409
+        # rotazione del refresh token su PostgreSQL (UPDATE ... WHERE used_at IS NULL, rowcount, famiglie)
+        assert c.post("/api/auth/refresh", headers=h).status_code == 200 and c.post("/api/auth/refresh", headers=h).status_code == 200
+        assert c.post("/api/auth/logout", headers=h).status_code == 200 and c.post("/api/auth/refresh", headers=h).status_code == 401
+        key = app.extensions["jwt_secret"]
+        second = create_app(str(tmp_path / "altra"), DATABASE_URL=pg_url, AUTH_ENABLED=True)  # un'altra istanza sullo stesso database
+        assert len(key) == 64 and second.extensions["jwt_secret"] == key  # la chiave dei JWT sta nel database, condivisa
 
     def test_import_sqlite_command(self, pg_url, tmp_path):
         old = create_app(str(tmp_path / "old"))

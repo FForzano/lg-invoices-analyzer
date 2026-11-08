@@ -6,6 +6,7 @@ set -euo pipefail
 
 URL="${URL:-http://localhost:8090}"
 # Con il login attivo imposta CRON_TOKEN (stesso valore del container): vale solo per questa operazione.
+# Alternativa senza token: `docker exec bollette flask --app app import-offers`.
 AUTH=()
 [ -n "${CRON_TOKEN:-}" ] && AUTH=(-H "Authorization: Bearer $CRON_TOKEN")
 curl -fsS --max-time 300 -X POST ${AUTH[@]+"${AUTH[@]}"} "$URL/api/offers/import-arera" -o /dev/null

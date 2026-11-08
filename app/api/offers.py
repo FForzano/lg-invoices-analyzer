@@ -2,7 +2,7 @@ from flask import jsonify, request
 
 from .. import auth, db, forms
 from ..models import Offer
-from ..services import arera
+from ..services import arera, catalog
 from ..services.offers_csv import parse_offers_csv
 from ..services.paging import paginate
 from . import ApiError, bp, dump, msg
@@ -32,11 +32,20 @@ def get_offer(id: int):
     return jsonify(offer=dump(offer))
 
 
+CATALOG_ONLY_ADMIN = "Il catalogo delle offerte"
+
+
 def _save(id: int | None):
     try:
         offer = forms.parse(Offer, strs(request.get_json(silent=True) or {}))
     except ValueError as e:
         raise ApiError(str(e)) from None
+    if not offer.is_current:  # un'offerta non «attuale» è del catalogo, condiviso: la gestiscono gli amministratori
+        existing = db.get_offer(id) if id is not None else None
+        if existing is None and id is not None:
+            raise ApiError("Offerta non trovata.", 404)
+        if existing is None or existing.profile_id is None:
+            auth.require_admin(CATALOG_ONLY_ADMIN)
     try:
         new_id = db.save_offer(offer, id)
     except LookupError:
@@ -56,11 +65,15 @@ def update_offer(id: int):
 
 @bp.delete("/offers/<int:id>")
 def delete_offer(id: int):
+    offer = db.get_offer(id)
+    if offer is not None and offer.profile_id is None:
+        auth.require_admin(CATALOG_ONLY_ADMIN)
     db.delete_offer(id)
     return jsonify(ok=True)
 
 
 @bp.post("/offers/import-csv")
+@auth.admin_required
 def import_csv():
     file = request.files.get("csv")
     if not file or not file.filename:
@@ -75,17 +88,7 @@ def import_csv():
 @auth.admin_required
 def import_arera():
     try:
-        offers, skipped = arera.fetch_offers()
+        messages = catalog.refresh_catalog()
     except arera.AreraError as e:
         raise ApiError(str(e), 502) from None
-    n = db.replace_imported_offers(offers, arera.SOURCE_PREFIX)
-    detail = ", ".join(f"{count} {why}" for why, count in skipped.items())
-    messages = [msg("info", f"Importate {n} offerte domestiche dal Portale Offerte" + (f" (scartate: {detail})." if detail else "."))]
-    try:
-        factors, recent = arera.fetch_index_history()
-        db.save_index_factors(factors)
-        db.save_settings({"pun_recent": recent["pun"], "psv_recent": recent["psv"], "recent_until": recent["until"]})
-        messages.append(msg("info", "Stagionalità e prezzi recenti di PUN/PSV aggiornati. Puoi adottare i prezzi recenti in Impostazioni."))
-    except arera.AreraError as e:
-        messages.append(msg("warn", f"{e}: uso i valori predefiniti."))
     return jsonify(messages=messages)

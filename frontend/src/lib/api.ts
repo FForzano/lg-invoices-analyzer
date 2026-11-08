@@ -6,20 +6,13 @@ export class ApiError extends Error {
 }
 
 // --- login (opzionale: AUTH_ENABLED sul server) -------------------------------------------------
-// Il token sta in localStorage (in un'app nativa basterà sostituire queste tre funzioni con lo storage sicuro del sistema).
-// Se il server ha il login spento il token non esiste e non viene mandato nulla.
-const TOKEN_KEY = 'bollette.token';
-export const getToken = (): string | null => { try { return localStorage.getItem(TOKEN_KEY); } catch { return null; } };
-export const setToken = (token: string | null) => {
-  try { if (token) localStorage.setItem(TOKEN_KEY, token); else localStorage.removeItem(TOKEN_KEY); } catch { /* storage non disponibile */ }
-};
-let authHeaders = (): Record<string, string> => { const t = getToken(); return t ? { Authorization: `Bearer ${t}` } : {}; };
+// La sessione sta in cookie HttpOnly (access JWT breve + refresh a rotazione): JavaScript non li vede né li conserva,
+// il browser li manda da solo. Qui si fa solo il resto: l'header anti-CSRF e il rinnovo trasparente quando l'access scade.
 let onUnauthorized: () => void = () => {};
-export const setAuthHeaders = (fn: () => Record<string, string>) => { authHeaders = fn; };
-/** Chiamata quando una richiesta riceve 401 (token scaduto o revocato): l'app torna alla schermata di accesso. */
+/** Chiamata quando la sessione non è più rinnovabile (scaduta o revocata): l'app torna alla schermata di accesso. */
 export const setOnUnauthorized = (fn: () => void) => { onUnauthorized = fn; };
 
-// --- profilo attivo: lo manda ogni richiesta (i cookie non sono affidabili in un'app nativa) -----
+// --- profilo attivo: lo manda ogni richiesta ------------------------------------------------------
 const PROFILE_KEY = 'bollette.profile';
 export const getProfileId = (): number | null => {
   try { return Number(localStorage.getItem(PROFILE_KEY)) || null; } catch { return null; }
@@ -28,23 +21,41 @@ export const setProfileId = (id: number) => { try { localStorage.setItem(PROFILE
 
 function headers(extra: Record<string, string> = {}): Record<string, string> {
   const profile = getProfileId();
-  return { ...(profile ? { 'X-Profile-Id': String(profile) } : {}), ...authHeaders(), ...extra };
+  // X-Requested-With: un altro sito non può aggiungerlo alle sue richieste, quindi il server lo pretende per quelle che modificano
+  return { 'X-Requested-With': 'bollette', ...(profile ? { 'X-Profile-Id': String(profile) } : {}), ...extra };
+}
+
+let refreshing: Promise<boolean> | null = null;
+/** Rinnova la sessione. Una sola richiesta alla volta: con più chiamate in volo che scadono insieme, il refresh token
+ *  (a rotazione, valido una volta) verrebbe usato più volte e il server lo scambierebbe per un furto. */
+function refreshSession(): Promise<boolean> {
+  refreshing ??= fetch('/api/auth/refresh', { method: 'POST', headers: headers() })
+    .then((r) => r.ok).catch(() => false).finally(() => { refreshing = null; });
+  return refreshing;
+}
+
+const NO_RETRY = ['/auth/login', '/auth/refresh', '/auth/session', '/auth/logout'];
+
+/** fetch su /api: se risponde 401 prova a rinnovare la sessione e ripete la richiesta una volta. */
+async function send(method: string, path: string, body?: unknown): Promise<Response> {
+  const isForm = body instanceof FormData;
+  const go = () => fetch(`/api${path}`, {
+    method,
+    headers: headers(body && !isForm ? { 'Content-Type': 'application/json' } : {}),
+    body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
+  });
+  const attempt = async () => { try { return await go(); } catch { throw new ApiError('Server non raggiungibile: controlla la connessione.', 0); } };
+  let res = await attempt();
+  if (res.status === 401 && !NO_RETRY.includes(path)) {
+    if (await refreshSession()) res = await attempt();
+    if (res.status === 401) onUnauthorized();
+  }
+  return res;
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const isForm = body instanceof FormData;
-  let res: Response;
-  try {
-    res = await fetch(`/api${path}`, {
-      method,
-      headers: headers(body && !isForm ? { 'Content-Type': 'application/json' } : {}),
-      body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
-    });
-  } catch {
-    throw new ApiError('Server non raggiungibile: controlla la connessione.', 0);
-  }
+  const res = await send(method, path, body);
   const data = await res.json().catch(() => null);
-  if (res.status === 401 && path !== '/auth/login') onUnauthorized();
   if (!res.ok) throw new ApiError(data?.error ?? `Errore ${res.status}`, res.status, data);
   return data as T;
 }
@@ -61,7 +72,7 @@ export const api = {
 
 /** Apre un PDF protetto (richiede header): lo scarica come blob e lo mostra in una scheda. */
 export async function openPdf(path: string): Promise<void> {
-  const res = await fetch(`/api${path}`, { headers: headers() });
+  const res = await send('GET', path);
   if (!res.ok) throw new ApiError('PDF non disponibile.', res.status);
   const url = URL.createObjectURL(await res.blob());
   window.open(url, '_blank', 'noopener');
@@ -69,7 +80,7 @@ export async function openPdf(path: string): Promise<void> {
 }
 
 export const fetchPdfData = async (path: string): Promise<ArrayBuffer> => {
-  const res = await fetch(`/api${path}`, { headers: headers() });
+  const res = await send('GET', path);
   if (!res.ok) throw new ApiError('PDF non disponibile.', res.status);
   return res.arrayBuffer();
 };

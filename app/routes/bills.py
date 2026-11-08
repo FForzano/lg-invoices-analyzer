@@ -6,11 +6,11 @@ from pypdf.errors import PyPdfError
 from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, send_file, url_for
 
 from .. import db, forms
-from ..models import COMMODITIES, Bill
+from ..models import COMMODITIES, UNIT, Bill
 from ..models import Offer
 from ..services import extraction
 from ..services.bill_parser import parse_offer_terms
-from ..services.history import history
+from ..services.history import chart_data, history
 from ..services.paging import paginate
 
 bp = Blueprint("bills", __name__)
@@ -154,4 +154,5 @@ def history_page():
     commodity = request.args.get("commodity", "power")
     if commodity not in COMMODITIES:
         abort(404)
-    return render_template("history.html", commodity=commodity, rows=history(db.list_bills(commodity)))
+    rows = history(db.list_bills(commodity))
+    return render_template("history.html", commodity=commodity, rows=rows, chart=chart_data(rows), unit=UNIT[commodity])

@@ -37,3 +37,15 @@ def _unit_cost(b: Bill) -> float | None:
 
 def _pct(now: float | None, before: float | None) -> float | None:
     return (now - before) / before * 100 if now is not None and before else None
+
+
+def chart_data(rows: list[HistoryRow], last: int = 24) -> dict:
+    """Serie cronologiche per i grafici dello storico (ultime `last` bollette)."""
+    rows = sorted(rows, key=lambda r: r.bill.period_start)[-last:]
+    return {
+        "labels": [r.bill.period_end[:7] for r in rows],
+        "consumption": [r.bill.consumption for r in rows],
+        "total": [r.bill.total_eur for r in rows],
+        "unit_cost": [r.unit_cost for r in rows],
+        "estimated": [r.bill.reading_type == "stimata" for r in rows],
+    }

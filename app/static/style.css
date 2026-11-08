@@ -128,3 +128,23 @@ th button.info { text-transform:none; }
 .guide h2 { margin-top:1.75rem; }
 .guide dt { font-weight:600; margin-top:.75rem; }
 .guide dd { margin:0 0 0 0; }
+
+/* menu: da telefono diventa un elenco dietro il pulsante «Menu» (senza JS resta tutto visibile) */
+nav .nav-links { display:flex; flex-wrap:wrap; gap:0 .25rem; align-items:center; flex:1 1 auto; min-width:0; }
+nav .nav-toggle { display:none; background:none; color:var(--fg); border:0; font-weight:500; min-width:0; padding:.4rem .6rem; align-items:center; gap:.5rem; }
+@media (max-width:48rem) {
+  .js nav .nav-toggle { display:inline-flex; }
+  .js nav:not(.open) .nav-links { display:none; }
+  nav .nav-links { flex-basis:100%; flex-direction:column; align-items:stretch; gap:0; padding-bottom:.25rem; }
+  nav .nav-links a { border-bottom:1px solid var(--line); }
+  nav .nav-links a[aria-current=page] { background:var(--calm-bg); border-bottom-color:var(--line); }
+  nav .nav-links .nav-end { margin-left:0; }
+  nav .profile-switch { margin:0; padding:.5rem .6rem; flex-basis:auto; flex-wrap:wrap; }
+  nav .profile-switch a { border-bottom:0; }
+}
+
+/* grafici dello storico (Chart.js, in static/vendor) */
+.charts { display:grid; grid-template-columns:minmax(0,1fr); gap:1rem; margin:0 0 1rem; }
+.chart { min-width:0; margin:0; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:.75rem 1rem 1rem; }
+.chart figcaption { font-weight:600; margin-bottom:.5rem; }
+.chart-box { position:relative; height:14rem; }

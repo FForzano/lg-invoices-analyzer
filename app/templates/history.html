@@ -7,6 +7,15 @@
   <a href="?commodity=gas" {{ 'aria-current=page' if commodity == 'gas' }}>Gas</a>
 </div>
 {% set unit = 'kWh' if commodity == 'power' else 'Smc' %}
+{% if rows | length > 1 %}
+<section class="charts" aria-label="Grafici dello storico">
+  {% for id, title in [('consumption', 'Consumo per bolletta (' ~ unit ~ ')'), ('total', 'Spesa per bolletta (€)'), ('unit_cost', 'Costo medio (€/' ~ unit ~ ')')] %}
+  <figure class="chart"><figcaption>{{ title }}</figcaption><div class="chart-box"><canvas id="chart-{{ id }}" role="img" aria-label="{{ title }}: tabella con gli stessi dati qui sotto"></canvas></div></figure>
+  {% endfor %}
+  <p class="muted">Barre più chiare: lettura stimata. Spesa e costo medio includono trasporto, imposte e canone TV.</p>
+</section>
+<h2>Dettaglio bollette</h2>
+{% endif %}
 <div class="scroll"><table>
   <tr><th>Periodo</th><th class="num">Consumo ({{ unit }}){{ info('t_consumption') }}</th><th class="num">vs anno prima{{ info('t_vs_prev') }}</th><th class="num">Costo medio (€/{{ unit }}){{ info('t_avg_cost') }}</th><th class="num">vs anno prima{{ info('t_vs_prev') }}</th><th>Lettura{{ info('t_reading') }}</th></tr>
   {% for r in rows %}
@@ -21,5 +30,33 @@
 <p class="muted">Il costo medio è il totale in bolletta diviso il consumo: include trasporto, imposte e voci come il canone TV.</p>
 {% if rows | selectattr('bill.reading_type', 'equalto', 'stimata') | list %}
 <p class="flash info">Alcune letture sono stimate: fai l'autolettura dal 1 al 5 del mese.</p>
+{% endif %}
+{% if rows | length > 1 %}
+<script src="{{ url_for('static', filename='vendor/chart.umd.js') }}"></script>
+<script>
+(function () {
+  var d = {{ chart | tojson }}, css = getComputedStyle(document.documentElement);
+  var accent = css.getPropertyValue('--accent').trim(), line = css.getPropertyValue('--line').trim(), muted = css.getPropertyValue('--muted').trim();
+  var months = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+  var labels = d.labels.map(function (l) { return months[+l.slice(5) - 1] + ' ' + l.slice(2, 4); });
+  var fmt = new Intl.NumberFormat('it-IT', { maximumFractionDigits: 3 });
+  Chart.defaults.font.family = 'system-ui, sans-serif'; Chart.defaults.color = muted;
+  function draw(id, type, data, decimals) {
+    new Chart(document.getElementById('chart-' + id), {
+      type: type,
+      data: { labels: labels, datasets: [{ data: data, borderColor: accent, borderWidth: 2, pointRadius: 4, pointBackgroundColor: accent, borderRadius: 4,
+        backgroundColor: data.map(function (_, i) { return d.estimated[i] ? accent + '66' : accent; }) }] },
+      options: { maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: false }, tooltip: { callbacks: {
+          label: function (c) { return new Intl.NumberFormat('it-IT', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(c.parsed.y) + (d.estimated[c.dataIndex] ? ' (stimata)' : ''); } } } },
+        scales: { x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true } },
+                  y: { beginAtZero: true, grid: { color: line }, border: { display: false }, ticks: { maxTicksLimit: 6, callback: function (v) { return fmt.format(v); } } } } }
+    });
+  }
+  draw('consumption', 'bar', d.consumption, 0);
+  draw('total', 'bar', d.total, 2);
+  draw('unit_cost', 'line', d.unit_cost, 3);
+})();
+</script>
 {% endif %}
 {% endblock %}

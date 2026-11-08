@@ -180,6 +180,7 @@ Angoli appena arrotondati: 6px su campi, pulsanti e messaggi; 8px su riquadri (`
 - Riquadro 6px, padding 0.6rem 0.9rem; `warn` su giallo; `info` senza fondo, con bordo Filo e testo sommesso da 0.875rem.
 
 ### Navigation
+- Sotto 48rem le voci stanno dietro il pulsante «Menu» (elenco verticale, pagina corrente su fondo neutro, Esc chiude).
 - Riga in alto su Superficie con bordo inferiore Filo; voci in Inchiostro, peso 500, area di tocco almeno 44px; la pagina corrente (`aria-current=page`) è in grassetto con sottolineatura blu da 3px. Selettore profilo con pulsante «Cambia» solo se i profili sono più d'uno; altrimenti solo il link «Profili» a destra.
 
 ### Tabs
@@ -191,6 +192,9 @@ Angoli appena arrotondati: 6px su campi, pulsanti e messaggi; 8px su riquadri (`
 ### Icons
 - SVG inline dalla macro `icon()` in `_macros.html` (nessun font, nessuna risorsa esterna): tratto 1.75, `currentColor`, 1.25rem, `aria-hidden`. Servono a riconoscere, mai a decorare: fornitura nei titoli dei riquadri (fulmine, fiamma, quadrante; in grigio sommesso), esito nel verdetto (spunta / meno, nel colore dell'etichetta), triangolo negli avvisi. Il testo resta sempre presente.
 - Tastino (i): icona `info` blu senza bordo, dopo il termine che spiega (mai prima), con `U+2060` per non andare a capo da solo; area di tocco 44px.
+
+### Charts
+- Chart.js locale (`static/vendor`), una serie per grafico in blu accento (dati, non decorazione), griglia in Filo, nessuna legenda; barre più chiare = lettura stimata. Il dettaglio sta nella tabella sotto.
 
 ### Details
 - `<details>` per calcoli, condizioni e spiegazioni (PUN/PSV); il sommario è blu, alto almeno 44px.

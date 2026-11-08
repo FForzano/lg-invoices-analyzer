@@ -1,4 +1,4 @@
-<!doctype html>
+{% from "_macros.html" import icon %}<!doctype html>
 <html lang="it">
 <head>
   <meta charset="utf-8">
@@ -7,7 +7,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+<script>document.documentElement.classList.add('js')</script>
 <nav aria-label="Principale">
+  <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="menu">{{ icon('menu') }}<span>Menu</span></button>
+  <div id="menu" class="nav-links">
   {% set ep = request.endpoint or '' %}
   <a href="{{ url_for('home.index') }}" {{ 'aria-current=page' if ep == 'home.index' }}>Home</a>
   <a href="{{ url_for('bills.index') }}" {{ 'aria-current=page' if ep.startswith('bills.') and ep != 'bills.history_page' }}>Bollette</a>
@@ -29,6 +32,7 @@
   {% else %}
   <a class="nav-end" href="{{ url_for('profiles.index') }}" {{ 'aria-current=page' if ep.startswith('profiles.') }}>Profili</a>
   {% endif %}
+  </div>
 </nav>
 <main>
   {% for category, message in get_flashed_messages(with_categories=true) %}
@@ -53,6 +57,18 @@
     pop.style.left = Math.max(8, Math.min(window.scrollX + r.left - 12, window.scrollX + document.documentElement.clientWidth - w - 8)) + 'px';
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(true); });
+})();
+</script>
+<script>
+(function () {
+  var nav = document.querySelector('nav'), btn = nav.querySelector('.nav-toggle');
+  function set(open, back) {
+    nav.classList.toggle('open', open); btn.setAttribute('aria-expanded', open);
+    btn.querySelector('span').textContent = open ? 'Chiudi' : 'Menu';
+    if (back) btn.focus();
+  }
+  btn.addEventListener('click', function () { set(!nav.classList.contains('open')); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && nav.classList.contains('open')) set(false, true); });
 })();
 </script>
 </body>

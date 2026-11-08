@@ -1,12 +1,12 @@
-"""Accesso a SQLite e repository minimali (Bill, Offer, impostazioni)."""
+"""Accesso al database (SQLite o PostgreSQL, vedi database.py) e repository minimali (Bill, Offer, impostazioni)."""
 from __future__ import annotations
 
 import dataclasses
 import json
-import sqlite3
 
 from flask import Flask, current_app, g, has_request_context, request
 
+from .database import Database
 from .migrations import migrate_database
 from .services.layouts import Layout
 from .services.proposal import Proposal, dump_terms, load_terms
@@ -22,15 +22,14 @@ SETTING_DEFAULTS: dict[str, float | str] = {
 PROFILE_SETTINGS = ("region", "province", "comune", "default_power_kw")
 
 
-def get_db() -> sqlite3.Connection:
+def get_db() -> Database:
     if "db" not in g:
-        g.db = sqlite3.connect(current_app.config["DB_PATH"])
-        g.db.row_factory = sqlite3.Row
+        g.db = Database(current_app.config["DATABASE_URL"])
     return g.db
 
 
 def init_app(app: Flask) -> None:
-    migrate_database(app.config["DB_PATH"])
+    migrate_database(app.config["DATABASE_URL"])
     app.teardown_appcontext(_close_db)
 
 
@@ -46,18 +45,23 @@ def _fetch(cls, sql: str, args=()):
     return [cls(**dict(r)) for r in get_db().execute(sql, args)]
 
 
+def _plain(values: dict) -> dict:
+    """I booleani diventano 0/1: le colonne sono INTEGER in entrambi i motori (PostgreSQL non li converte da solo)."""
+    return {k: int(v) if isinstance(v, bool) else v for k, v in values.items()}
+
+
 def _insert(table: str, obj, **extra) -> int:
-    values = {**{k: v for k, v in dataclasses.asdict(obj).items() if k not in SYSTEM_FIELDS}, **extra}
+    values = _plain({**{k: v for k, v in dataclasses.asdict(obj).items() if k not in SYSTEM_FIELDS}, **extra})
     names = ", ".join(values)
     marks = ", ".join("?" for _ in values)
     db = get_db()
-    cur = db.execute(f"INSERT INTO {table} ({names}) VALUES ({marks})", tuple(values.values()))
+    id = db.insert(f"INSERT INTO {table} ({names}) VALUES ({marks})", tuple(values.values()))
     db.commit()
-    return cur.lastrowid
+    return id
 
 
 def _update(table: str, id: int, obj) -> None:
-    values = {k: v for k, v in dataclasses.asdict(obj).items() if k not in SYSTEM_FIELDS}
+    values = _plain({k: v for k, v in dataclasses.asdict(obj).items() if k not in SYSTEM_FIELDS})
     sets = ", ".join(f"{k} = ?" for k in values)
     db = get_db()
     db.execute(f"UPDATE {table} SET {sets} WHERE id = ?", (*values.values(), id))
@@ -73,32 +77,45 @@ def _delete(table: str, id: int, **scope) -> None:
 
 # --- profili -----------------------------------------------------------------
 
+def current_user() -> dict | None:
+    """L'utente autenticato (None con il login spento: allora tutti i profili sono visibili, come sempre)."""
+    return g.get("user") if has_request_context() else None
+
+
 def profile_id() -> int:
-    """Profilo attivo: quello indicato dal client, se esiste ancora, altrimenti il primo."""
+    """Profilo attivo: quello indicato dal client, se esiste ancora (ed è dell'utente), altrimenti il primo."""
     if "profile_id" not in g:
+        ids = [p["id"] for p in list_profiles()]
+        if not ids:  # utente senza profili (es. creato a mano nel database): ne nasce uno vuoto
+            here = SETTING_DEFAULTS
+            ids = [add_profile("Casa", here["region"], here["province"], here["comune"], here["default_power_kw"])]
         # il front-end manda il profilo scelto nell'header `X-Profile-Id` (niente cookie: l'app nativa non li ha affidabili)
         wanted = request.headers.get("X-Profile-Id", type=int) if has_request_context() else None
-        row = get_db().execute("SELECT id FROM profiles WHERE id = ?", (wanted,)).fetchone() if wanted else None
-        g.profile_id = row["id"] if row else get_db().execute("SELECT min(id) FROM profiles").fetchone()[0]
+        g.profile_id = wanted if wanted in ids else ids[0]
     return g.profile_id
 
 
 def list_profiles() -> list[dict]:
-    return [dict(r) for r in get_db().execute("SELECT * FROM profiles ORDER BY id")]
+    user = current_user()
+    where, args = ("WHERE user_id = ?", (user["id"],)) if user else ("", ())
+    return [dict(r) for r in get_db().execute(f"SELECT * FROM profiles {where} ORDER BY id", args)]
 
 
 def current_profile() -> dict:
     return dict(get_db().execute("SELECT * FROM profiles WHERE id = ?", (profile_id(),)).fetchone())
 
 
-def add_profile(name: str, region: str, province: str, comune: str, default_power_kw: float) -> int:
+def add_profile(name: str, region: str, province: str, comune: str, default_power_kw: float, user_id: int | None = None) -> int:
+    """Nuovo profilo; con il login attivo appartiene a chi lo crea (o all'utente indicato)."""
+    if user_id is None and (user := current_user()):
+        user_id = user["id"]
     db = get_db()
-    cur = db.execute(
-        "INSERT INTO profiles (name, region, province, comune, default_power_kw) VALUES (?, ?, ?, ?, ?)",
-        (name, region, province, comune, default_power_kw),
+    id = db.insert(
+        "INSERT INTO profiles (name, region, province, comune, default_power_kw, user_id) VALUES (?, ?, ?, ?, ?, ?)",
+        (name, region, province, comune, default_power_kw, user_id),
     )
     db.commit()
-    return cur.lastrowid
+    return id
 
 
 def rename_profile(id: int, name: str) -> None:
@@ -209,7 +226,7 @@ def delete_offer(id: int) -> None:
 
 # --- proposte ricevute -------------------------------------------------------
 
-def _proposal(row: sqlite3.Row) -> Proposal:
+def _proposal(row) -> Proposal:
     return Proposal(load_terms(row["terms"]), row["id"], row["contact"], row["received_on"], row["notes"], row["created_at"])
 
 
@@ -227,11 +244,10 @@ def save_proposal(p: Proposal) -> int:
     db = get_db()
     args = (p.offer.commodity, dump_terms(p.offer), p.contact, p.received_on, p.notes)
     if p.id is None:
-        cur = db.execute(
+        p.id = db.insert(
             "INSERT INTO proposals (commodity, terms, contact, received_on, notes, profile_id) VALUES (?, ?, ?, ?, ?, ?)",
             (*args, profile_id()),
         )
-        p.id = cur.lastrowid
     else:
         cur = db.execute(
             "UPDATE proposals SET commodity = ?, terms = ?, contact = ?, received_on = ?, notes = ? WHERE id = ? AND profile_id = ?",
@@ -262,10 +278,10 @@ def save_layout(layout: Layout) -> int:
     """Un solo layout per fornitore: insegnarne un altro con la stessa firma lo sostituisce."""
     db = get_db()
     db.execute("DELETE FROM bill_layouts WHERE lower(signature) = lower(?)", (layout.signature,))
-    cur = db.execute("INSERT INTO bill_layouts (name, signature, rules) VALUES (?, ?, ?)",
-                     (layout.name, layout.signature, json.dumps([r.to_dict() for r in layout.rules], ensure_ascii=False)))
+    id = db.insert("INSERT INTO bill_layouts (name, signature, rules) VALUES (?, ?, ?)",
+                   (layout.name, layout.signature, json.dumps([r.to_dict() for r in layout.rules], ensure_ascii=False)))
     db.commit()
-    return cur.lastrowid
+    return id
 
 
 def delete_layout(id: int) -> None:
@@ -274,9 +290,19 @@ def delete_layout(id: int) -> None:
 
 # --- impostazioni -----------------------------------------------------------
 
+def _setting(key: str, value):
+    """Le impostazioni numeriche tornano numeri (in PostgreSQL il valore è testo); i codici ISTAT restano testo."""
+    if isinstance(SETTING_DEFAULTS.get(key, 0.0), float) or key.endswith("_recent"):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return value
+    return str(value)
+
+
 def get_settings() -> dict[str, float | str]:
     """Impostazioni globali più quelle del profilo attivo (località, potenza di default)."""
-    stored = {r["key"]: r["value"] for r in get_db().execute("SELECT key, value FROM settings")}
+    stored = {r["key"]: _setting(r["key"], r["value"]) for r in get_db().execute("SELECT key, value FROM settings")}
     profile = current_profile()
     return {**SETTING_DEFAULTS, **stored, **{k: profile[k] for k in PROFILE_SETTINGS}}
 
@@ -287,7 +313,7 @@ def save_settings(values: dict[str, float | str]) -> None:
     shared = {k: v for k, v in values.items() if k not in PROFILE_SETTINGS}
     db.executemany(
         "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-        shared.items(),
+        [(k, str(v)) for k, v in shared.items()],  # colonna di testo: i numeri si rileggono con _setting
     )
     for key, value in per_profile.items():  # i nomi vengono da PROFILE_SETTINGS, mai dall'utente
         db.execute(f"UPDATE profiles SET {key} = ? WHERE id = ?", (value, profile_id()))

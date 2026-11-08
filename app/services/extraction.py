@@ -7,6 +7,7 @@ Senza ANTHROPIC_API_KEY il ripiego non c'è e si completa il modulo a mano."""
 from __future__ import annotations
 
 import dataclasses
+import io
 import os
 import typing
 
@@ -64,8 +65,9 @@ def available() -> bool:
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
 
-def pdf_text(path: str) -> str:
-    return "\n".join(page.extract_text() or "" for page in PdfReader(path).pages)
+def pdf_text(source: str | bytes) -> str:
+    """Testo del PDF, da un percorso o dai byte (il file può stare in S3: lo si legge in memoria)."""
+    return "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(source) if isinstance(source, bytes) else source).pages)
 
 
 def tool_schema() -> dict:
@@ -83,7 +85,7 @@ def tool_schema() -> dict:
     }
 
 
-def extract_bill(path: str, client=None, layouts: list[Layout] = ()) -> tuple[dict, str]:
+def extract_bill(path: str | bytes, client=None, layouts: list[Layout] = ()) -> tuple[dict, str]:
     """Restituisce (campi, metodo): "regole", «layout …» (forniti o insegnati) o "LLM". `client` è iniettabile per i test.
     In caso di fallimento solleva ExtractionError con i campi parziali già letti dalle regole."""
     return extract_text(pdf_text(path).strip(), client, layouts)

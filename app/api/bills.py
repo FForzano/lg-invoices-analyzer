@@ -1,6 +1,5 @@
+import io
 import uuid
-from pathlib import Path
-
 from flask import current_app, jsonify, request, send_file
 from pypdf.errors import PyPdfError
 
@@ -10,17 +9,18 @@ from ..services import extraction
 from ..services.bill_parser import parse_offer_terms
 from ..services.history import chart_data, history
 from ..services.paging import paginate
-from . import ApiError, bp, dump, msg
+from . import ApiError, bp, dump, msg, storage
 from .compare import page_info
 
 PER_PAGE = 25
 
 
-def _save_pdf(file) -> tuple[str, Path]:
+def _save_pdf(file) -> tuple[str, bytes]:
+    """Salva il PDF nello storage (cartella o S3) e lo restituisce anche in memoria, per leggerlo subito."""
+    data = file.read()
     name = f"{uuid.uuid4().hex}.pdf"
-    path = Path(current_app.config["PDF_DIR"]) / name
-    file.save(path)
-    return name, path
+    storage().put(name, data)
+    return name, data
 
 
 def _has_manual_current(commodity: str) -> bool:
@@ -31,7 +31,7 @@ def _has_manual_current(commodity: str) -> bool:
 def _detect_current_offer(bill_id: int, bills: list[Bill]) -> str:
     """Crea/aggiorna l'offerta attuale dal PDF della bolletta e riallinea PUN/PSV al mese in bolletta."""
     bill = next(b for b in bills if b.id == bill_id)
-    terms = parse_offer_terms(extraction.pdf_text(str(Path(current_app.config["PDF_DIR"]) / bill.pdf_path)), bill.commodity)
+    terms = parse_offer_terms(extraction.pdf_text(storage().get(bill.pdf_path)), bill.commodity)
     if terms is None:
         return "Offerta attuale non riconosciuta nella bolletta: inseriscila a mano in Offerte per vedere il risparmio."
     db.save_detected_offer(Offer(**terms.offer, is_current=True, source=f"bolletta:{bill_id}"))
@@ -91,15 +91,18 @@ def bill_pdf(id: int):
     bill = next((b for b in db.list_bills() if b.id == id and b.pdf_path), None)
     if bill is None:
         raise ApiError("Bolletta non trovata.", 404)
-    return send_file(Path(current_app.config["PDF_DIR"]) / bill.pdf_path, mimetype="application/pdf")
+    try:
+        return send_file(io.BytesIO(storage().get(bill.pdf_path)), mimetype="application/pdf")
+    except FileNotFoundError:
+        raise ApiError("PDF non trovato.", 404) from None
 
 
-def prefill(name: str, path: Path, commodity: str = "power") -> dict:
+def prefill(name: str, pdf: bytes, commodity: str = "power") -> dict:
     """Valori del modulo bolletta letti dal PDF; se la lettura non basta indica il PDF da cui insegnare il layout."""
     values: dict = {"pdf_path": name, "commodity": commodity}
     messages, teach = [], None
     try:
-        fields, method = extraction.extract_bill(str(path), layouts=db.list_layouts())
+        fields, method = extraction.extract_bill(pdf, layouts=db.list_layouts())
         values.update(fields)
         messages.append(msg("info", f"Dati letti con {method}: controllali prima di salvare."))
     except extraction.ExtractionError as e:
@@ -117,8 +120,12 @@ def upload():
         raise ApiError("Seleziona un file PDF.")
     if len(files) > 1:
         return jsonify(bulk=_bulk_import(files))
-    name, path = _save_pdf(files[0])
-    return jsonify(prefill=prefill(name, path, request.form.get("commodity", "power")))
+    name, pdf = _save_pdf(files[0])
+    try:
+        return jsonify(prefill=prefill(name, pdf, request.form.get("commodity", "power")))
+    except PyPdfError:
+        storage().delete(name)
+        raise ApiError("Il file non è un PDF valido.") from None
 
 
 def _bulk_import(files) -> dict:
@@ -129,15 +136,15 @@ def _bulk_import(files) -> dict:
     problems = []
     layouts = db.list_layouts()
     for file in files:
-        name, path = _save_pdf(file)
+        name, pdf = _save_pdf(file)
         try:
-            fields, _ = extraction.extract_bill(str(path), layouts=layouts)
+            fields, _ = extraction.extract_bill(pdf, layouts=layouts)
             bill = Bill(**fields, pdf_path=name).with_derived_consumption()
             key = (bill.commodity, bill.period_start, bill.period_end)
             if key in known:
                 raise ValueError("già presente")
         except (extraction.ExtractionError, PyPdfError, TypeError, ValueError) as e:
-            path.unlink(missing_ok=True)
+            storage().delete(name)
             hint = " Caricalo da solo per insegnare all'app a leggerlo." if isinstance(e, extraction.ExtractionError) and not isinstance(e, extraction.NoTextError) else ""
             problems.append(f"{file.filename}: {e}.{hint}")
             continue

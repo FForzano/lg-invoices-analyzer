@@ -1,8 +1,14 @@
 import type { ReactNode } from 'react';
+import { useAuth } from '../context/AuthContext';
+import Login from '../pages/Login';
+import ChangePassword from '../pages/ChangePassword';
 
-/** Guscio per il login futuro: oggi lascia passare tutto (l'app è pensata per la rete di casa).
- *  Quando arriverà il login: se manca la sessione, `return <Navigate to="/login" replace />`;
- *  le richieste porteranno il token con `setAuthHeaders` (lib/api.ts) e il backend lo verificherà in `authenticate()`. */
+/** Con il login attivo mostra l'accesso finché non c'è una sessione, e il cambio password se è provvisoria.
+ *  Con il login spento (predefinito) lascia passare tutto. Il backend controlla comunque ogni richiesta (`authenticate()`). */
 export default function RequireAuth({ children }: { children: ReactNode }) {
+  const { enabled, user } = useAuth();
+  if (!enabled) return <>{children}</>;
+  if (!user) return <Login />;
+  if (user.must_change_password) return <ChangePassword forced />;
   return <>{children}</>;
 }

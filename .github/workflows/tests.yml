@@ -5,6 +5,15 @@ on:
 jobs:
   pytest:
     runs-on: ubuntu-latest
+    services:
+      postgres:  # i test di tests/test_backends.py girano anche su un PostgreSQL vero
+        image: postgres:16-alpine
+        env: { POSTGRES_PASSWORD: pw, POSTGRES_DB: bollette }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:pw@localhost:5432/bollette
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5

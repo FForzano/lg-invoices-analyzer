@@ -1,7 +1,7 @@
 # Installare l'app su un NAS o home server
 
 Guida e template per metterla in produzione in casa (OpenMediaVault, Synology, Unraid, Raspberry, un qualsiasi host con Docker).
-L'app è pensata per la **rete locale**: non ha autenticazione.
+L'app è pensata per la **rete locale**; il login è opzionale (vedi «Configurazione opzionale»).
 
 | File | A cosa serve |
 |---|---|
@@ -19,8 +19,7 @@ curl -O https://raw.githubusercontent.com/FForzano/lg-invoices-analyzer/main/dep
 curl -o .env https://raw.githubusercontent.com/FForzano/lg-invoices-analyzer/main/deploy/example.env
 mv docker-compose.example.yml docker-compose.yml
 
-# 1. imposta SECRET_KEY e, se serve, DATA_PATH / PUID / PGID / PORT
-sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$(openssl rand -hex 32)/" .env
+# 1. se serve, imposta DATA_PATH / PUID / PGID / PORT nel .env
 
 # 2. la cartella dati deve essere scrivibile dall'utente del container
 mkdir -p data && sudo chown 1000:100 data
@@ -49,13 +48,37 @@ Il default è Ferrara; cambiala.
 
 ## Sicurezza e privacy
 
-- **Nessun login.** Non esporre la porta su internet. Per usarla fuori casa: VPN (WireGuard, Tailscale) oppure un reverse
-  proxy con autenticazione (`Caddyfile.example`).
+- **Login spento di default.** Senza `AUTH_ENABLED=true` non esporre la porta su internet. Per usarla fuori casa: VPN (WireGuard, Tailscale)
+  oppure un reverse proxy con HTTPS (`Caddyfile.example`); con il login attivo scegli una `ADMIN_PASSWORD` robusta.
 - **Dati personali.** Le bollette contengono nome, indirizzo, codice fiscale. Restano nella cartella dati.
   L'unica uscita verso l'esterno è l'aggiornamento delle offerte (scarica file pubblici, non invia nulla)
   e, solo se imposti `ANTHROPIC_API_KEY` e la lettura locale non basta, il testo di quella bolletta verso l'API Anthropic.
   Per non inviare mai nulla, non impostare la chiave.
-- Usa un `SECRET_KEY` casuale e non committare `.env`.
+- Non committare `.env`: contiene password e chiavi.
+
+## Configurazione opzionale
+
+**Di default non cambia nulla**: SQLite e PDF nella cartella dati, nessun login. Ogni funzione si accende con variabili
+d'ambiente (nel `.env`); si possono usare separatamente.
+
+| Funzione | Variabili |
+|---|---|
+| **Login** | `AUTH_ENABLED=true`. Al primo avvio nasce un amministratore: `ADMIN_EMAIL` (default `admin@bollette.local`) e `ADMIN_PASSWORD` (se non la imposti è `admin` e al primo accesso viene chiesto di cambiarla). Da *Utenti* l'amministratore crea gli altri account; ognuno ha i **suoi profili** (quante case vuole) e cambia nome, email e password da *Account*. I profili già esistenti passano all'amministratore. `SESSION_DAYS` (default 30) = durata dell'accesso. |
+| **PostgreSQL** | `DATABASE_URL=postgresql://utente:password@host:5432/bollette` (database già creato; le tabelle le crea l'app). Senza: `sqlite:///` nella cartella dati. |
+| **PDF su S3 / MinIO / R2** | `STORAGE_DRIVER=s3`, `S3_BUCKET`, `S3_ENDPOINT_URL` (vuoto per AWS), `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` (senza: catena standard di AWS, es. ruolo IAM), `S3_PREFIX` (cartella nel bucket), `S3_ADDRESSING=path\|virtual` (con un endpoint è «path», come vuole MinIO). Senza: `STORAGE_PATH`, default `DATA_DIR/pdf`. |
+
+Con il login attivo, il cron di aggiornamento offerte non ha un account: imposta `CRON_TOKEN` e mandalo come
+`Authorization: Bearer <token>` (vale solo per quell'operazione; `deploy/refresh-offers.example.sh` lo fa se `CRON_TOKEN` è impostato).
+
+**Passare a PostgreSQL o S3 con dati già presenti** (una volta, con la nuova configurazione nel `.env`):
+
+```bash
+docker compose exec bollette flask --app app import-sqlite /data/bollette.db   # copia i dati nel nuovo database (che deve essere vuoto)
+docker compose exec bollette flask --app app upload-pdfs                       # carica nello storage S3 i PDF che stanno in /data/pdf
+```
+
+Il backup di `deploy/backup.example.sh` copia il database SQLite: con PostgreSQL usa `pg_dump`, con S3 le copie del bucket.
+Dopo lo spostamento puoi togliere i vecchi `bollette.db` e `pdf/`.
 
 ## Aggiornare l'app
 
@@ -92,7 +115,7 @@ L'aggiornamento carica anche i prezzi storici di PUN/PSV, ma non cambia le ipote
 ```bash
 git clone https://github.com/FForzano/lg-invoices-analyzer.git && cd lg-invoices-analyzer
 uv sync --no-dev
-DATA_DIR=$PWD/data SECRET_KEY=$(openssl rand -hex 32) uv run gunicorn -b 0.0.0.0:8080 --workers 2 --timeout 180 "app:create_app()"
+DATA_DIR=$PWD/data uv run gunicorn -b 0.0.0.0:8080 --workers 2 --timeout 180 "app:create_app()"
 ```
 
 ## Problemi frequenti

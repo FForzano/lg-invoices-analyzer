@@ -12,11 +12,24 @@ services:
     # Deve poter scrivere in DATA_PATH. Di default l'immagine usa 1000:100; su molti NAS è il tuo utente.
     user: "${PUID:-1000}:${PGID:-100}"
     ports:
-      # Per esporlo solo a un'interfaccia: "192.168.1.10:8090:8080". Non pubblicarlo su internet: manca l'autenticazione.
+      # Per esporlo solo a un'interfaccia: "192.168.1.10:8090:8080". Non pubblicarlo su internet senza AUTH_ENABLED=true (e HTTPS).
       - "${PORT:-8090}:8080"
     environment:
       - TZ=${TZ:-Europe/Rome}
-      - SECRET_KEY=${SECRET_KEY:?imposta SECRET_KEY nel file .env (openssl rand -hex 32)}
+      # Tutto il resto è opzionale e spento di default: SQLite e PDF nella cartella dati, nessun login.
+      # Per attivare login, PostgreSQL o S3/MinIO decommenta le variabili in `.env` (vedi example.env) e qui sotto:
+      - AUTH_ENABLED=${AUTH_ENABLED:-false}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - CRON_TOKEN=${CRON_TOKEN:-}
+      - DATABASE_URL=${DATABASE_URL:-}
+      - STORAGE_DRIVER=${STORAGE_DRIVER:-local}
+      - S3_BUCKET=${S3_BUCKET:-}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL:-}
+      - S3_REGION=${S3_REGION:-}
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID:-}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY:-}
+      - S3_PREFIX=${S3_PREFIX:-}
       # Opzionale. Senza chiave l'app non invia mai dati a servizi esterni (la lettura PDF è locale).
       # Con la chiave, SOLO se la lettura locale non basta, il testo della bolletta va all'API Anthropic.
       # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}

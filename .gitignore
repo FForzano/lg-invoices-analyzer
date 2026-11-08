@@ -6,3 +6,6 @@ data/
 
 # specifiche originali: contengono dati di consumo personali, restano locali
 Specifiche*.md
+
+node_modules/
+dist

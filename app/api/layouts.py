@@ -1,14 +1,14 @@
+import io
 import os
 import re
-from pathlib import Path
 from urllib.parse import quote
 
-from flask import Response, current_app, jsonify, request, send_file
+from flask import Response, jsonify, request, send_file
 
 from .. import db
 from ..services import extraction, layouts
 from ..services.bill_parser import REQUIRED
-from . import ApiError, bp, dump, msg
+from . import ApiError, bp, dump, msg, storage
 from .bills import prefill
 
 REPO_URL = "https://github.com/FForzano/lg-invoices-analyzer"  # `REPORT_REPO_URL` per un fork
@@ -21,11 +21,14 @@ FIELD_LABEL = {  # più chiari delle descrizioni per l'LLM in FIELD_HELP; i camp
 CHOICE_LABEL = {"power": "Luce", "gas": "Gas", "effettiva": "Effettiva", "stimata": "Stimata"}
 
 
-def _pdf(name: str | None) -> Path:
-    path = Path(current_app.config["PDF_DIR"]) / (name or "")
-    if not (name and PDF_NAME.fullmatch(name) and path.is_file()):
+def _pdf(name: str | None) -> bytes:
+    """Il PDF dallo storage. Il nome deve essere uno di quelli generati dall'app (esclude percorsi e chiavi arbitrarie)."""
+    if not (name and PDF_NAME.fullmatch(name)):
         raise ApiError("PDF non trovato.", 404)
-    return path
+    try:
+        return storage().get(name)
+    except FileNotFoundError:
+        raise ApiError("PDF non trovato.", 404) from None
 
 
 @bp.get("/layouts")
@@ -51,15 +54,15 @@ def _teach_info(name: str, text: str, samples=None, errors=None) -> dict:
 @bp.get("/layouts/teach")
 def teach_info():
     name = request.args.get("pdf")
-    return jsonify(_teach_info(name, extraction.pdf_text(str(_pdf(name))).strip()))
+    return jsonify(_teach_info(name, extraction.pdf_text(_pdf(name)).strip()))
 
 
 @bp.post("/layouts/teach")
 def teach_save():
     data = request.get_json(silent=True) or {}
     name = data.get("pdf")
-    path = _pdf(name)
-    text = extraction.pdf_text(str(path)).strip()
+    pdf = _pdf(name)
+    text = extraction.pdf_text(pdf).strip()
     samples = {f: ((data.get("values") or {}).get(f, ""), (data.get("choices") or {}).get(f)) for f in layouts.teachable_fields()}
     signature = (data.get("signature") or "").strip()
     plain = {**{f: s[0] for f, s in samples.items()}, "_signature": signature}
@@ -70,7 +73,7 @@ def teach_save():
     if errors or not layout.rules:
         return jsonify(_teach_info(name, text, plain, errors or {"_all": "Indica almeno un valore."})), 400
     db.save_layout(layout)
-    result = prefill(name, path, data.get("commodity", "power"))
+    result = prefill(name, pdf, data.get("commodity", "power"))
     result["messages"].insert(0, msg("info", f"Layout «{layout.name}» salvato ({len(layout.rules)} regole): le prossime bollette dello stesso fornitore si leggeranno da sole."))
     return jsonify(prefill=result)
 
@@ -78,7 +81,7 @@ def teach_save():
 @bp.get("/layouts/pdf/<name>")
 def layout_pdf(name: str):
     """Il PDF da mostrare nella pagina «Insegna» (anche prima che la bolletta sia salvata)."""
-    return send_file(_pdf(name), mimetype="application/pdf")
+    return send_file(io.BytesIO(_pdf(name)), mimetype="application/pdf")
 
 
 @bp.delete("/layouts/<int:id>")

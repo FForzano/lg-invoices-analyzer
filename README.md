@@ -1,6 +1,6 @@
 # Bollette self-hosted
 
-> **EN:** a self-hosted web app (Flask API + React front-end, SQLite, one Docker container) for Italian households: upload your electricity and gas bills (PDF, read locally, no cloud needed), import the public offers from the Italian regulator's open-data portal, and find out whether switching supplier would save you money over a year. The UI and docs are in Italian.
+> **EN:** a self-hosted web app (Flask API + React front-end, SQLite by default, one Docker container; optional login, PostgreSQL and S3/MinIO storage) for Italian households: upload your electricity and gas bills (PDF, read locally, no cloud needed), import the public offers from the Italian regulator's open-data portal, and find out whether switching supplier would save you money over a year. The UI and docs are in Italian.
 
 App web per raccogliere le bollette di luce e gas, ricavare il consumo annuo e stimare il costo annuo delle offerte di mercato (solo la parte decisa dal fornitore), con il risparmio rispetto all'offerta attuale.
 
@@ -24,9 +24,9 @@ docker compose up --build   # http://localhost:8080, dati in ./data
 
 ## Struttura
 
-- `app/` — Flask: API JSON sotto `/api` (`app/api/`), logica di dominio in `app/services/`, SQLite. Serve anche il front-end compilato.
+- `app/` — Flask: API JSON sotto `/api` (`app/api/`), logica di dominio in `app/services/`, SQLite. Serve anche il front-end compilato. Database (`database.py`, SQLite o PostgreSQL), storage dei PDF (`storage.py`, cartella o S3) e login (`auth.py`) si scelgono con variabili d'ambiente (`config.py`).
 - `frontend/` — React + TypeScript + Vite + Tailwind. Il design è descritto in `DESIGN.md`. In Docker viene compilato in uno stadio Node e copiato nell'immagine.
-- L'app non ha ancora un login (pensata per la rete di casa); i punti dove aggiungerlo sono `authenticate()` in `app/api/__init__.py`, `RequireAuth` e `setAuthHeaders` nel front-end.
+- Il login è opzionale (`AUTH_ENABLED`, spento di default): token `Bearer` nell'header, controllato in `authenticate()` (`app/api/__init__.py` → `app/auth.py`); nel front-end `AuthContext`, `RequireAuth` e `lib/api.ts`.
 
 ## Test
 
@@ -64,7 +64,7 @@ Se vuoi che il tuo fornitore funzioni per tutti, *Segnala agli sviluppatori* mos
 
 ## Profili (più appartamenti)
 
-Non sono account: non c'è login. Un **profilo** è un appartamento, con le sue bollette, la sua offerta attuale, la località e la potenza di default. Si crea e si cambia da *Profili* (o dal menu in alto); la scelta resta nel cookie del browser. Il catalogo delle offerte (importate o inserite a mano) e le ipotesi su PUN/PSV sono condivisi. Cancellare un profilo elimina le sue bollette e i PDF. I dati esistenti passano nel profilo «Casa».
+Un **profilo** è un appartamento, con le sue bollette, la sua offerta attuale, la località e la potenza di default. Si crea e si cambia da *Profili* (o dal menu); la scelta resta nel browser. Con il login attivo ogni **account** ha i suoi profili (quanti vuole) e non vede quelli degli altri. Il catalogo delle offerte (importate o inserite a mano) e le ipotesi su PUN/PSV sono condivisi. Cancellare un profilo elimina le sue bollette e i PDF. I dati esistenti passano nel profilo «Casa».
 
 ## Offerte
 
@@ -88,7 +88,7 @@ Migrazioni SQL numerate in `app/migrations/`, applicate all'avvio (versione in `
 - I prezzi futuri di PUN/PSV non sono noti: la stagionalità è storica e non prevede trend (nel 2026 sono saliti). Il verdetto mostra la sensibilità a ±20%.
 - Dispacciamento e oneri di capacità: molte offerte li fatturano a parte al costo regolato; si assume un valore (Impostazioni) per renderle confrontabili con l'offerta attuale.
 - Alcune offerte valgono solo in certe aree ma l'XML non lo dichiara (es. «Dedicata Comune»): controlla sempre le condizioni sul sito del venditore.
-- Nessuna autenticazione: tenere solo in rete locale.
+- Il login è spento di default: senza `AUTH_ENABLED=true` tenere l'app solo in rete locale.
 
 ## Licenza
 

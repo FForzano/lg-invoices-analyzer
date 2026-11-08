@@ -37,8 +37,9 @@ def test_upgrade_from_pre_migration_db_keeps_data():
 def test_failed_migration_does_not_advance_version(tmp_path, monkeypatch):
     from app import migrations
 
-    (tmp_path / "001_ok.sql").write_text("CREATE TABLE a (x);")
-    (tmp_path / "002_bad.sql").write_text("CREATE TABLE b (x); INSERT INTO nope VALUES (1);")
+    (tmp_path / "sqlite").mkdir()
+    (tmp_path / "sqlite" / "001_ok.sql").write_text("CREATE TABLE a (x);")
+    (tmp_path / "sqlite" / "002_bad.sql").write_text("CREATE TABLE b (x); INSERT INTO nope VALUES (1);")
     monkeypatch.setattr(migrations, "DIR", tmp_path)
     conn = sqlite3.connect(":memory:", isolation_level=None)
     try:
@@ -89,3 +90,17 @@ def test_profiles_migration_moves_existing_data_to_first_profile():
     assert conn.execute("SELECT profile_id FROM bills").fetchall() == [(1,)]
     assert dict(conn.execute("SELECT name, profile_id FROM offers").fetchall()) == {"Mia": 1, "Catalogo": None}
     assert [r[0] for r in conn.execute("SELECT key FROM settings")] == ["pun"]  # le impostazioni di profilo escono dalla tabella globale
+
+
+def test_both_engines_have_the_same_latest_migration():
+    """Ogni modifica allo schema va scritta per SQLite e per PostgreSQL con lo stesso numero (vedi migrations/README.md)."""
+    assert migration_files("sqlite")[-1][0] == migration_files("postgres")[-1][0]
+    assert {n for n, _ in migration_files("postgres")} <= {n for n, _ in migration_files("sqlite")} | {11}
+
+
+def test_postgres_sql_translation():
+    from app.database import to_postgres
+
+    assert to_postgres("SELECT * FROM t WHERE a = ? AND b = :p AND c::int > 0") == "SELECT * FROM t WHERE a = %s AND b = %(p)s AND c::int > 0"
+    assert to_postgres("WHERE source LIKE 'bolletta:%' AND x = ?") == "WHERE source LIKE 'bolletta:%%' AND x = %s"
+    assert to_postgres("WHERE name = 'a ? :b' AND y = ?") == "WHERE name = 'a ? :b' AND y = %s"

@@ -3,6 +3,8 @@ export type Commodity = 'power' | 'gas';
 export type MessageLevel = 'info' | 'warn';
 export interface Message { level: MessageLevel; text: string }
 
+export interface User { id: number; email: string; name: string; is_admin: boolean; must_change_password: boolean; created_at: string; profiles?: number }
+
 export interface Profile { id: number; name: string; region: string; province: string; comune: string; default_power_kw: number; bills?: number }
 
 export interface Bill {

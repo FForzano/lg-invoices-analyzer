@@ -64,7 +64,7 @@ def test_delete_profile_removes_its_data_and_pdfs_but_not_the_last_one(client, m
 
     monkeypatch.setattr(extraction, "pdf_text", lambda p: "")  # il PDF finto non contiene offerte da rilevare
     mare = new_profile(client, "Mare")
-    pdf_dir = client.application.config["PDF_DIR"]
+    pdf_dir = client.application.config["STORAGE_PATH"]
     (pdf_dir / "x.pdf").write_bytes(b"%PDF")
     client.post("/api/bills", json={**BILL, "pdf_path": "x.pdf"}, **as_(mare))
     client.post("/api/offers", json={**OFFER, "name": "Attuale mare", "is_current": True}, **as_(mare))

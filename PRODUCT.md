@@ -20,14 +20,14 @@ Self-hosted: i dati personali delle bollette restano in casa; l'LLM è solo ulti
 
 ## Operating Context
 
-Un container Docker (Flask + SQLite) su NAS/Raspberry Pi, senza login. Flusso: carica bollette (anche più PDF insieme) → importa offerte dal Portale Offerte ARERA → Home con il verdetto per luce e gas (e luce+gas insieme), consiglio sulla potenza impegnata. Più profili = più appartamenti, scelti da cookie.
+Un container Docker (Flask + SQLite) su NAS/Raspberry Pi; di default senza login, con PDF in locale. Opzionali, da variabili d'ambiente: login (account con più profili ciascuno), PostgreSQL, S3/MinIO. Flusso: carica bollette (anche più PDF insieme) → importa offerte dal Portale Offerte ARERA → Home con il verdetto per luce e gas (e luce+gas insieme), consiglio sulla potenza impegnata. Più profili = più appartamenti, scelti dal browser.
 
 ## Capabilities and Constraints
 
 - Il confronto esclude per costruzione trasporto, oneri, imposte, bonus sociali e canone TV.
 - Verdetto «conviene» se risparmio ≥ 30 € e ≥ 5% l'anno; avvisa quando la stima è poco affidabile (meno di ~330 giorni coperti).
 - Commodity `power` / `gas` nel codice; etichette italiane solo nei template.
-- Front-end React + TypeScript (Vite, Tailwind) in `frontend/`, che parla con l'API JSON di Flask (`/api`); Flask serve il build. Scelto per poter incapsulare l'app in una nativa (Capacitor, in futuro). Nessun login per ora: il codice lo prevede (`authenticate()`, `RequireAuth`) ma resta spento.
+- Front-end React + TypeScript (Vite, Tailwind) in `frontend/`, che parla con l'API JSON di Flask (`/api`); Flask serve il build. Scelto per poter incapsulare l'app in una nativa (Capacitor, in futuro). Login opzionale (`AUTH_ENABLED`, spento di default), con token nell'header (niente cookie, per l'app nativa).
 
 ## Brand Commitments
 

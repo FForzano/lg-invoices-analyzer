@@ -104,13 +104,13 @@ def test_unwritable_data_dir_gives_clear_error(tmp_path):
 
 def test_bulk_import_saves_complete_bills_and_reports_the_rest(client, monkeypatch):
     texts = {b"power": (FIX / "bill_power.txt").read_text(), b"gas": (FIX / "bill_gas.txt").read_text(), b"junk": "nulla di utile"}
-    monkeypatch.setattr(extraction, "pdf_text", lambda p: texts[Path(p).read_bytes()])
+    monkeypatch.setattr(extraction, "pdf_text", lambda p: texts[p])
     files = [(io.BytesIO(k), f"{k.decode()}{i}.pdf") for i, k in enumerate([b"power", b"gas", b"power", b"junk"])]
     bulk = upload(client, files).json["bulk"]
     text = " ".join(m["text"] for m in bulk["messages"])
     assert bulk["imported"] == 2 and "Importate 2 bollette su 4" in text
     assert "power2.pdf: già presente" in text and "junk3.pdf" in text and "Offerta attuale rilevata" in text
-    assert len(list(client.application.config["PDF_DIR"].glob("*.pdf"))) == 2  # i PDF scartati non restano su disco
+    assert len(list(client.application.config["STORAGE_PATH"].glob("*.pdf"))) == 2  # i PDF scartati non restano su disco
 
 
 def test_lists_are_paginated(client):
@@ -228,3 +228,9 @@ def test_legacy_cron_url_still_works(client, monkeypatch):
     monkeypatch.setattr(arera, "fetch_offers", lambda: ([], {}))
     monkeypatch.setattr(arera, "fetch_index_history", lambda: (_ for _ in ()).throw(arera.AreraError("offline")))
     assert client.post("/offers/import-arera").status_code == 200  # deploy/refresh-offers.example.sh di versioni precedenti
+
+
+def test_corrupt_pdf_is_a_clean_error_and_leaves_nothing_behind(client):
+    r = client.post("/api/bills/upload", data={"pdf": (io.BytesIO(b"non sono un pdf"), "x.pdf")}, content_type="multipart/form-data")
+    assert r.status_code == 400 and "PDF" in r.json["error"]
+    assert not list(client.application.config["STORAGE_PATH"].glob("*.pdf"))

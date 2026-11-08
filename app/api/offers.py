@@ -1,6 +1,6 @@
 from flask import jsonify, request
 
-from .. import db, forms
+from .. import auth, db, forms
 from ..models import Offer
 from ..services import arera
 from ..services.offers_csv import parse_offers_csv
@@ -72,6 +72,7 @@ def import_csv():
 
 
 @bp.post("/offers/import-arera")
+@auth.admin_required
 def import_arera():
     try:
         offers, skipped = arera.fetch_offers()

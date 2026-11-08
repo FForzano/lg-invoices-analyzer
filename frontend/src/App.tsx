@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
 import { ConfirmProvider } from './context/ConfirmContext';
 import Layout from './components/Layout';
@@ -14,6 +15,8 @@ import OfferForm from './pages/OfferForm';
 import { Proposal, ProposalSaved, ProposalShow } from './pages/Proposal';
 import Settings from './pages/Settings';
 import Profiles from './pages/Profiles';
+import Account from './pages/Account';
+import Users from './pages/Users';
 import Guide from './pages/Guide';
 import Layouts from './pages/Layouts';
 import LayoutReport from './pages/LayoutReport';
@@ -26,6 +29,7 @@ const NotFound = () => <><H1>Pagina non trovata</H1><Muted>Questo indirizzo non 
 
 export default function App() {
   return (
+    <AuthProvider>
     <BrowserRouter>
       <RequireAuth>
         <AppProvider>
@@ -50,6 +54,8 @@ export default function App() {
                   <Route path="guide" element={<Guide />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="profiles" element={<Profiles />} />
+                  <Route path="account" element={<Account />} />
+                  <Route path="users" element={<Users />} />
                   <Route path="layouts" element={<Layouts />} />
                   <Route path="layouts/teach" element={<Teach />} />
                   <Route path="layouts/:id/report" element={<LayoutReport />} />
@@ -62,5 +68,6 @@ export default function App() {
         </AppProvider>
       </RequireAuth>
     </BrowserRouter>
+    </AuthProvider>
   );
 }

@@ -5,13 +5,18 @@ export class ApiError extends Error {
   constructor(message: string, public status: number, public data?: any) { super(message); }
 }
 
-// --- punti di estensione per il login (futuro) -----------------------------------------------
-// Oggi l'app non ha login: nessun header di autenticazione e nessuna gestione speciale del 401.
-// Quando servirà: `setAuthHeaders(() => ({ Authorization: `Bearer ${token}` }))` dopo l'accesso e
-// `setOnUnauthorized(() => navigate('/login'))`; il resto del front-end non cambia.
-let authHeaders: () => Record<string, string> = () => ({});
+// --- login (opzionale: AUTH_ENABLED sul server) -------------------------------------------------
+// Il token sta in localStorage (in un'app nativa basterà sostituire queste tre funzioni con lo storage sicuro del sistema).
+// Se il server ha il login spento il token non esiste e non viene mandato nulla.
+const TOKEN_KEY = 'bollette.token';
+export const getToken = (): string | null => { try { return localStorage.getItem(TOKEN_KEY); } catch { return null; } };
+export const setToken = (token: string | null) => {
+  try { if (token) localStorage.setItem(TOKEN_KEY, token); else localStorage.removeItem(TOKEN_KEY); } catch { /* storage non disponibile */ }
+};
+let authHeaders = (): Record<string, string> => { const t = getToken(); return t ? { Authorization: `Bearer ${t}` } : {}; };
 let onUnauthorized: () => void = () => {};
 export const setAuthHeaders = (fn: () => Record<string, string>) => { authHeaders = fn; };
+/** Chiamata quando una richiesta riceve 401 (token scaduto o revocato): l'app torna alla schermata di accesso. */
 export const setOnUnauthorized = (fn: () => void) => { onUnauthorized = fn; };
 
 // --- profilo attivo: lo manda ogni richiesta (i cookie non sono affidabili in un'app nativa) -----
@@ -39,7 +44,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     throw new ApiError('Server non raggiungibile: controlla la connessione.', 0);
   }
   const data = await res.json().catch(() => null);
-  if (res.status === 401) onUnauthorized();
+  if (res.status === 401 && path !== '/auth/login') onUnauthorized();
   if (!res.ok) throw new ApiError(data?.error ?? `Errore ${res.status}`, res.status, data);
   return data as T;
 }

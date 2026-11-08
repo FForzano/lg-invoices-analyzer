@@ -3,30 +3,34 @@ from pathlib import Path
 
 from flask import Flask, abort, jsonify, send_from_directory
 
-from . import db
+from . import auth, cli, config, db, storage
 
 # Il front-end React compilato (frontend/dist). In Docker è copiato in /srv/frontend/dist; sovrascrivibile con FRONTEND_DIR.
 DEFAULT_FRONTEND = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
 
-def create_app(data_dir: str | None = None, frontend_dir: str | None = None) -> Flask:
+def create_app(data_dir: str | None = None, frontend_dir: str | None = None, **overrides) -> Flask:
+    """`overrides` sostituisce singole chiavi di configurazione (vedi config.py): serve soprattutto ai test."""
     app = Flask(__name__, static_folder=None)
-    data = Path(data_dir or os.environ.get("DATA_DIR", "data"))
+    app.config.update(config.from_env(data_dir=data_dir), **overrides)
     app.config.update(
-        DATA_DIR=data,
-        DB_PATH=data / "bollette.db",
-        PDF_DIR=data / "pdf",
         FRONTEND_DIR=Path(frontend_dir or os.environ.get("FRONTEND_DIR", DEFAULT_FRONTEND)),
         MAX_CONTENT_LENGTH=100 * 1024 * 1024,
     )
+    data = app.config["DATA_DIR"]
     try:
-        app.config["PDF_DIR"].mkdir(parents=True, exist_ok=True)
+        data.mkdir(parents=True, exist_ok=True)
+        app.extensions["storage"] = storage.from_config(app.config)
         db.init_app(app)
     except PermissionError as e:
         raise RuntimeError(
             f"Cartella dati non scrivibile: {data}. Dai i permessi all'utente del processo "
             "(in Docker di default uid 1000, gid 100: `chown 1000:100 <cartella>`) oppure imposta `user:` nel compose."
         ) from e
+    if app.config["AUTH_ENABLED"]:
+        with app.app_context():
+            auth.bootstrap_admin()
+    cli.register(app)
 
     from .api import bp as api_bp
     from .api import offers as api_offers
@@ -39,7 +43,7 @@ def create_app(data_dir: str | None = None, frontend_dir: str | None = None) -> 
         return "ok"
 
     # URL storico usato dagli script di aggiornamento già installati (cron sul NAS): resta valido
-    app.add_url_rule("/offers/import-arera", "legacy_import_arera", lambda: api_offers.import_arera(), methods=["POST"])
+    app.add_url_rule("/offers/import-arera", "legacy_import_arera", lambda: auth.guard(api_offers.import_arera), methods=["POST"])
 
     @app.get("/", defaults={"path": ""})
     @app.get("/<path:path>")

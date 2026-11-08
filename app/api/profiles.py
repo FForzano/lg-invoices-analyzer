@@ -1,11 +1,9 @@
-from pathlib import Path
-
-from flask import current_app, jsonify, request
+from flask import jsonify, request
 
 from .. import db
 from ..glossary import HELP
 from ..services import extraction
-from . import ApiError, bp, msg
+from . import ApiError, bp, msg, storage
 
 MAX_NAME = 60
 
@@ -60,5 +58,5 @@ def delete_profile(id: int):
     if len(_known(id)) == 1:
         raise ApiError("Deve esistere almeno un profilo.", 409)
     for name in db.delete_profile(id):
-        (Path(current_app.config["PDF_DIR"]) / name).unlink(missing_ok=True)
+        storage().delete(name)
     return jsonify(messages=[msg("info", "Profilo eliminato con le sue bollette.")])

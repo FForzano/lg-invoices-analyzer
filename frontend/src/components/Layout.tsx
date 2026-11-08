@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { BarChart3, BookOpen, Lightbulb, MoreHorizontal, Receipt, Scale, SlidersHorizontal, Tag, Users, House, type LucideIcon } from 'lucide-react';
+import { BarChart3, BookOpen, Lightbulb, MoreHorizontal, Receipt, Scale, SlidersHorizontal, Tag, Users, House, UserRound, ShieldCheck, type LucideIcon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { Modal } from './Modal';
 import { MessageList } from './ui';
 import { FOCUS_RING, fieldClass } from './styles';
@@ -20,6 +21,8 @@ const MORE: Item[] = [
   { to: '/settings', label: 'Impostazioni', icon: SlidersHorizontal },
   { to: '/profiles', label: 'Profili', icon: Users },
 ];
+const ACCOUNT: Item = { to: '/account', label: 'Account', icon: UserRound };
+const USERS: Item = { to: '/users', label: 'Utenti', icon: ShieldCheck };
 const inSection = (path: string, i: Item) => (i.end ? path === i.to : path.startsWith(i.match ?? i.to));
 
 export function BrandMark({ className = 'h-8 w-8' }: { className?: string }) {
@@ -65,8 +68,10 @@ export default function Layout(): ReactNode {
   const { pathname } = useLocation();
   const { clearStale } = useApp();
   const [more, setMore] = useState(false);
+  const { enabled, user } = useAuth();
+  const items = enabled ? [...MORE, ACCOUNT, ...(user?.is_admin ? [USERS] : [])] : MORE;  // con il login spento non ci sono account da gestire
   useEffect(() => { clearStale(); setMore(false); window.scrollTo({ top: 0 }); }, [pathname, clearStale]);
-  const moreActive = MORE.some((i) => inSection(pathname, i));
+  const moreActive = items.some((i) => inSection(pathname, i));
 
   return (
     <div className="min-h-screen lg:pl-sidebar">
@@ -82,7 +87,7 @@ export default function Layout(): ReactNode {
           <MoreHorizontal className="h-6 w-6" aria-hidden /><span>Altro</span>
         </button>
         <div className="mt-2 hidden flex-1 flex-col gap-1 border-t border-edge pt-3 lg:flex">
-          {MORE.map((i) => <NavItem key={i.to} item={i} path={pathname} variant="side" />)}
+          {items.map((i) => <NavItem key={i.to} item={i} path={pathname} variant="side" />)}
           <div className="mt-auto"><ProfileSwitch /></div>
         </div>
       </nav>
@@ -90,7 +95,7 @@ export default function Layout(): ReactNode {
       <Modal open={more} onClose={() => setMore(false)} title="Altro" compact>
         <div className="flex flex-col gap-1 pb-2">
           <ProfileSwitch onDone={() => setMore(false)} />
-          {MORE.map((i) => <NavItem key={i.to} item={i} path={pathname} variant="sheet" onNavigate={() => setMore(false)} />)}
+          {items.map((i) => <NavItem key={i.to} item={i} path={pathname} variant="sheet" onNavigate={() => setMore(false)} />)}
         </div>
       </Modal>
 

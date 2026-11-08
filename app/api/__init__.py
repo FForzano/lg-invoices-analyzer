@@ -1,5 +1,6 @@
 """API JSON per il front-end React (web e app nativa). Stessa logica delle pagine, senza HTML.
 
+Il login è opzionale (AUTH_ENABLED, vedi auth.py): con la `Authorization: Bearer <token>` ottenuta da /auth/login.
 Convenzioni: errori `{"error": "..."}` con status 4xx; le notifiche che prima erano `flash` tornano
 in `messages: [{"level": "info"|"warn", "text": "..."}]`. Il profilo attivo arriva dall'header `X-Profile-Id`."""
 from __future__ import annotations
@@ -7,7 +8,10 @@ from __future__ import annotations
 import dataclasses
 from typing import Any
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, current_app, jsonify
+
+from .. import auth
+from ..errors import ApiError
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -27,21 +31,19 @@ def dump(obj: Any) -> Any:
     return obj
 
 
+def storage():
+    """Dove stanno i PDF (cartella o S3, vedi app/storage.py)."""
+    return current_app.extensions["storage"]
+
+
 def msg(level: str, text: str) -> dict:
     return {"level": level, "text": text}
 
 
-class ApiError(Exception):
-    def __init__(self, text: str, status: int = 400):
-        self.text, self.status = text, status
-
-
 @bp.before_request
 def authenticate():
-    """Unico punto in cui verrà aggiunto il login (token/sessione): oggi non controlla nulla, per scelta.
-    Per attivarlo: leggere qui l'header `Authorization` e rispondere 401 con `ApiError("...", 401)`;
-    il front-end gestisce già il 401 (frontend/src/lib/api.ts, `onUnauthorized`)."""
-    return None
+    """Con AUTH_ENABLED chiede un token valido a ogni richiesta (tranne login e stato della sessione); altrimenti non fa nulla."""
+    auth.authenticate()
 
 
 @bp.errorhandler(ApiError)
@@ -54,4 +56,4 @@ def _not_found(_e):
     return jsonify(error="Non trovato."), 404
 
 
-from . import bills, compare, layouts, offers, profiles, proposals, settings  # noqa: E402,F401  (registrano le route)
+from . import accounts, bills, compare, layouts, offers, profiles, proposals, settings  # noqa: E402,F401  (registrano le route)

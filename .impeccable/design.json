@@ -1,18 +1,18 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-08T12:00:00Z",
+  "generatedAt": "2026-11-08T12:30:00Z",
   "title": "Design System: Bollette self-hosted",
   "extensions": {
     "colorMeta": {
       "accent-blue": {
         "role": "primary",
         "displayName": "Blu funzionale",
-        "canonical": "#1f6feb",
+        "canonical": "#1a66e0",
         "tonalRamp": [
           "#0b2a5c",
           "#124291",
           "#1757c4",
-          "#1f6feb",
+          "#1a66e0",
           "#4c8af0",
           "#79a8f4",
           "#a8c6f8",
@@ -22,7 +22,7 @@
       "paper": {
         "role": "neutral",
         "displayName": "Carta",
-        "canonical": "#fafafa",
+        "canonical": "#f6f7f9",
         "tonalRamp": [
           "#1d2330",
           "#3a4152",
@@ -31,13 +31,13 @@
           "#b0b3c0",
           "#d0d2dc",
           "#e8e9ef",
-          "#fafafa"
+          "#f6f7f9"
         ]
       },
       "good-green": {
         "role": "semantic",
         "displayName": "Verde esito",
-        "canonical": "#1a7f37",
+        "canonical": "#17722f",
         "tonalRamp": [
           "#0a3a19",
           "#105423",
@@ -93,6 +93,21 @@
           "#eef0f4",
           "#f8f9fb"
         ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Superficie",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#1a1e29",
+          "#303646",
+          "#5f6675",
+          "#9aa3b5",
+          "#d9dce3",
+          "#eef0f4",
+          "#f6f7f9",
+          "#ffffff"
+        ]
       }
     },
     "typographyMeta": {
@@ -103,6 +118,10 @@
       "body": {
         "displayName": "Testo",
         "purpose": "Tutto il contenuto."
+      },
+      "title": {
+        "displayName": "Titolo di sezione",
+        "purpose": "Etichetta maiuscola da 0.8rem per riquadri e gruppi di campi."
       }
     },
     "shadows": [],
@@ -121,7 +140,7 @@
       "refersTo": "button-primary",
       "description": "Azione principale di un modulo.",
       "html": "<button class=\"ds-btn\">Salva</button>",
-      "css": ".ds-btn { font: inherit; min-height:44px; padding: .4rem .9rem; border: 0; border-radius: 6px; background: var(--accent, #1f6feb); color: var(--on-accent, #fff); cursor: pointer; } .ds-btn:focus-visible { outline:2px solid var(--accent,#1f6feb); outline-offset:2px; }"
+      "css": ".ds-btn { font: inherit; min-height:44px; padding: .4rem .9rem; border: 0; border-radius: 6px; background: var(--accent, #1a66e0); color: var(--on-accent, #fff); cursor: pointer; } .ds-btn:focus-visible { outline:2px solid var(--accent,#1a66e0); outline-offset:2px; }"
     },
     {
       "name": "Input",
@@ -129,7 +148,7 @@
       "refersTo": "input",
       "description": "Campo con etichetta sopra.",
       "html": "<label class=\"ds-field\">Consumo annuo (kWh)<input class=\"ds-input\" value=\"2.700\"></label>",
-      "css": ".ds-field { display:flex; flex-direction:column; font-size:.9rem; gap:.2rem; } .ds-input { font: inherit; padding:.4rem .5rem; border:1px solid var(--line, #ddddee); border-radius:6px; background: var(--bg, #fafafa); color: var(--fg, #1d2330); }"
+      "css": ".ds-field { display:flex; flex-direction:column; font-size:.9rem; gap:.2rem; } .ds-input { font: inherit; padding:.4rem .5rem; border:1px solid var(--line, #d9dce3); border-radius:6px; background: var(--bg, #ffffff); color: var(--fg, #1d2330); }"
     },
     {
       "name": "Card",
@@ -137,7 +156,7 @@
       "refersTo": "card",
       "description": "Riquadro con bordo sottile, senza ombra.",
       "html": "<div class=\"ds-card\"><p>Conviene cambiare: risparmi circa <span class=\"ds-good\">120 €</span> l'anno.</p></div>",
-      "css": ".ds-card { border:1px solid var(--line, #ddddee); border-radius:8px; padding:.25rem 1rem; margin:1rem 0; } .ds-good { color: var(--good, #1a7f37); }"
+      "css": ".ds-card { border:1px solid var(--line, #d9dce3); border-radius:8px; padding:.25rem 1rem; margin:1rem 0; } .ds-good { color: var(--good, #17722f); }"
     },
     {
       "name": "Flash warn",
@@ -153,7 +172,15 @@
       "refersTo": "card",
       "description": "Blocco del verdetto: etichetta, cifra del risparmio, nota.",
       "html": "<div class=\"ds-verdict\"><p class=\"ds-verdict-label\">Conviene cambiare</p><p class=\"ds-verdict-figure\">302,77 € l'anno</p><p>Risparmio stimato del 52%.</p></div>",
-      "css": ".ds-verdict { border-radius:6px; padding:.75rem 1rem; background: var(--good-bg, #e9f5ec); } .ds-verdict p { margin:0; } .ds-verdict-label { font-weight:700; font-size:1.15rem; color: var(--good, #1a7f37); } .ds-verdict-figure { font-size:2rem; font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums; }"
+      "css": ".ds-verdict { border-radius:6px; padding:.75rem 1rem; background: var(--good-bg, #e9f5ec); } .ds-verdict p { margin:0; } .ds-verdict-label { font-weight:700; font-size:1.15rem; color: var(--good, #17722f); } .ds-verdict-figure { font-size:2rem; font-weight:700; line-height:1.2; font-variant-numeric:tabular-nums; }"
+    },
+    {
+      "name": "Tag",
+      "kind": "chip",
+      "refersTo": "flash-warn",
+      "description": "Segno di stato: «attuale» (blu a contorno) o «da verificare» (giallo).",
+      "html": "<span class=\"ds-tag ds-tag-current\"><strong>attuale</strong></span> <span class=\"ds-tag ds-tag-warn\"><strong>stimata</strong></span>",
+      "css": ".ds-tag { display:inline-block; padding:.2rem .6rem; border:1px solid var(--line, #d9dce3); border-radius:6px; font-size:.8rem; line-height:1.5; } .ds-tag strong { font-weight:600; } .ds-tag-current { color: var(--accent, #1a66e0); border-color: var(--accent, #1a66e0); } .ds-tag-warn { background: var(--warn, #fff3cd); border-color: transparent; color: var(--fg, #1d2330); }"
     }
   ],
   "narrative": {
@@ -169,7 +196,7 @@
     "rules": [
       {
         "name": "The Outcome-Only Color Rule",
-        "body": "Verde, rosso, giallo e azzurro compaiono solo per comunicare un esito o un avviso, mai come decorazione.",
+        "body": "Verde, rosso e giallo compaiono solo per comunicare un esito o un avviso, mai come decorazione.",
         "section": "colors"
       },
       {
@@ -199,7 +226,9 @@
       "Don't usare il blu per decorare.",
       "Don't usare colori semantici come ornamento.",
       "Don't aggiungere tono commerciale.",
-      "Don't usare le tinte del verdetto fuori dal blocco del verdetto."
+      "Don't usare le tinte del verdetto fuori dal blocco del verdetto.",
+      "Don't mettere i riquadri sullo stesso tono della pagina: usano --surface.",
+      "Don't colorare di rosso ogni azione di cancellazione a riposo: il rosso compare solo con l'intenzione (hover/focus)."
     ]
   }
 }

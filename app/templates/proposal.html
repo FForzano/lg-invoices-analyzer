@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import field, select, eur, num %}
+{% from "_macros.html" import field, select, area, check, eur, num %}
 {% block content %}
 <h1>Valuta una proposta</h1>
 <p class="muted">Un operatore ti propone un'offerta che non trovi nel catalogo? Inserisci quello che ti dice (anche solo i campi che conosci) e la confronto con la tua offerta attuale. Salvala per ritrovarla e controllare il contratto prima di firmare.</p>
@@ -27,14 +27,14 @@
     {{ field('loss_pct', 'Perdite di rete (%) – luce', v, 'number') }}
     {{ field('dispatching', 'Dispacciamento (€/kWh) – luce', v, 'number') }}
     {{ field('capacity', 'Oneri di capacità (€/kWh) – luce', v, 'number') }}
-    <label>Dispacciamento/capacità fatturati a parte<input type="checkbox" name="dispatching_extra" {{ 'checked' if v.get('dispatching_extra') in (true, 1, 'on', '1') }}></label>
+    {{ check('dispatching_extra', 'Dispacciamento/capacità fatturati a parte', v) }}
     {{ field('gas_mgmt', 'Gestione variabile (€/Smc) – gas', v, 'number') }}
     {{ field('pcs_adjustment', 'Adeguamento PCS (€/Smc) – gas', v, 'number') }}
   </div></fieldset>
   <fieldset class="full"><legend>Da ricordare per il contratto</legend><div class="grid">
     {{ field('contact', 'Chi l\'ha proposta / riferimento chiamata', v) }}
     {{ field('received_on', 'Data della proposta', v, 'date') }}
-    <label class="full">Cos'altro ti hanno promesso a voce<textarea name="notes" rows="3">{{ v.get('notes') or '' }}</textarea></label>
+    {{ area('notes', 'Cos\'altro ti hanno promesso a voce', v, 3) }}
   </div></fieldset>
   <div class="full actions">
     <button>Valuta</button>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import eur, num, pct %}
+{% from "_macros.html" import eur, num, pct, info %}
 {% block content %}
 <h1>Storico {{ 'luce' if commodity == 'power' else 'gas' }}</h1>
 <div class="tabs">
@@ -8,7 +8,7 @@
 </div>
 {% set unit = 'kWh' if commodity == 'power' else 'Smc' %}
 <div class="scroll"><table>
-  <tr><th>Periodo</th><th class="num">Consumo ({{ unit }})</th><th class="num">vs anno prima</th><th class="num">Costo medio (€/{{ unit }})</th><th class="num">vs anno prima</th><th>Lettura</th></tr>
+  <tr><th>Periodo</th><th class="num">Consumo ({{ unit }}){{ info('t_consumption') }}</th><th class="num">vs anno prima{{ info('t_vs_prev') }}</th><th class="num">Costo medio (€/{{ unit }}){{ info('t_avg_cost') }}</th><th class="num">vs anno prima{{ info('t_vs_prev') }}</th><th>Lettura{{ info('t_reading') }}</th></tr>
   {% for r in rows %}
   <tr>
     <td>{{ r.bill.period_start }} → {{ r.bill.period_end }}</td>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import field, select %}
+{% from "_macros.html" import field, select, area, check %}
 {% block content %}
 <h1>{{ 'Modifica' if id else 'Nuova' }} offerta</h1>
 <form method="post" action="{{ url_for('offers.save') }}" class="grid">
@@ -9,7 +9,7 @@
   {{ field('name', 'Nome offerta', v, required=true) }}
   {{ select('price_type', 'Tipo di prezzo', v, [('fixed', 'Fisso'), ('indexed', 'Indicizzato')], required=true) }}
   {{ field('expires_on', 'Scadenza', v, 'date') }}
-  <label>Offerta attuale<input type="checkbox" name="is_current" {{ 'checked' if v.get('is_current') in (true, 1, 'on', '1') }}></label>
+  {{ check('is_current', 'Offerta attuale', v) }}
 
   <fieldset class="full"><legend>Prezzo energia (€/kWh o €/Smc)</legend><div class="grid">
     {{ field('price', 'Prezzo fisso', v, 'number') }}
@@ -24,7 +24,7 @@
     {{ field('loss_pct', 'Perdite di rete (%) – luce', v, 'number') }}
     {{ field('dispatching', 'Dispacciamento (€/kWh) – luce', v, 'number') }}
     {{ field('capacity', 'Oneri di capacità (€/kWh) – luce', v, 'number') }}
-    <label>Dispacciamento/capacità fatturati a parte<input type="checkbox" name="dispatching_extra" {{ 'checked' if v.get('dispatching_extra') in (true, 1, 'on', '1') }}></label>
+    {{ check('dispatching_extra', 'Dispacciamento/capacità fatturati a parte', v) }}
     {{ field('gas_mgmt', 'Gestione variabile (€/Smc) – gas', v, 'number') }}
     {{ field('pcs_adjustment', 'Adeguamento PCS (€/Smc) – gas', v, 'number') }}
   </div></fieldset>
@@ -41,8 +41,8 @@
   <fieldset class="full"><legend>Durata e condizioni</legend><div class="grid">
     {{ field('duration_months', 'Durata delle condizioni (mesi)', v, 'number', step='1') }}
     {{ field('started_on', 'Attivata il (offerta attuale)', v, 'date') }}
-    <label class="full">Condizioni del venditore (una per riga)<textarea name="conditions" rows="3">{{ v.get('conditions') or '' }}</textarea></label>
-    <label class="full">Cosa cambia a fine periodo<textarea name="after_term" rows="3">{{ v.get('after_term') or '' }}</textarea></label>
+    {{ area('conditions', 'Condizioni del venditore (una per riga)', v, 3) }}
+    {{ area('after_term', 'Cosa cambia a fine periodo', v, 3) }}
   </div>
   <p class="muted">Con durata e data di attivazione, se l'offerta è «attuale» ti avviso prima che finiscano le condizioni economiche.</p></fieldset>
   <div class="full"><button>Salva</button></div>

@@ -1,9 +1,9 @@
 {# Consiglio sulla potenza impegnata (luce). Parametro: a (analysis.Analysis) #}
-{% from "_macros.html" import eur, num %}
+{% from "_macros.html" import eur, num, info %}
 {% set pw = a.power_advice %}
 {% if pw %}
 <section class="card">
-  <h2>Potenza impegnata</h2>
+  <h2>Potenza impegnata{{ info('power_kw') }}</h2>
   {% if pw.suggested %}
     <p>Hai <strong>{{ num(pw.contracted, 1) }} kW</strong> e in {{ pw.months }} mesi il picco è stato <strong>{{ num(pw.peak, 1) }} kW</strong>:
       potresti scendere a <strong>{{ num(pw.suggested, 1) }} kW</strong>{% if pw.saving_year %}, risparmiando circa <strong>{{ eur(pw.saving_year) }} l'anno</strong> di quota potenza{% endif %}.</p>

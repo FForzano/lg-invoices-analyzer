@@ -1,17 +1,38 @@
-{% macro field(name, label, v, type='text', step='any', required=false) -%}
+{# Tastino (i): il testo viene da app/glossary.py; lo script in base.html lo mostra in un popover #}
+{% macro info(key) -%}
+{% if HELP.get(key) %}<button type="button" class="info" data-help="{{ HELP[key] }}" aria-label="Cosa significa?" aria-expanded="false">i</button>{% endif %}
+{%- endmacro %}
+
+{% macro field(name, label, v, type='text', step='any', required=false, help=none) -%}
+<div class="fld">
 <label>{{ label }}
   <input name="{{ name }}" type="{{ 'number' if type == 'number' else type }}" {% if type == 'number' %}step="{{ step }}"{% endif %}
          value="{{ v.get(name) if v.get(name) is not none else '' }}" {{ 'required' if required }}>
-</label>
+</label>{{ info(help or name) }}
+</div>
+{%- endmacro %}
+
+{% macro area(name, label, v, rows=3, full=true) -%}
+<div class="fld{{ ' full' if full }}">
+<label>{{ label }}<textarea name="{{ name }}" rows="{{ rows }}">{{ v.get(name) or '' }}</textarea></label>{{ info(name) }}
+</div>
+{%- endmacro %}
+
+{% macro check(name, label, v) -%}
+<div class="fld">
+<label>{{ label }}<input type="checkbox" name="{{ name }}" {{ 'checked' if v.get(name) in (true, 1, 'on', '1') }}></label>{{ info(name) }}
+</div>
 {%- endmacro %}
 
 {% macro select(name, label, v, options, required=false) -%}
+<div class="fld">
 <label>{{ label }}
   <select name="{{ name }}" {{ 'required' if required }}>
     {% if not required %}<option value=""></option>{% endif %}
     {% for value, text in options %}<option value="{{ value }}" {{ 'selected' if v.get(name) == value }}>{{ text }}</option>{% endfor %}
   </select>
-</label>
+</label>{{ info(name) }}
+</div>
 {%- endmacro %}
 
 {% macro eur(x) -%}{{ '{:,.2f}'.format(x).replace(',', ' ').replace('.', ',') }} €{%- endmacro %}

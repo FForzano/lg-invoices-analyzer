@@ -1,5 +1,5 @@
 {# Verdetto per una fornitura. Parametro: a (analysis.Analysis) #}
-{% from "_macros.html" import eur, num %}
+{% from "_macros.html" import eur, num, info %}
 {% set label = 'Luce' if a.commodity == 'power' else 'Gas' %}
 {% set index = 'PUN' if a.commodity == 'power' else 'PSV' %}
 {% set unit = 'kWh' if a.commodity == 'power' else 'Smc' %}
@@ -21,7 +21,7 @@
         {% if v.worthwhile %}
           <p class="verdict-label">Conviene cambiare</p>
           <p class="verdict-figure">{{ eur(v.saving) }} l'anno</p>
-          <p class="verdict-note">Risparmio stimato del {{ num(v.saving_pct, 0) }}%.</p>
+          <p class="verdict-note">{{ info('t_saving') }} Risparmio stimato del {{ num(v.saving_pct, 0) }}%.</p>
         {% else %}
           <p class="verdict-label">Non conviene cambiare</p>
           <p class="verdict-figure">{{ eur(v.saving) }} l'anno</p>
@@ -29,11 +29,11 @@
         {% endif %}
       </div>
       <p>Migliore alternativa: <strong>{{ v.best.offer.name }}</strong> – {{ v.best.offer.supplier }}.<br>
-         Costo annuo stimato <strong>{{ eur(v.best.estimate.total) }}</strong> contro <strong>{{ eur(v.current.estimate.total) }}</strong> con l'offerta attuale.</p>
+         Costo annuo{{ info('t_total') }} stimato <strong>{{ eur(v.best.estimate.total) }}</strong> contro <strong>{{ eur(v.current.estimate.total) }}</strong> con l'offerta attuale.</p>
       {% if (v.saving_range[1] - v.saving_range[0]) < 1 %}
-        <p class="muted">Il risparmio non dipende dall'andamento del {{ index }}: anche l'offerta attuale è indicizzata.</p>
+        <p class="muted">Il risparmio non dipende dall'andamento del {{ index }}{{ info(index | lower) }}: anche l'offerta attuale è indicizzata.</p>
       {% elif v.worthwhile and not v.robust %}
-        <p class="flash warn" role="alert">Il vantaggio dipende dall'andamento del {{ index }}: con prezzi dell'indice ±20% il risparmio va da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }}.</p>
+        <p class="flash warn" role="alert">Il vantaggio dipende dall'andamento del {{ index }}: con prezzi dell'indice ±20%{{ info('t_sensitivity') }} il risparmio va da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }}.</p>
       {% endif %}
       {% set o = v.best.offer %}
       {% if o.duration_months %}
@@ -42,7 +42,7 @@
       <div class="card-links">
       <details>
         <summary>Dettagli del calcolo</summary>
-        <p class="muted">Con {{ index }} ±20%: risparmio da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }} l'anno.</p>
+        <p class="muted">Con {{ index }}{{ info(index | lower) }} ±20%: risparmio da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }} l'anno.</p>
         <p class="muted">Condizioni importate: {{ 'prezzo fisso' if o.price_type == 'fixed' else 'indicizzato' }}
           {%- if o.price_type == 'fixed' %} {{ num(o.price if o.price is not none else o.price_f1, 4) }} €/{{ unit }}{% else %}, spread {{ num(o.spread, 4) }}{% endif %},
           quota fissa {{ eur(o.fixed_fee_month or 0) }}/mese{% if o.expires_on %}, valida fino al {{ o.expires_on }}{% endif %}. Verificale sul sito del venditore.</p>

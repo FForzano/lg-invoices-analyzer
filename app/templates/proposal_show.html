@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import info %}
 {% block content %}
 <h1>Proposta {{ offer.supplier }} · {{ 'luce' if offer.commodity == 'power' else 'gas' }}</h1>
 <p class="muted">{% if p.received_on %}Ricevuta il {{ p.received_on }}. {% endif %}{% if p.contact %}Riferimento: {{ p.contact }}.{% endif %}</p>

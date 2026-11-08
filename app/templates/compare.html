@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import eur, num, pager %}
+{% from "_macros.html" import eur, num, pager, info %}
 {% block content %}
 {% set commodity = a.commodity %}{% set consumption = a.consumption %}{% set assumptions = a.assumptions %}{% set settings = a.settings %}{% set skipped = a.skipped %}
 <h1>Confronto {{ 'luce' if commodity == 'power' else 'gas' }}</h1>
@@ -15,9 +15,9 @@
   <p>Consumo annuo: <strong>{{ num(consumption.total, 0) }} {{ unit }}</strong> <span class="muted">({{ consumption.source }})</span><br>
   {% if consumption.partial %}<span class="flash warn">Solo {{ consumption.days_covered }} giorni di bollette: consumo annuo proiettato con un profilo stagionale tipico, stima poco affidabile.</span>{% endif %}
   {% if commodity == 'power' and not consumption.bands %}<span class="muted">Fasce non presenti: ripartizione tipica 33% F1, 30% F2, 37% F3.</span><br>{% endif %}
-  <span class="muted">Ipotesi per le offerte indicizzate: {% if commodity == 'power' %}PUN medio annuo {{ num(settings.pun, 3) }} €/kWh × {{ num(a.season_multiplier, 2) }} (stagionalità sui tuoi consumi) = {{ num(assumptions.pun, 3) }} €/kWh, perdite di rete {{ num(assumptions.loss_pct, 1) }}% se non indicate{% else %}PSV medio annuo {{ num(settings.psv, 3) }} €/Smc × {{ num(a.season_multiplier, 2) }} (stagionalità sui tuoi consumi) = {{ num(assumptions.psv, 3) }} €/Smc{% endif %} (<a href="{{ url_for('settings.index') }}">modifica</a>). Zona: regione {{ settings.region or '–' }}, provincia {{ settings.province or '–' }}, comune {{ settings.comune or '–' }}.</span></p>
+  <span class="muted">Ipotesi per le offerte indicizzate: {% if commodity == 'power' %}PUN{{ info('pun') }} medio annuo {{ num(settings.pun, 3) }} €/kWh × {{ num(a.season_multiplier, 2) }} (stagionalità sui tuoi consumi) = {{ num(assumptions.pun, 3) }} €/kWh, perdite di rete {{ num(assumptions.loss_pct, 1) }}% se non indicate{% else %}PSV{{ info('psv') }} medio annuo {{ num(settings.psv, 3) }} €/Smc × {{ num(a.season_multiplier, 2) }} (stagionalità sui tuoi consumi) = {{ num(assumptions.psv, 3) }} €/Smc{% endif %} (<a href="{{ url_for('settings.index') }}">modifica</a>). Zona: regione {{ settings.region or '–' }}, provincia {{ settings.province or '–' }}, comune {{ settings.comune or '–' }}.</span></p>
   <div class="scroll"><table>
-    <tr><th>Offerta</th><th class="num">Energia</th><th class="num">Quote fisse</th><th class="num">Sconti</th><th class="num">Costo annuo</th><th class="num">Risparmio</th></tr>
+    <tr><th>Offerta</th><th class="num">Energia{{ info('t_energy') }}</th><th class="num">Quote fisse{{ info('t_fixed') }}</th><th class="num">Sconti{{ info('t_discount') }}</th><th class="num">Costo annuo{{ info('t_total') }}</th><th class="num">Risparmio{{ info('t_saving') }}</th></tr>
     {% for r in page.items %}
     <tr{% if r.offer.is_current %} class="current"{% endif %}>
       <td>{{ r.offer.supplier }} – {{ r.offer.name }}{% if r.offer.is_current %} <span class="tag current"><strong>attuale</strong></span>{% endif %}</td>

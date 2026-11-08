@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% from "_macros.html" import field %}
+{% from "_macros.html" import field, info %}
 {% block content %}
 <h1>Impostazioni</h1>
-<p class="muted">PUN, PSV, perdite e dispacciamento valgono per tutti i profili. Potenza di default e località sono del profilo <strong>{{ profile.name }}</strong>.</p>
+<p class="muted">{{ info('pun') }} PUN, {{ info('psv') }} PSV, perdite e dispacciamento valgono per tutti i profili. Potenza di default e località sono del profilo <strong>{{ profile.name }}</strong>.</p>
 <form method="post" class="grid">
   <h2 class="full">Prezzi assunti per le offerte indicizzate</h2>
   {{ field('pun', 'PUN medio annuo assunto (€/kWh)', s, 'number') }}
   {{ field('psv', 'PSV medio annuo assunto (€/Smc)', s, 'number') }}
-  {{ field('loss_pct', 'Perdite di rete assunte (%)', s, 'number') }}
-  {{ field('dispatching_extra', 'Dispacciamento + capacità a parte (€/kWh)', s, 'number') }}
+  {{ field('loss_pct', 'Perdite di rete assunte (%)', s, 'number', help='loss_pct_setting') }}
+  {{ field('dispatching_extra', 'Dispacciamento + capacità a parte (€/kWh)', s, 'number', help='dispatching_extra_cost') }}
   <p class="muted full">PUN e PSV sono medie annue assunte per stimare le offerte indicizzate (il valore futuro non è noto). Il confronto le adatta ai mesi in cui consumi (il gas soprattutto d'inverno) con la stagionalità storica; si aggiorna con «Aggiorna dal Portale Offerte». Dispacciamento + capacità: molte offerte li fatturano a parte al costo regolato; nella bolletta di esempio erano ~0,019 €/kWh (0,0105 + ~0,008). Viene aggiunto alle offerte marcate «fatturati a parte», come quelle importate da ARERA.</p>
   <h2 class="full">Profilo {{ profile.name }}: potenza e località</h2>
   {{ field('default_power_kw', 'Potenza di default (kW)', s, 'number') }}

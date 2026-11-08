@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import eur, num, pager %}
+{% from "_macros.html" import eur, num, pager, info %}
 {% block content %}
 <h1>Confronto luce + gas insieme</h1>
 <div class="tabs">
@@ -12,7 +12,7 @@
 {% else %}
   <p class="muted">Offerte con luce e gas dello stesso fornitore, da sottoscrivere insieme. Costo = parte decisa dal fornitore per luce e gas. Il risparmio è rispetto alle due offerte attuali{% if not (power.has_current and gas.has_current) %}: manca l'offerta attuale di luce o gas, quindi non è calcolabile{% endif %}.</p>
   <div class="scroll"><table>
-    <tr><th>Offerta luce</th><th>Offerta gas</th><th class="num">Luce</th><th class="num">Gas</th><th class="num">Costo annuo</th><th class="num">Risparmio</th></tr>
+    <tr><th>Offerta luce</th><th>Offerta gas</th><th class="num">Luce</th><th class="num">Gas</th><th class="num">Costo annuo{{ info('t_total') }}</th><th class="num">Risparmio{{ info('t_saving') }}</th></tr>
     {% for b in page.items %}
     <tr>
       <td>{{ b.power.offer.supplier }} – {{ b.power.offer.name }}</td>

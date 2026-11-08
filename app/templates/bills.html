@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import eur, num, pager %}
+{% from "_macros.html" import eur, num, pager, info %}
 {% block content %}
 <h1>Bollette</h1>
 <div class="actions">
@@ -7,7 +7,7 @@
   <a class="btn secondary" href="{{ url_for('bills.new', commodity='gas') }}">+ Gas</a>
 </div>
 <div class="scroll"><table>
-  <tr><th>Fornitura</th><th>Periodo</th><th class="num">Consumo</th><th>Lettura</th><th class="num">Totale</th><th></th></tr>
+  <tr><th>Fornitura</th><th>Periodo</th><th class="num">Consumo{{ info('t_consumption') }}</th><th>Lettura{{ info('t_reading') }}</th><th class="num">Totale{{ info('total_eur') }}</th><th></th></tr>
   {% for b in page.items %}
   <tr>
     <td>{{ 'Luce' if b.commodity == 'power' else 'Gas' }}</td>

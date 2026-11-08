@@ -15,6 +15,7 @@
   <a href="{{ url_for('offers.index') }}" {{ 'aria-current=page' if ep.startswith('offers.') }}>Offerte</a>
   <a href="{{ url_for('compare.index') }}" {{ 'aria-current=page' if ep.startswith('compare.') }}>Confronto</a>
   <a href="{{ url_for('proposal.index') }}" {{ 'aria-current=page' if ep.startswith('proposal.') }}>Proposta</a>
+  <a href="{{ url_for('guide.index') }}" {{ 'aria-current=page' if ep.startswith('guide.') }}>Guida</a>
   <a href="{{ url_for('settings.index') }}" {{ 'aria-current=page' if ep.startswith('settings.') }}>Impostazioni</a>
   {% if profiles | length > 1 %}
   <form method="post" action="{{ url_for('profiles.switch') }}" class="profile-switch">
@@ -35,5 +36,24 @@
   {% endfor %}
   {% block content %}{% endblock %}
 </main>
+<div id="help-pop" role="tooltip" hidden><span></span> <a href="{{ url_for('guide.index') }}">Guida</a></div>
+<script>
+(function () {
+  var pop = document.getElementById('help-pop'), text = pop.firstElementChild, open = null;
+  function close() { if (open) { open.setAttribute('aria-expanded', 'false'); open = null; } pop.hidden = true; }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('button.info');
+    if (!b) { if (!pop.contains(e.target)) close(); return; }
+    e.preventDefault();
+    if (open === b) { close(); return; }
+    close(); open = b; b.setAttribute('aria-expanded', 'true');
+    text.textContent = b.dataset.help; pop.hidden = false;
+    var r = b.getBoundingClientRect(), w = pop.offsetWidth;
+    pop.style.top = (window.scrollY + r.bottom + 6) + 'px';
+    pop.style.left = Math.max(8, Math.min(window.scrollX + r.left - 12, window.scrollX + document.documentElement.clientWidth - w - 8)) + 'px';
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+})();
+</script>
 </body>
 </html>

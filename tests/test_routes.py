@@ -205,3 +205,12 @@ def test_proposal_save_and_contract_checklist(client):
     assert "Acme" not in client.get("/offers").text  # non entra nel catalogo
     client.post("/proposal/1/delete")
     assert client.get("/proposal/1").status_code == 404
+
+
+def test_guide_and_info_buttons(client):
+    assert "Fisso o indicizzato" in client.get("/guide").text
+    for path in ("/proposal", "/offers/new", "/bills/new", "/settings", "/compare"):
+        page = client.get(path).text
+        assert 'class="info"' in page or path == "/compare", path
+    assert "PUN (Prezzo Unico Nazionale)" in client.get("/settings").text
+    assert "FISSO:" in client.get("/proposal").text

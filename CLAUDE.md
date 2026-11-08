@@ -26,6 +26,7 @@ Entry point `app/__init__.py` (`create_app`, config da env: `DATA_DIR`, `SECRET_
 - `app/analysis.py` — `analyze(commodity)`: unisce database e servizi (consumo, confronto, verdetto); usata da home e confronto.
 - Proposte (`/proposal`, `routes/proposal.py`): form per valutare un'offerta non pubblicata (es. telefonata); `analysis.evaluate_proposal` → `verdict.judge_proposal` contro l'offerta attuale. Valutare non salva nulla; «Salva» scrive in `proposals` (migrazione 010, per profilo, `terms` = JSON dei campi di `Offer` via `services/proposal.py`, nessuna colonna per campo): fuori dal catalogo e dai confronti, pagina di dettaglio con promemoria da verificare nel contratto. Solo singola fornitura, no dual fuel.
 - `app/routes/` — un blueprint per area; solo HTTP, niente logica di dominio.
+- `app/glossary.py` — testi dei tastini (i) (`HELP`, chiave = nome del campo o `t_*` per termini di tabelle/verdetti), esposti come global Jinja; `info(chiave)` in `_macros.html` (anche dentro `field/select/area/check`, con `help=` per altra chiave) apre un popover (script in `base.html`). Un campo nuovo nei form richiede anche la sua voce in `HELP`. Pagina `/guide` (`templates/guide.html`): guida alla lettura e alla decisione.
 - `app/templates/` — Jinja; formattazione numeri/€ nelle macro di `_macros.html`.
 
 ## Code Style Guidelines

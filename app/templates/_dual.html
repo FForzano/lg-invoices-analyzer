@@ -1,5 +1,5 @@
 {# Verdetto luce+gas insieme. Parametro: dual (analysis.DualAnalysis) #}
-{% from "_macros.html" import eur, num %}
+{% from "_macros.html" import eur, num, info %}
 {% set v = dual.verdict %}
 {% if v %}
 <section class="card">
@@ -16,7 +16,7 @@
     {% endif %}
   </div>
   <p>Migliore alternativa: <strong>{{ v.best.power.offer.name }}</strong> + <strong>{{ v.best.gas.offer.name }}</strong> – {{ v.best.power.offer.supplier }}.<br>
-     Costo annuo stimato <strong>{{ eur(v.best.total) }}</strong> (luce {{ eur(v.best.power.estimate.total) }}, gas {{ eur(v.best.gas.estimate.total) }}).</p>
+     Costo annuo{{ info('t_total') }} stimato <strong>{{ eur(v.best.total) }}</strong> (luce {{ eur(v.best.power.estimate.total) }}, gas {{ eur(v.best.gas.estimate.total) }}).</p>
   {% if v.separate_saving > 0 %}
     <div class="compare-pair" role="group" aria-label="Insieme o separate">
       <div><span class="muted">Insieme</span><br><span class="num-big">{{ eur(v.saving) }}</span></div>

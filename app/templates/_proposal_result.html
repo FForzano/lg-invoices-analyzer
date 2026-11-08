@@ -1,4 +1,4 @@
-{% from "_macros.html" import eur, num %}
+{% from "_macros.html" import eur, num, info %}
 {% if not est %}
   <p class="flash info">Servono bollette di questa fornitura per stimare il consumo annuo.</p>
 {% else %}
@@ -6,17 +6,17 @@
   <p>Consumo annuo usato: <strong>{{ num(a.consumption.total, 0) }} {{ unit }}</strong> <span class="muted">({{ a.consumption.source }})</span></p>
   {% if verdict %}
     <p class="flash {{ 'info' if verdict.worthwhile else 'warn' }}">
-      {% if verdict.worthwhile and verdict.robust %}<strong>Conviene</strong>: risparmieresti circa {{ eur(verdict.saving) }} il primo anno ({{ num(verdict.saving_pct, 1) }}%), anche con PUN/PSV ±20%.
-      {% elif verdict.worthwhile %}<strong>Conviene, ma non con certezza</strong>: circa {{ eur(verdict.saving) }} il primo anno ({{ num(verdict.saving_pct, 1) }}%); con PUN/PSV ±20% il risparmio va da {{ eur(verdict.saving_range[0]) }} a {{ eur(verdict.saving_range[1]) }}.
+      {% if verdict.worthwhile and verdict.robust %}<strong>Conviene</strong>: risparmieresti circa {{ eur(verdict.saving) }} il primo anno ({{ num(verdict.saving_pct, 1) }}%), anche con PUN/PSV ±20%{{ info('t_sensitivity') }}.
+      {% elif verdict.worthwhile %}<strong>Conviene, ma non con certezza</strong>: circa {{ eur(verdict.saving) }} il primo anno ({{ num(verdict.saving_pct, 1) }}%); con PUN/PSV ±20%{{ info('t_sensitivity') }} il risparmio va da {{ eur(verdict.saving_range[0]) }} a {{ eur(verdict.saving_range[1]) }}.
       {% elif verdict.saving > 0 %}<strong>Guadagno troppo piccolo</strong>: circa {{ eur(verdict.saving) }} il primo anno, sotto la soglia che giustifica il cambio.
       {% else %}<strong>Non conviene</strong>: costerebbe circa {{ eur(-verdict.saving) }} in più della tua offerta attuale.{% endif %}
     </p>
     <div class="scroll"><table>
-      <tr><th></th><th class="num">Energia</th><th class="num">Quote fisse</th><th class="num">Sconti</th><th class="num">Costo annuo</th></tr>
+      <tr><th></th><th class="num">Energia{{ info('t_energy') }}</th><th class="num">Quote fisse{{ info('t_fixed') }}</th><th class="num">Sconti{{ info('t_discount') }}</th><th class="num">Costo annuo{{ info('t_total') }}</th></tr>
       <tr><td>Proposta</td><td class="num">{{ eur(verdict.proposal.energy) }}</td><td class="num">{{ eur(verdict.proposal.fixed_fee + verdict.proposal.power_fee) }}</td><td class="num">{{ eur(verdict.proposal.discount) }}</td><td class="num"><strong>{{ eur(verdict.proposal.total) }}</strong></td></tr>
       <tr class="current"><td>Offerta attuale</td><td class="num">{{ eur(verdict.current.energy) }}</td><td class="num">{{ eur(verdict.current.fixed_fee + verdict.current.power_fee) }}</td><td class="num">{{ eur(verdict.current.discount) }}</td><td class="num"><strong>{{ eur(verdict.current.total) }}</strong></td></tr>
     </table></div>
-    <p>Senza i bonus una tantum (dal secondo anno) la differenza è di <strong>{{ eur(verdict.saving_steady) }}</strong> l'anno{% if verdict.saving_steady <= 0 %}: il vantaggio sta tutto nel bonus{% endif %}.
+    <p>Senza i bonus una tantum{{ info('t_saving_steady') }} (dal secondo anno) la differenza è di <strong>{{ eur(verdict.saving_steady) }}</strong> l'anno{% if verdict.saving_steady <= 0 %}: il vantaggio sta tutto nel bonus{% endif %}.
     {% if offer.duration_months %}Le condizioni durano {{ offer.duration_months }} mesi: chiedi cosa succede dopo.{% else %}Chiedi per quanto tempo valgono questi prezzi.{% endif %}</p>
   {% else %}
     <p>Costo annuo stimato della proposta: <strong>{{ eur(est.total) }}</strong> (energia {{ eur(est.energy) }}, quote fisse {{ eur(est.fixed_fee + est.power_fee) }}, sconti {{ eur(est.discount) }}).</p>
@@ -24,6 +24,6 @@
   {% endif %}
   {% set best = a.ranked | rejectattr('offer.is_current') | first %}
   {% if best %}<p class="muted">Per confronto, la migliore offerta pubblicata costa {{ eur(best.estimate.total) }} l'anno ({{ best.offer.supplier }} – {{ best.offer.name }}).</p>{% endif %}
-  <p class="muted">Ipotesi per le offerte indicizzate: {% if offer.commodity == 'power' %}PUN {{ num(a.assumptions.pun, 3) }} €/kWh{% else %}PSV {{ num(a.assumptions.psv, 3) }} €/Smc{% endif %} (<a href="{{ url_for('settings.index') }}">modifica</a>).</p>
+  <p class="muted">Ipotesi per le offerte indicizzate: {% if offer.commodity == 'power' %}PUN{{ info('pun') }} {{ num(a.assumptions.pun, 3) }} €/kWh{% else %}PSV{{ info('psv') }} {{ num(a.assumptions.psv, 3) }} €/Smc{% endif %} (<a href="{{ url_for('settings.index') }}">modifica</a>).</p>
 {% endif %}
 <p class="muted">Stima della sola parte decisa dal fornitore: trasporto, oneri, imposte, bonus sociali e canone TV sono esclusi. Controlla di avere i prezzi senza IVA e che «fisso» non sia un prezzo scontato a tempo.</p>

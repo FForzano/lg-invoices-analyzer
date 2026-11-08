@@ -6,6 +6,10 @@ interface AuthState {
   /** Il server richiede l'accesso (AUTH_ENABLED). Se no, l'app funziona come sempre, senza account. */
   enabled: boolean;
   user: User | null;
+  /** Chiunque può registrarsi (ALLOW_REGISTRATION) / c'è un catalogo su cui fare la simulazione pubblica. */
+  registrationOpen: boolean;
+  demo: boolean;
+  register: (name: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (u: User) => void;
@@ -14,17 +18,17 @@ const Ctx = createContext<AuthState | null>(null);
 export const useAuth = () => { const v = useContext(Ctx); if (!v) throw new Error('useAuth fuori da AuthProvider'); return v; };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<{ enabled: boolean; user: User | null } | null>(null);
+  const [state, setState] = useState<{ enabled: boolean; user: User | null; registrationOpen: boolean; demo: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const s = await api.get<{ auth_enabled: boolean; user: User | null }>('/auth/session');
+      const s = await api.get<{ auth_enabled: boolean; user: User | null; registration_open?: boolean; demo?: boolean }>('/auth/session');
       let user = s.user;
       if (s.auth_enabled && !user) {  // l'access token dura pochi minuti: se c'è ancora il refresh token, si rientra senza password
         try { user = (await api.post<{ user: User }>('/auth/refresh')).user; } catch { user = null; }
       }
-      setState({ enabled: s.auth_enabled, user }); setError(null);
+      setState({ enabled: s.auth_enabled, user, registrationOpen: Boolean(s.registration_open), demo: Boolean(s.demo) }); setError(null);
     } catch (e) { setError(e instanceof Error ? e.message : 'Errore'); }
   }, []);
   useEffect(() => { void load(); }, [load]);
@@ -35,13 +39,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const r = await api.post<{ user: User }>('/auth/login', { email, password });  // i token arrivano come cookie HttpOnly
     setState((s) => s && { ...s, user: r.user });
   }, []);
+  const register = useCallback(async (name: string, email: string, password: string) => {
+    const r = await api.post<{ user: User }>('/auth/register', { name, email, password });
+    setState((s) => s && { ...s, user: r.user });
+  }, []);
   const logout = useCallback(async () => {
     try { await api.post('/auth/logout'); } catch { /* si esce comunque dall'app; al prossimo contatto il server revocherà */ }
     setState((s) => s && { ...s, user: null });
   }, []);
   const setUser = useCallback((user: User) => setState((s) => s && { ...s, user }), []);
 
-  const value = useMemo<AuthState | null>(() => state && ({ ...state, login, logout, setUser }), [state, login, logout, setUser]);
+  const value = useMemo<AuthState | null>(() => state && ({ ...state, login, register, logout, setUser }), [state, login, register, logout, setUser]);
 
   if (error && !state) return (
     <div className="mx-auto mt-24 max-w-md rounded-card bg-surface p-8 text-center shadow-panel">

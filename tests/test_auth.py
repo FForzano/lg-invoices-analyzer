@@ -88,7 +88,7 @@ def test_login_off_by_default_everything_open(client):
 
 def test_requests_need_a_session(app):
     a = Api(app)
-    assert a.get("/api/auth/session").json == {"auth_enabled": True, "user": None}
+    assert a.get("/api/auth/session").json == {"auth_enabled": True, "user": None, "registration_open": False, "demo": False}
     assert a.get("/api/bootstrap").status_code == 401
     assert a.get("/health").status_code == 200  # healthcheck e pagine statiche restano pubblici
 

@@ -300,6 +300,20 @@ def _setting(key: str, value):
     return str(value)
 
 
+def get_global_settings() -> dict[str, float | str]:
+    """Impostazioni senza profilo (PUN, PSV, perdite...): per chi non ha un account, come la simulazione pubblica."""
+    return {**SETTING_DEFAULTS, **{r["key"]: _setting(r["key"], r["value"]) for r in get_db().execute("SELECT key, value FROM settings")}}
+
+
+def list_catalog_offers(commodity: str) -> list[Offer]:
+    """Il catalogo condiviso (offerte senza profilo), indipendente da chi guarda."""
+    return _fetch(Offer, f"SELECT {', '.join(columns(Offer))} FROM offers WHERE profile_id IS NULL AND commodity = ? ORDER BY supplier, name", (commodity,))
+
+
+def has_catalog() -> bool:
+    return get_db().execute("SELECT 1 FROM offers WHERE profile_id IS NULL LIMIT 1").fetchone() is not None
+
+
 def get_settings() -> dict[str, float | str]:
     """Impostazioni globali più quelle del profilo attivo (località, potenza di default)."""
     stored = {r["key"]: _setting(r["key"], r["value"]) for r in get_db().execute("SELECT key, value FROM settings")}

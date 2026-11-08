@@ -27,6 +27,10 @@ def create_app(data_dir: str | None = None, frontend_dir: str | None = None, **o
             f"Cartella dati non scrivibile: {data}. Dai i permessi all'utente del processo "
             "(in Docker di default uid 1000, gid 100: `chown 1000:100 <cartella>`) oppure imposta `user:` nel compose."
         ) from e
+    if app.config["TRUST_PROXY"]:  # un solo proxy davanti: IP reale (limiti di richieste) e schema HTTPS (cookie Secure)
+        from werkzeug.middleware.proxy_fix import ProxyFix
+
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
     if app.config["AUTH_ENABLED"]:
         with app.app_context():
             auth.bootstrap_admin()

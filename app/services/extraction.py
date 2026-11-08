@@ -85,13 +85,13 @@ def tool_schema() -> dict:
     }
 
 
-def extract_bill(path: str | bytes, client=None, layouts: list[Layout] = ()) -> tuple[dict, str]:
+def extract_bill(path: str | bytes, client=None, layouts: list[Layout] = (), allow_llm: bool = True) -> tuple[dict, str]:
     """Restituisce (campi, metodo): "regole", «layout …» (forniti o insegnati) o "LLM". `client` è iniettabile per i test.
     In caso di fallimento solleva ExtractionError con i campi parziali già letti dalle regole."""
-    return extract_text(pdf_text(path).strip(), client, layouts)
+    return extract_text(pdf_text(path).strip(), client, layouts, allow_llm)
 
 
-def extract_text(text: str, client=None, layouts: list[Layout] = ()) -> tuple[dict, str]:
+def extract_text(text: str, client=None, layouts: list[Layout] = (), allow_llm: bool = True) -> tuple[dict, str]:
     if not text:
         raise NoTextError("Il PDF è un'immagine, senza testo da leggere. Scarica dal sito o dall'area clienti del fornitore la bolletta in PDF digitale (non una scansione o una foto)")
     parsed = parse_bill_text(text)
@@ -101,7 +101,7 @@ def extract_text(text: str, client=None, layouts: list[Layout] = ()) -> tuple[di
     if all(f in fields for f in REQUIRED):
         return fields, f"layout «{', '.join(used)}»"
     missing = [f for f in REQUIRED if f not in fields]
-    if client is None and not available():
+    if client is None and not (allow_llm and available()):  # allow_llm=False: la simulazione pubblica non spende mai la chiave dell'amministratore
         raise ExtractionError(f"lettura automatica incompleta (mancano: {', '.join(missing)})", fields)
     try:
         llm_fields = _llm_extract(text, client)

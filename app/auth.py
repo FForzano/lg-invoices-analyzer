@@ -37,7 +37,7 @@ ACCESS_COOKIE, REFRESH_COOKIE = "bollette_access", "bollette_refresh"
 CSRF_HEADER, CSRF_VALUE = "X-Requested-With", "bollette"
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
-PUBLIC_ENDPOINTS = {"api.auth_session", "api.auth_login", "api.auth_refresh", "api.auth_logout"}
+PUBLIC_ENDPOINTS = {"api.auth_session", "api.auth_login", "api.auth_register", "api.auth_refresh", "api.auth_logout", "api.simulate"}
 # con la password da cambiare si può solo gestire il proprio account
 ACCOUNT_ENDPOINTS = PUBLIC_ENDPOINTS | {"api.auth_me", "api.auth_update_me", "api.auth_password"}
 CRON_ENDPOINTS = {"api.import_arera", "legacy_import_arera"}

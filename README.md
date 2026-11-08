@@ -64,7 +64,7 @@ Se vuoi che il tuo fornitore funzioni per tutti, *Segnala agli sviluppatori* mos
 
 ## Profili (più appartamenti)
 
-Un **profilo** è un appartamento, con le sue bollette, la sua offerta attuale, la località e la potenza di default. Si crea e si cambia da *Profili* (o dal menu); la scelta resta nel browser. Con il login attivo ogni **account** ha i suoi profili (quanti vuole) e non vede quelli degli altri; catalogo offerte e PUN/PSV restano condivisi ma li modificano solo gli amministratori. Il catalogo delle offerte (importate o inserite a mano) e le ipotesi su PUN/PSV sono condivisi. Cancellare un profilo elimina le sue bollette e i PDF. I dati esistenti passano nel profilo «Casa».
+Un **profilo** è un appartamento, con le sue bollette, la sua offerta attuale, la località e la potenza di default. Si crea e si cambia da *Profili* (o dal menu); la scelta resta nel browser. Con il login attivo ogni **account** ha i suoi profili (quanti vuole) e non vede quelli degli altri; catalogo offerte e PUN/PSV restano condivisi ma li modificano solo gli amministratori. Senza sessione compare una landing (4 passi, bolletta → consiglio) con la simulazione pubblica «Carica la tua ultima bolletta»; la registrazione aperta è opzionale (`ALLOW_REGISTRATION`). Il catalogo delle offerte (importate o inserite a mano) e le ipotesi su PUN/PSV sono condivisi. Cancellare un profilo elimina le sue bollette e i PDF. I dati esistenti passano nel profilo «Casa».
 
 ## Offerte
 

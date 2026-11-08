@@ -60,6 +60,7 @@ export default function App() {
                   <Route path="layouts/teach" element={<Teach />} />
                   <Route path="layouts/:id/report" element={<LayoutReport />} />
                   <Route path="verdict" element={<Navigate to="/" replace />} />
+                  {["accedi", "registrati", "simulazione"].map((p) => <Route key={p} path={p} element={<Navigate to="/" replace />} />)}
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>

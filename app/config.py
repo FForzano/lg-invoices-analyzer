@@ -23,7 +23,7 @@ def from_env(env: Mapping[str, str] | None = None, data_dir: str | Path | None =
                 local: STORAGE_PATH (default DATA_DIR/pdf)
                 s3:    S3_BUCKET, S3_PREFIX, S3_ENDPOINT_URL (MinIO e simili), S3_REGION,
                        S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY (senza: catena standard di AWS), S3_ADDRESSING=path|virtual
-    Login:      AUTH_ENABLED=true  (con ADMIN_EMAIL, ADMIN_PASSWORD, SECRET_KEY, ACCESS_MINUTES, SESSION_DAYS, COOKIE_SECURE, CRON_TOKEN)"""
+    Login:      AUTH_ENABLED=true  (con ADMIN_EMAIL, ADMIN_PASSWORD, ALLOW_REGISTRATION, TRUST_PROXY, SECRET_KEY, ACCESS_MINUTES, SESSION_DAYS, COOKIE_SECURE, CRON_TOKEN)"""
     env = os.environ if env is None else env
     data = Path(data_dir or env.get("DATA_DIR") or "data")
     return {
@@ -39,6 +39,8 @@ def from_env(env: Mapping[str, str] | None = None, data_dir: str | Path | None =
         "S3_SECRET_ACCESS_KEY": env.get("S3_SECRET_ACCESS_KEY") or None,
         "S3_ADDRESSING": (env.get("S3_ADDRESSING") or "auto").strip().lower(),
         "AUTH_ENABLED": flag(env.get("AUTH_ENABLED")),
+        "ALLOW_REGISTRATION": flag(env.get("ALLOW_REGISTRATION")),  # registrazione aperta a chiunque (con il login attivo)
+        "TRUST_PROXY": flag(env.get("TRUST_PROXY")),  # dietro un reverse proxy: fidati di X-Forwarded-For/-Proto (IP reale per i limiti)
         "ADMIN_EMAIL": (env.get("ADMIN_EMAIL") or DEFAULT_ADMIN_EMAIL).strip().lower(),
         "ADMIN_PASSWORD": env.get("ADMIN_PASSWORD") or None,  # None = quella di default, da cambiare al primo accesso
         "SECRET_KEY": env.get("SECRET_KEY") or None,  # firma i JWT; None = ne viene generata una e conservata nel database

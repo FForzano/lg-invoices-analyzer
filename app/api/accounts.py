@@ -1,8 +1,8 @@
 """Account: accesso, dati personali, password e (solo amministratori) gestione degli utenti.
 Con AUTH_ENABLED spento esistono solo `/auth/session` (risponde «login spento») e nessun utente."""
-from flask import g, jsonify, request
+from flask import current_app, g, jsonify, request
 
-from .. import auth
+from .. import auth, db, ratelimit
 from . import ApiError, bp, msg, storage
 
 
@@ -21,7 +21,9 @@ def auth_session():
     if not auth.enabled():
         return jsonify(auth_enabled=False, user=None)
     user = auth.user_from_access_token(request.cookies.get(auth.ACCESS_COOKIE, ""))
-    return jsonify(auth_enabled=True, user=auth.public(user) if user else None)
+    return jsonify(auth_enabled=True, user=auth.public(user) if user else None,
+                   registration_open=bool(current_app.config["ALLOW_REGISTRATION"]),
+                   demo=db.has_catalog())  # la simulazione pubblica ha senso solo con un catalogo importato
 
 
 def _with_session(user: dict, refresh: str, **extra):
@@ -37,6 +39,21 @@ def auth_login():
     data = _body()
     user, refresh = auth.login(str(data.get("email", "")), str(data.get("password", "")))
     return _with_session(user, refresh)
+
+
+@bp.post("/auth/register")
+def auth_register():
+    """Registrazione aperta (solo con ALLOW_REGISTRATION): crea un account normale con il suo primo profilo e lo fa entrare."""
+    _need_auth()
+    if not current_app.config["ALLOW_REGISTRATION"]:
+        raise ApiError("Le registrazioni non sono aperte su questa installazione.", 403)
+    ratelimit.check("register", 5, 3600, "registrazioni")
+    data = _body()
+    email, name, password = auth.check_email(data.get("email", "")), auth.check_name(data.get("name", "")), auth.check_password(data.get("password", ""))
+    id = auth.create_user(email, name, password)
+    resp = _with_session(auth.get_user(id), auth.issue_refresh(id))
+    resp.status_code = 201
+    return resp
 
 
 @bp.post("/auth/refresh")

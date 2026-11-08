@@ -5,6 +5,15 @@ export interface Message { level: MessageLevel; text: string }
 
 export interface User { id: number; email: string; name: string; is_admin: boolean; must_change_password: boolean; created_at: string; profiles?: number }
 
+/** Risposta di POST /simulate: la simulazione pubblica da una sola bolletta (nulla viene salvato). */
+export interface Simulation {
+  commodity: Commodity; method: string; catalog_size: number;
+  bill: { supplier: string | null; period_start: string; period_end: string; consumption: number | null; total_eur: number | null; reading_type: string | null };
+  analysis: Omit<Analysis, 'settings'>;
+  current_offer: { name: string; supplier: string } | null;
+  alternatives: Ranked[];
+}
+
 export interface Profile { id: number; name: string; region: string; province: string; comune: string; default_power_kw: number; bills?: number }
 
 export interface Bill {

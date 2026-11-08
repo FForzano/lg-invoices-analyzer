@@ -1,6 +1,11 @@
 import pytest
 
-from app import create_app
+from app import create_app, ratelimit
+
+
+@pytest.fixture(autouse=True)
+def _fresh_rate_limits():
+    ratelimit.reset()
 
 
 @pytest.fixture

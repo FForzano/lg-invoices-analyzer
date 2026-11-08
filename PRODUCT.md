@@ -20,7 +20,7 @@ Self-hosted: i dati personali delle bollette restano in casa; l'LLM è solo ulti
 
 ## Operating Context
 
-Un container Docker (Flask + SQLite) su NAS/Raspberry Pi; di default senza login, con PDF in locale. Opzionali, da variabili d'ambiente: login (account con più profili ciascuno), PostgreSQL, S3/MinIO. Flusso: carica bollette (anche più PDF insieme) → importa offerte dal Portale Offerte ARERA → Home con il verdetto per luce e gas (e luce+gas insieme), consiglio sulla potenza impegnata. Più profili = più appartamenti, scelti dal browser.
+Un container Docker (Flask + SQLite) su NAS/Raspberry Pi; di default senza login, con PDF in locale. Opzionali, da variabili d'ambiente: login (account con più profili ciascuno; con il login, landing pubblica e simulazione da una sola bolletta senza account), PostgreSQL, S3/MinIO. Flusso: carica bollette (anche più PDF insieme) → importa offerte dal Portale Offerte ARERA → Home con il verdetto per luce e gas (e luce+gas insieme), consiglio sulla potenza impegnata. Più profili = più appartamenti, scelti dal browser.
 
 ## Capabilities and Constraints
 

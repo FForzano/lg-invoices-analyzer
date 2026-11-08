@@ -29,22 +29,25 @@ class Analysis:
 
 
 def analyze(commodity: str, today: date | None = None) -> Analysis:
+    """Analisi dei dati del profilo attivo."""
+    return analyze_data(commodity, db.list_bills(commodity), db.list_offers(commodity), db.get_settings(), db.get_index_factors(), today)
+
+
+def analyze_data(commodity: str, bills: list, all_offers: list[Offer], settings: dict, factors: dict, today: date | None = None) -> Analysis:
+    """Lo stesso calcolo su dati qualsiasi: serve anche alla simulazione pubblica, che non ha profilo né database dell'utente."""
     today = today or date.today()
-    settings = db.get_settings()
     result = Analysis(commodity, settings)
     index = "pun" if commodity == "power" else "psv"
-    mult = season_multiplier(consumption_profile(commodity), db.get_index_factors()[index])
+    mult = season_multiplier(consumption_profile(commodity), factors[index])
     result.season_multiplier = mult
     # PUN/PSV nelle impostazioni sono medie annue: per la fornitura analizzata si usa la media sui mesi di consumo
     result.assumptions = a = Assumptions(
         settings["pun"] * (mult if index == "pun" else 1), settings["psv"] * (mult if index == "psv" else 1),
         settings["default_power_kw"], settings["loss_pct"], settings["dispatching_extra"],
     )
-    bills = db.list_bills(commodity)
     result.consumption = c = annual_consumption(bills)
     if commodity == "power":
         result.power_advice = power_advice(bills)
-    all_offers = db.list_offers(commodity)
     result.has_current = any(o.is_current for o in all_offers)
     # le metà di offerte luce+gas valgono solo se sottoscritte insieme: fuori dal confronto singolo
     offers = [o for o in all_offers if not o.dual_with]

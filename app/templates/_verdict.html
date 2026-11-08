@@ -39,6 +39,7 @@
       {% if o.duration_months %}
         <p class="muted">Condizioni economiche valide {{ o.duration_months }} mesi: dopo, il venditore può cambiare il prezzo. Se la attivi, marcala come «attuale» con la data di attivazione: ti avviso prima della fine.</p>
       {% endif %}
+      <div class="card-links">
       <details>
         <summary>Dettagli del calcolo</summary>
         <p class="muted">Con {{ index }} ±20%: risparmio da {{ eur(v.saving_range[0]) }} a {{ eur(v.saving_range[1]) }} l'anno.</p>
@@ -56,25 +57,8 @@
           Il consumo è in {{ unit }}{% if a.commodity == 'gas' %} (standard metri cubi){% endif %}.
         </p>
       </details>
-      <p><a href="{{ url_for('compare.index', commodity=a.commodity) }}">Vedi tutte le offerte {{ label | lower }}</a></p>
+      <a href="{{ url_for('compare.index', commodity=a.commodity) }}">Vedi tutte le offerte {{ label | lower }}</a>
+      </div>
     {% endif %}
   {% endif %}
 </section>
-{% set pw = a.power_advice %}
-{% if pw %}
-<section class="card">
-  <h2>Potenza impegnata</h2>
-  {% if pw.suggested %}
-    <p>Hai <strong>{{ num(pw.contracted, 1) }} kW</strong> e in {{ pw.months }} mesi il picco è stato <strong>{{ num(pw.peak, 1) }} kW</strong>:
-      potresti scendere a <strong>{{ num(pw.suggested, 1) }} kW</strong>{% if pw.saving_year %}, risparmiando circa <strong>{{ eur(pw.saving_year) }} l'anno</strong> di quota potenza{% endif %}.</p>
-    {% if pw.tight %}<p class="flash warn" role="alert">Margine ridotto: il picco è vicino al limite del nuovo livello e un forno, un phon e una lavatrice insieme potrebbero far staccare il contatore.</p>{% endif %}
-    {% if pw.partial %}<p class="flash warn" role="alert">Ho solo {{ pw.months }} mesi di picchi: carica una bolletta che riporti lo storico annuale prima di decidere (d'inverno i picchi sono di solito più alti).</p>{% endif %}
-    <details>
-      <summary>Cosa tenere presente</summary>
-      <p class="muted">La quota potenza è regolata e uguale per tutti i fornitori; l'importo è senza IVA. Il cambio di potenza può avere costi una tantum: chiedi al fornitore.</p>
-    </details>
-  {% else %}
-    <p class="muted">Hai {{ num(pw.contracted, 1) }} kW e il picco degli ultimi {{ pw.months }} mesi è {{ num(pw.peak, 1) }} kW: non c'è margine per ridurre la potenza.</p>
-  {% endif %}
-</section>
-{% endif %}

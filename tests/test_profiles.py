@@ -39,7 +39,7 @@ def test_profiles_have_separate_bills_current_offer_and_settings(client):
 
 def test_selected_profile_survives_requests_and_next_is_internal_only(client):
     client.post("/profiles", data={"name": "Mare"})
-    assert client.get("/").text.count("· Mare") == 1
+    assert client.get("/").text.count("Profilo Mare") == 1
     r = client.post("/profiles/switch", data={"profile_id": "1", "next": "//evil.example/x"})
     assert r.headers["Location"] == "/"
     assert client.post("/profiles/switch", data={"profile_id": "999"}).status_code == 404
@@ -74,3 +74,11 @@ def test_cannot_edit_another_profiles_current_offer(client):
     client.post(f"/offers/{offer_id}/delete")
     switch_to(client, "Casa")
     assert "Attuale casa" in client.get("/offers").text  # la cancellazione dell'altro profilo non ha effetto
+
+
+def test_profile_switcher_only_with_more_than_one_profile(client):
+    one = client.get("/").text
+    assert 'name="profile_id"' not in one and "Profilo Casa" not in one and 'class="nav-end"' in one
+    client.post("/profiles", data={"name": "Mare"})
+    two = client.get("/").text
+    assert 'name="profile_id"' in two and "Profilo Mare" in two

@@ -2,12 +2,16 @@
 {% from "_macros.html" import eur, num, pager %}
 {% block content %}
 <h1>Confronto luce + gas insieme</h1>
-<p><a href="{{ url_for('compare.index', commodity='power') }}">Solo luce</a> · <a href="{{ url_for('compare.index', commodity='gas') }}">Solo gas</a></p>
+<div class="tabs">
+  <a href="{{ url_for('compare.index', commodity='power') }}">Luce</a>
+  <a href="{{ url_for('compare.index', commodity='gas') }}">Gas</a>
+  <a href="{{ url_for('compare.dual') }}" aria-current="page">Luce + gas insieme</a>
+</div>
 {% if not (power.consumption and gas.consumption) %}
   <p class="flash info">Servono bollette sia di luce sia di gas per stimare i consumi annui.</p>
 {% else %}
   <p class="muted">Offerte con luce e gas dello stesso fornitore, da sottoscrivere insieme. Costo = parte decisa dal fornitore per luce e gas. Il risparmio è rispetto alle due offerte attuali{% if not (power.has_current and gas.has_current) %}: manca l'offerta attuale di luce o gas, quindi non è calcolabile{% endif %}.</p>
-  <table>
+  <div class="scroll"><table>
     <tr><th>Offerta luce</th><th>Offerta gas</th><th class="num">Luce</th><th class="num">Gas</th><th class="num">Costo annuo</th><th class="num">Risparmio</th></tr>
     {% for b in page.items %}
     <tr>
@@ -19,7 +23,7 @@
       <td class="num">{% if b.saving is none %}–{% else %}<span class="{{ 'good' if b.saving > 0 else 'bad' }}">{{ eur(b.saving) }}</span>{% endif %}</td>
     </tr>
     {% else %}<tr><td colspan="6" class="muted">Nessuna offerta luce+gas valida nella tua zona. <a href="{{ url_for('offers.index') }}">Importa le offerte</a>.</td></tr>{% endfor %}
-  </table>
+  </table></div>
   {{ pager(page, request.endpoint, request.args) }}
 {% endif %}
 <p class="muted">Sconti e bonus una tantum non sono inclusi. Trasporto, oneri, imposte, bonus sociali e canone TV sono esclusi. Non è un preventivo.</p>

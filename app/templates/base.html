@@ -15,6 +15,7 @@
   <a href="{{ url_for('offers.index') }}" {{ 'aria-current=page' if ep.startswith('offers.') }}>Offerte</a>
   <a href="{{ url_for('compare.index') }}" {{ 'aria-current=page' if ep.startswith('compare.') }}>Confronto</a>
   <a href="{{ url_for('settings.index') }}" {{ 'aria-current=page' if ep.startswith('settings.') }}>Impostazioni</a>
+  {% if profiles | length > 1 %}
   <form method="post" action="{{ url_for('profiles.switch') }}" class="profile-switch">
     <input type="hidden" name="next" value="{{ request.full_path if request.method == 'GET' else '' }}">
     <select name="profile_id" aria-label="Profilo attivo">
@@ -23,6 +24,9 @@
     <button>Cambia</button>
     <a href="{{ url_for('profiles.index') }}" {{ 'aria-current=page' if ep.startswith('profiles.') }}>Profili</a>
   </form>
+  {% else %}
+  <a class="nav-end" href="{{ url_for('profiles.index') }}" {{ 'aria-current=page' if ep.startswith('profiles.') }}>Profili</a>
+  {% endif %}
 </nav>
 <main>
   {% for category, message in get_flashed_messages(with_categories=true) %}

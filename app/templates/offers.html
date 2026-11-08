@@ -2,22 +2,12 @@
 {% from "_macros.html" import eur, num, pager %}
 {% block content %}
 <h1>Offerte</h1>
-<p><a href="{{ url_for('offers.new', commodity='power') }}">+ Luce</a> · <a href="{{ url_for('offers.new', commodity='gas') }}">+ Gas</a></p>
-<form method="get" style="margin:.5rem 0"><input name="q" value="{{ q }}" placeholder="Cerca fornitore o offerta"> <button>Cerca</button></form>
-{{ pager(page, request.endpoint, request.args) }}
-<table>
-  <tr><th>Fornitura</th><th>Fornitore</th><th>Offerta</th><th>Tipo</th><th>Scadenza</th><th></th><th></th></tr>
-  {% for o in page.items %}
-  <tr>
-    <td>{{ 'Luce' if o.commodity == 'power' else 'Gas' }}</td><td>{{ o.supplier }}</td>
-    <td><a href="{{ url_for('offers.edit', id=o.id) }}">{{ o.name }}</a>{% if o.dual_with %} <span class="muted">(luce+gas)</span>{% endif %}</td>
-    <td>{{ 'fisso' if o.price_type == 'fixed' else 'indicizzato' }}</td>
-    <td>{{ o.expires_on or '–' }}</td><td>{% if o.is_current %}<strong>attuale</strong>{% endif %}</td>
-    <td><form method="post" action="{{ url_for('offers.delete', id=o.id) }}" onsubmit="return confirm('Eliminare?')"><button class="link">elimina</button></form></td>
-  </tr>
-  {% else %}<tr><td colspan="7" class="muted">Nessuna offerta.</td></tr>{% endfor %}
-</table>
-{{ pager(page, request.endpoint, request.args) }}
+<div class="actions">
+  <a class="btn secondary" href="{{ url_for('offers.new', commodity='power') }}">+ Luce</a>
+  <a class="btn secondary" href="{{ url_for('offers.new', commodity='gas') }}">+ Gas</a>
+</div>
+<details class="maintenance"{% if not page.total %} open{% endif %}>
+  <summary>Aggiorna o importa il catalogo</summary>
 <fieldset>
   <legend>Portale Offerte ARERA (open data)</legend>
   <form method="post" action="{{ url_for('offers.import_arera') }}" onsubmit="this.querySelector('button').disabled=true; this.querySelector('button').textContent='Download in corso…'">
@@ -33,4 +23,20 @@
   </form>
   <p class="muted">Intestazione = nomi dei campi (vedi <code>examples/offers.csv</code>). Separatore , o ;</p>
 </fieldset>
+</details>
+{% if page.total or q %}<form method="get" class="inline-form search"><input name="q" value="{{ q }}" placeholder="Cerca fornitore o offerta" aria-label="Cerca fornitore o offerta"> <button>Cerca</button></form>{% endif %}
+{{ pager(page, request.endpoint, request.args) }}
+<div class="scroll"><table>
+  <tr><th>Fornitura</th><th>Fornitore</th><th>Offerta</th><th>Tipo</th><th>Scadenza</th><th></th><th></th></tr>
+  {% for o in page.items %}
+  <tr{% if o.is_current %} class="current"{% endif %}>
+    <td>{{ 'Luce' if o.commodity == 'power' else 'Gas' }}</td><td>{{ o.supplier }}</td>
+    <td><a href="{{ url_for('offers.edit', id=o.id) }}">{{ o.name }}</a>{% if o.dual_with %} <span class="muted">(luce+gas)</span>{% endif %}</td>
+    <td>{{ 'fisso' if o.price_type == 'fixed' else 'indicizzato' }}</td>
+    <td>{{ o.expires_on or '–' }}</td><td>{% if o.is_current %}<span class="tag current"><strong>attuale</strong></span>{% endif %}</td>
+    <td><form method="post" action="{{ url_for('offers.delete', id=o.id) }}" onsubmit="return confirm('Eliminare?')"><button class="link">elimina</button></form></td>
+  </tr>
+  {% else %}<tr><td colspan="7" class="muted">Nessuna offerta.</td></tr>{% endfor %}
+</table></div>
+{{ pager(page, request.endpoint, request.args) }}
 {% endblock %}

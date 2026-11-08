@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Bollette luce e gas <span class="muted">· {{ profile.name }}</span></h1>
-{% for level, text in alerts %}<div class="flash {{ 'warn' if level == 'warn' else 'info' }}" role="{{ 'alert' if level == 'warn' else 'status' }}">{{ text }}</div>{% endfor %}
+<h1>Bollette luce e gas{% if profiles | length > 1 %} <span class="muted">Profilo {{ profile.name }}</span>{% endif %}</h1>
 {% if not analyses | selectattr('consumption') | list %}
 <section class="card first-run">
   <h2>Comincia da una bolletta</h2>
@@ -9,8 +8,10 @@
   <div class="actions"><a class="btn" href="{{ url_for('bills.new') }}">Carica la prima bolletta</a></div>
 </section>
 {% else %}
+{% for level, text in alerts %}<div class="flash {{ 'warn' if level == 'warn' else 'info' }}" role="{{ 'alert' if level == 'warn' else 'status' }}">{{ text }}</div>{% endfor %}
 {% for a in analyses %}{% include "_verdict.html" %}{% endfor %}
 {% include "_dual.html" %}
+{% for a in analyses %}{% include "_power.html" %}{% endfor %}
 <div class="actions">
   <a class="btn" href="{{ url_for('bills.new') }}">Carica bolletta</a>
   <a class="btn secondary" href="{{ url_for('offers.new') }}">Nuova offerta</a>

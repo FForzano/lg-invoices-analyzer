@@ -2,26 +2,22 @@
 {% block content %}
 <h1>Profili</h1>
 <p class="muted">Un profilo è un appartamento (o una fornitura): ha le sue bollette, l'offerta attuale, la località e la potenza di default. Il catalogo delle offerte e le ipotesi su PUN/PSV sono condivisi.</p>
-<table>
-  <tr><th>Nome</th><th class="num">Bollette</th><th></th></tr>
-  {% for p in profiles %}
-  <tr>
-    <td>
-      <form method="post" action="{{ url_for('profiles.rename', id=p.id) }}" style="display:flex; gap:.5rem">
-        <input name="name" value="{{ p.name }}" maxlength="60" required aria-label="Nome del profilo">
-        <button>Rinomina</button>
-      </form>
-    </td>
-    <td class="num">{{ counts.get(p.id, 0) }}</td>
-    <td>
-      {% if p.id == profile.id %}<strong>attivo</strong>{% else %}
-      <form method="post" action="{{ url_for('profiles.switch') }}" style="display:inline"><input type="hidden" name="profile_id" value="{{ p.id }}"><button>Usa</button></form>{% endif %}
-      {% if profiles | length > 1 %}
-      <form method="post" action="{{ url_for('profiles.delete', id=p.id) }}" style="display:inline" onsubmit="return confirm('Eliminare il profilo «{{ p.name }}» con tutte le sue bollette?')"><button class="link">elimina</button></form>{% endif %}
-    </td>
-  </tr>
-  {% endfor %}
-</table>
+{% for p in profiles %}
+{% set n = counts.get(p.id, 0) %}
+<section class="card profile">
+  <form method="post" action="{{ url_for('profiles.rename', id=p.id) }}" class="inline-form">
+    <input name="name" value="{{ p.name }}" maxlength="60" required aria-label="Nome del profilo">
+    <button>Rinomina</button>
+  </form>
+  <p class="muted">{{ n }} {{ 'bolletta' if n == 1 else 'bollette' }}</p>
+  <div class="row-actions">
+    {% if p.id == profile.id %}<span class="tag current"><strong>attivo</strong></span>{% else %}
+    <form method="post" action="{{ url_for('profiles.switch') }}" class="inline"><input type="hidden" name="profile_id" value="{{ p.id }}"><button>Usa</button></form>{% endif %}
+    {% if profiles | length > 1 %}
+    <form method="post" action="{{ url_for('profiles.delete', id=p.id) }}" class="inline" onsubmit="return confirm('Eliminare il profilo «{{ p.name }}» con tutte le sue bollette?')"><button class="link">elimina</button></form>{% endif %}
+  </div>
+</section>
+{% endfor %}
 <fieldset>
   <legend>Nuovo profilo</legend>
   <form method="post" action="{{ url_for('profiles.create') }}" class="grid">

@@ -9,10 +9,17 @@ from app.services.offers_csv import parse_offers_csv
 def test_parse_italian_decimal_and_required():
     b = forms.parse(Bill, {"commodity": "gas", "period_start": "2026-06-01", "period_end": "2026-06-30", "mc": "10,5"})
     assert b.mc == 10.5
-    with pytest.raises(ValueError, match="period_end"):
+    # nel form i messaggi usano le etichette («Fine periodo»), non i nomi dei campi
+    with pytest.raises(ValueError, match="Fine periodo") as e:
         forms.parse(Bill, {"commodity": "gas", "period_start": "2026-06-01"})
-    with pytest.raises(ValueError, match="commodity"):
+    assert "period_end" not in str(e.value)
+    with pytest.raises(ValueError, match="«Fornitura»"):
         forms.parse(Bill, {"commodity": "acqua", "period_start": "a", "period_end": "b"})
+    with pytest.raises(ValueError, match="«kWh F1»"):
+        forms.parse(Bill, {"commodity": "power", "period_start": "a", "period_end": "b", "kwh_f1": "x"})
+    # il CSV ha i nomi dei campi come intestazione e li vuole nei messaggi
+    with pytest.raises(ValueError, match="period_end"):
+        forms.parse(Bill, {"commodity": "gas", "period_start": "2026-06-01"}, labels=None)
 
 
 def test_csv_import_reports_row_errors():

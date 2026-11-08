@@ -16,7 +16,7 @@ def parse_offers_csv(text: str) -> tuple[list[Offer], list[str]]:
     offers, errors = [], []
     for n, row in enumerate(csv.DictReader(io.StringIO(text), delimiter=delimiter), start=2):
         try:
-            offers.append(forms.parse(Offer, row))
+            offers.append(forms.parse(Offer, row, labels=None))
         except ValueError as e:
             errors.append(f"Riga {n}: {e}")
     return offers, errors

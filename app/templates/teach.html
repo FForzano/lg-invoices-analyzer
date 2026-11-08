@@ -13,7 +13,7 @@
 {% endmacro %}
 <link rel="stylesheet" href="{{ url_for('static', filename='vendor/pdfjs/pdf_viewer.css') }}">
 <h1>Insegna a leggere la bolletta</h1>
-<p>Segui i passaggi: <strong>seleziona nella bolletta</strong> il dato richiesto (con il dito o il mouse). L'app capisce da sola dove si trova e lo riconoscerà anche nelle prossime bollette dello stesso fornitore, con valori diversi.</p>
+<p>Segui i passaggi: <strong>tocca nella bolletta</strong> il dato richiesto: i valori possibili sono già riquadrati (puoi anche selezionare il testo a mano). L'app capisce da sola dove si trova e lo riconoscerà anche nelle prossime bollette dello stesso fornitore, con valori diversi.</p>
 <p class="muted">Il documento resta in questo server: non viene inviato da nessuna parte. Puoi saltare i dati che non trovi.</p>
 {% for key, message in errors.items() %}<p class="flash warn" role="alert">{{ message if key in ('_all', '_signature') else (help.get(key, key) ~ ': ' ~ message) }}</p>{% endfor %}
 
@@ -44,9 +44,10 @@ let active = null, last = '';
 
 function setActive(row) {
   active = row;
+  pagesEl.dataset.kind = row ? row.querySelector('input').dataset.kind : '';
   document.getElementById('skip').hidden = !row;
   rows.forEach(r => r.classList.toggle('active', r === row));
-  label.textContent = row ? 'Seleziona nella bolletta: ' + row.dataset.label : 'Fatto: controlla i dati qui sotto e salva.';
+  label.textContent = row ? 'Tocca nella bolletta: ' + row.dataset.label : 'Fatto: controlla i dati qui sotto e salva.';
 }
 const pending = () => rows.filter(r => r.hasAttribute('data-required') && !r.hasAttribute('data-found') && !r.dataset.skipped && !r.querySelector('input').value);
 const advance = () => setActive(pending()[0] || null);
@@ -62,6 +63,32 @@ function fill(text) {
   if (select) { const g = GUESS.find(([re, v]) => re.test(text) && [...select.options].some(o => o.value === v)); if (g) select.value = g[1]; }
   advance();
 }
+// valori riquadrati: numeri e date sono cliccabili; per i campi a scelta (luce/gas, effettiva/stimata) basta toccare la riga
+const DATE = /\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4}/g, NUMBER = /(?<![\w.,\/-])(?:\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:,\d+)?)(?![\w\/])(?![.,]\d)/g;
+function markCandidates(layer) {
+  layer.querySelectorAll('span').forEach(span => {
+    const text = span.textContent, parts = [];
+    for (const [re, cls] of [[DATE, 'date'], [NUMBER, 'num']])
+      for (const m of text.matchAll(re)) if (!parts.some(p => m.index < p.end && m.index + m[0].length > p.start)) parts.push({ start: m.index, end: m.index + m[0].length, cls });
+    if (!parts.length) return;
+    parts.sort((a, b) => a.start - b.start);
+    const frag = document.createDocumentFragment();
+    let pos = 0;
+    for (const p of parts) {
+      frag.append(text.slice(pos, p.start));
+      const mark = Object.assign(document.createElement('mark'), { className: 'cand ' + p.cls, textContent: text.slice(p.start, p.end) });
+      frag.append(mark); pos = p.end;
+    }
+    frag.append(text.slice(pos));
+    span.replaceChildren(frag);
+  });
+}
+pagesEl.addEventListener('click', e => {
+  if (window.getSelection().toString().trim()) return;  // sta selezionando a mano
+  const kind = pagesEl.dataset.kind, cand = e.target.closest('.cand');
+  if (cand && cand.classList.contains(kind === 'date' ? 'date' : 'num') && (kind === 'date' || kind === 'number')) fill(cand.textContent);
+  else if ((kind === 'keyword' || kind === 'text') && e.target.closest('.textLayer span')) fill(e.target.closest('.textLayer span').textContent.replace(/\s+/g, ' ').trim());
+});
 let timer;
 document.addEventListener('selectionchange', () => {
   clearTimeout(timer);
@@ -90,6 +117,7 @@ try {
     box.append(canvas, text); pagesEl.append(box);
     await page.render({ canvasContext: canvas.getContext('2d'), viewport, transform: [ratio, 0, 0, ratio, 0, 0] }).promise;
     await new pdfjs.TextLayer({ textContentSource: page.streamTextContent(), container: text, viewport }).render();
+    markCandidates(text);
   }
   document.getElementById('text-fallback').open = false;
 } catch (e) {

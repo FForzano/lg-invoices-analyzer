@@ -162,3 +162,8 @@ button.secondary-btn { background:none; color:var(--accent); border:1px solid va
 .pdf-page canvas { display:block; }
 .teach-row.active .teach-input input { border-color:var(--accent); outline:2px solid var(--accent); }
 [hidden] { display:none !important; }
+
+/* valori riquadrati nel PDF: solo quelli del tipo richiesto dal passo corrente */
+.pdf-pages .cand { color:transparent; background:none; border-radius:3px; }
+.pdf-pages[data-kind=number] .cand.num, .pdf-pages[data-kind=date] .cand.date { background:color-mix(in srgb, var(--accent) 22%, transparent); outline:2px solid var(--accent); outline-offset:1px; cursor:pointer; }
+.pdf-pages[data-kind=keyword] .textLayer span:hover, .pdf-pages[data-kind=text] .textLayer span:hover { background:color-mix(in srgb, var(--accent) 22%, transparent); outline:2px solid var(--accent); cursor:pointer; }

@@ -128,7 +128,8 @@ Carta e inchiostro neutri con un blu funzionale; la palette ha una versione scur
 ### Hierarchy
 - **Titolo pagina** (700, 1.75rem, 1.2, tracking -0.01em): `h1`; il profilo attivo è un sottotitolo da 0.875rem sotto.
 - **Titolo sezione** (600, 1.25rem): `h2`; stessa dimensione per l'etichetta del verdetto («Conviene cambiare», 700).
-- **Etichetta di riquadro/gruppo** (600, 0.8rem, maiuscolo, tracking 0.06em, grigio sommesso): titoli dei riquadri in Home («Luce», «Gas», «Potenza impegnata») e dei gruppi nei form.
+- **Etichetta di gruppo** (600, 0.8rem, maiuscolo, tracking 0.06em, grigio sommesso): titoli dei gruppi nei form.
+- **Titolo di riquadro in Home** (`.card.commodity`: 600, 1.25rem, inchiostro) con sotto una riga di contesto `.card-meta` (consumo annuo, giorni di bollette). Sopra i riquadri, una frase di sintesi (`.summary`, 600, 1.25rem). Nel «Non conviene» la cifra grande non c'è: il risparmio massimo sta nella nota.
 - **Verdetto** (700, 2rem; 2.5rem da 40rem in su, tracking -0.015em, cifre tabulari): la cifra del risparmio.
 - **Body** (400, 1rem = la dimensione scelta dall'utente nel browser, 1.5; 1.55 con tracking 0.005em in tema scuro): tutto il resto. Paragrafi e liste a 70ch al massimo; titoli con `text-wrap: balance`, testo con `text-wrap: pretty`.
 - **Nav** (500, 1rem; 700 per la pagina corrente): voci del menu principale.

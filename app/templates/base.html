@@ -36,23 +36,23 @@
   {% endfor %}
   {% block content %}{% endblock %}
 </main>
-<div id="help-pop" role="tooltip" hidden><span></span> <a href="{{ url_for('guide.index') }}">Guida</a></div>
+<div id="help-pop" role="status" hidden><span></span> <a href="{{ url_for('guide.index') }}">Guida</a></div>
 <script>
 (function () {
   var pop = document.getElementById('help-pop'), text = pop.firstElementChild, open = null;
-  function close() { if (open) { open.setAttribute('aria-expanded', 'false'); open = null; } pop.hidden = true; }
+  function close(back) { if (open) { open.setAttribute('aria-expanded', 'false'); open.removeAttribute('aria-describedby'); if (back) open.focus(); open = null; } pop.hidden = true; }
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('button.info');
     if (!b) { if (!pop.contains(e.target)) close(); return; }
     e.preventDefault();
-    if (open === b) { close(); return; }
-    close(); open = b; b.setAttribute('aria-expanded', 'true');
+    if (open === b) { close(true); return; }
+    close(); open = b; b.setAttribute('aria-expanded', 'true'); b.setAttribute('aria-describedby', 'help-pop');
     text.textContent = b.dataset.help; pop.hidden = false;
     var r = b.getBoundingClientRect(), w = pop.offsetWidth;
     pop.style.top = (window.scrollY + r.bottom + 6) + 'px';
     pop.style.left = Math.max(8, Math.min(window.scrollX + r.left - 12, window.scrollX + document.documentElement.clientWidth - w - 8)) + 'px';
   });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(true); });
 })();
 </script>
 </body>

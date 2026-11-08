@@ -59,6 +59,7 @@ def test_upload_detects_current_offer_and_gives_verdict(client, monkeypatch):
     client.post("/offers/save", data=cheap)
     home = client.get("/").text
     assert "Conviene cambiare" in home and "Fissa economica" in home
+    assert "Luce: conviene cambiare" in home  # sintesi d'insieme sopra i riquadri
 
     # un'offerta attuale inserita a mano non viene sovrascritta da una nuova bolletta
     client.post("/offers/save", data={**cheap, "name": "Mia manuale", "is_current": "on"})

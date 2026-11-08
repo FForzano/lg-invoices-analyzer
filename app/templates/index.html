@@ -8,7 +8,15 @@
   <div class="actions"><a class="btn" href="{{ url_for('bills.new') }}">Carica la prima bolletta</a></div>
 </section>
 {% else %}
-{% for level, text in alerts %}<div class="flash {{ 'warn' if level == 'warn' else 'info' }}" role="{{ 'alert' if level == 'warn' else 'status' }}">{{ text }}</div>{% endfor %}
+{% from "_macros.html" import eur %}
+{% set judged = analyses | selectattr('verdict') | list %}
+{% if judged or dual.verdict %}
+<p class="summary">
+  {%- for a in judged %}{{ 'Luce' if a.commodity == 'power' else 'Gas' }}: {% if a.verdict.worthwhile %}conviene cambiare ({{ eur(a.verdict.saving) }} l'anno){% else %}non conviene{% endif %}.{{ ' ' }}{% endfor -%}
+  {%- if dual.verdict and dual.verdict.worthwhile and dual.verdict.beats_separate %}Luce+gas insieme: conviene ({{ eur(dual.verdict.saving) }} l'anno).{% endif %}
+</p>
+{% endif %}
+{% for level, text in alerts %}<div class="flash {{ 'warn' if level == 'warn' else 'info' }}" role="status">{{ text }}</div>{% endfor %}
 {% for a in analyses %}{% include "_verdict.html" %}{% endfor %}
 {% include "_dual.html" %}
 {% for a in analyses %}{% include "_power.html" %}{% endfor %}
@@ -17,5 +25,5 @@
   <a class="btn secondary" href="{{ url_for('offers.new') }}">Nuova offerta</a>
 </div>
 {% endif %}
-<p class="muted">Stima della sola parte decisa dal fornitore (energia, quote fisse, sconti): trasporto, oneri, imposte, bonus sociale e canone TV non cambiano con il fornitore. Sconti e bonus una tantum non sono inclusi. Prima di cambiare verifica sempre le condizioni sul sito del venditore.</p>
+<p class="muted">Stima della sola parte decisa dal fornitore: restano fuori trasporto, oneri, imposte, bonus e canone TV. Verifica le condizioni sul sito del venditore prima di cambiare. <a href="{{ url_for('guide.index') }}">Come leggere i numeri</a></p>
 {% endblock %}

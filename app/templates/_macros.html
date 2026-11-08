@@ -1,6 +1,6 @@
 {# Tastino (i): il testo viene da app/glossary.py; lo script in base.html lo mostra in un popover #}
-{% macro info(key) -%}
-{% if HELP.get(key) %}<button type="button" class="info" data-help="{{ HELP[key] }}" aria-label="Cosa significa?" aria-expanded="false">i</button>{% endif %}
+{% macro info(key, nome=none) -%}
+{% if HELP.get(key) %}<button type="button" class="info" data-help="{{ HELP[key] }}" aria-label="{{ 'Cosa significa «' ~ nome ~ '»?' if nome else 'Cosa significa?' }}" aria-controls="help-pop" aria-expanded="false">i</button>{% endif %}
 {%- endmacro %}
 
 {% macro field(name, label, v, type='text', step='any', required=false, help=none) -%}

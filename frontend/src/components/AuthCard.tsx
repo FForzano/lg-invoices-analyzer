@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { ApiError } from '../lib/api';
 import { BrandMark } from './Layout';
 import { Button, Notice } from './ui';
@@ -13,6 +14,9 @@ export function AuthCard({ title, intro, children }: { title: string; intro?: Re
         <h1 className="text-2xl font-extrabold leading-tight text-accent-deep">{title}</h1>
         {intro && <p className="mt-1 text-sm text-muted">{intro}</p>}
         {children}
+        <p className="mb-0 mt-6 border-t border-edge pt-3 text-xs text-muted">
+          <Link to="/termini" className="font-bold underline underline-offset-4">Termini d'uso</Link> · <Link to="/privacy" className="font-bold underline underline-offset-4">Privacy e cookie</Link>
+        </p>
       </div>
     </main>
   );

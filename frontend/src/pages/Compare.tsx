@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '../lib/useQuery';
 import { eur, num, unitOf } from '../lib/format';
 import type { Analysis, Bundle, PageInfo, Ranked } from '../lib/types';
+import AdSlot from '../components/AdSlot';
 import { ErrorBox, good, H1, InfoButton, Loading, Muted, Notice, Pager, Scroll, Tabs, Tag, usePage } from '../components/ui';
 
 const TABS = [{ to: '/compare/power', label: 'Luce' }, { to: '/compare/gas', label: 'Gas' }, { to: '/compare/dual', label: 'Luce + gas insieme' }];
@@ -49,6 +50,7 @@ export function Compare() {
         {a.skipped.length > 0 && <Muted>{a.skipped.length} offerte non valutabili per dati incompleti.</Muted>}
       </>}
       <Muted className="mt-3">{NOTE}</Muted>
+      <AdSlot slot="compare-end" />
     </>
   );
 }
@@ -79,6 +81,7 @@ export function CompareDual() {
         <Pager page={data.page} />
       </>}
       <Muted className="mt-3">Sconti e bonus una tantum non sono inclusi. Trasporto, oneri, imposte, bonus sociali e canone TV sono esclusi. Non è un preventivo.</Muted>
+      <AdSlot slot="compare-end" />
     </>
   );
 }

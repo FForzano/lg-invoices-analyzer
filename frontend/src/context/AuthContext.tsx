@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api, setOnUnauthorized } from '../lib/api';
-import type { User } from '../lib/types';
+import { NO_SITE, type Site, type User } from '../lib/types';
 
 interface AuthState {
   /** Il server richiede l'accesso (AUTH_ENABLED). Se no, l'app funziona come sempre, senza account. */
@@ -9,6 +9,8 @@ interface AuthState {
   /** Chiunque può registrarsi (ALLOW_REGISTRATION) / c'è un catalogo su cui fare la simulazione pubblica. */
   registrationOpen: boolean;
   demo: boolean;
+  /** Gestore e funzioni opzionali dell'installazione (posta, pubblicità...): vale anche a login spento. */
+  site: Site;
   register: (name: string, email: string, password: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -18,17 +20,20 @@ const Ctx = createContext<AuthState | null>(null);
 export const useAuth = () => { const v = useContext(Ctx); if (!v) throw new Error('useAuth fuori da AuthProvider'); return v; };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<{ enabled: boolean; user: User | null; registrationOpen: boolean; demo: boolean } | null>(null);
+  const [state, setState] = useState<{ enabled: boolean; user: User | null; registrationOpen: boolean; demo: boolean; site: Site } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
-      const s = await api.get<{ auth_enabled: boolean; user: User | null; registration_open?: boolean; demo?: boolean }>('/auth/session');
+      const [s, site] = await Promise.all([
+        api.get<{ auth_enabled: boolean; user: User | null; registration_open?: boolean; demo?: boolean }>('/auth/session'),
+        api.get<Site>('/site').catch(() => NO_SITE),  // le informazioni sul gestore non devono impedire di usare l'app
+      ]);
       let user = s.user;
       if (s.auth_enabled && !user) {  // l'access token dura pochi minuti: se c'è ancora il refresh token, si rientra senza password
         try { user = (await api.post<{ user: User }>('/auth/refresh')).user; } catch { user = null; }
       }
-      setState({ enabled: s.auth_enabled, user, registrationOpen: Boolean(s.registration_open), demo: Boolean(s.demo) }); setError(null);
+      setState({ enabled: s.auth_enabled, user, registrationOpen: Boolean(s.registration_open), demo: Boolean(s.demo), site });  setError(null);
     } catch (e) { setError(e instanceof Error ? e.message : 'Errore'); }
   }, []);
   useEffect(() => { void load(); }, [load]);

@@ -6,6 +6,7 @@ import { eur, num, commodityLabel, unitOf } from '../lib/format';
 import type { Bill, PageInfo } from '../lib/types';
 import { useApp } from '../context/AppContext';
 import { useConfirm } from '../context/ConfirmContext';
+import AdSlot from '../components/AdSlot';
 import { Actions, DangerLink, ErrorBox, H1, InfoButton, LinkButton, Loading, Pager, Scroll, usePage } from '../components/ui';
 import { TEXT_BUTTON } from '../components/styles';
 
@@ -52,6 +53,7 @@ export default function Bills() {
             {!data.items.length && <tr><td colSpan={6} className={`${td} text-muted`}>Nessuna bolletta.</td></tr>}
           </tbody></table></Scroll>
         <Pager page={data.page} />
+        <AdSlot slot="bills-list" />
       </>}
     </>
   );

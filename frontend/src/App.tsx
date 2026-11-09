@@ -20,6 +20,8 @@ import Users from './pages/Users';
 import Guide from './pages/Guide';
 import Layouts from './pages/Layouts';
 import LayoutReport from './pages/LayoutReport';
+import Terms from './pages/legal/Terms';
+import Privacy from './pages/legal/Privacy';
 
 // Grafici e lettura dei PDF sono librerie pesanti: si scaricano solo aprendo quelle pagine.
 const History = lazy(() => import('./pages/History'));
@@ -54,13 +56,15 @@ export default function App() {
                   <Route path="guide" element={<Guide />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="profiles" element={<Profiles />} />
+                  <Route path="termini" element={<Terms />} />
+                  <Route path="privacy" element={<Privacy />} />
                   <Route path="account" element={<Account />} />
                   <Route path="users" element={<Users />} />
                   <Route path="layouts" element={<Layouts />} />
                   <Route path="layouts/teach" element={<Teach />} />
                   <Route path="layouts/:id/report" element={<LayoutReport />} />
                   <Route path="verdict" element={<Navigate to="/" replace />} />
-                  {["accedi", "registrati", "simulazione"].map((p) => <Route key={p} path={p} element={<Navigate to="/" replace />} />)}
+                  {["accedi", "registrati", "simulazione", "password-dimenticata", "reimposta-password"].map((p) => <Route key={p} path={p} element={<Navigate to="/" replace />} />)}
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>

@@ -5,6 +5,7 @@ import { api, ApiError } from '../../lib/api';
 import { commodityLabel, eur, num, unitOf } from '../../lib/format';
 import type { Simulation } from '../../lib/types';
 import { useAuth } from '../../context/AuthContext';
+import AdSlot from '../../components/AdSlot';
 import PublicShell from '../../components/public/PublicShell';
 import { Card, Notice, VerdictBlock } from '../../components/ui';
 import { FOCUS_RING, PRIMARY_BUTTON, SOFT_BUTTON } from '../../components/styles';
@@ -24,7 +25,7 @@ function Dropzone({ onFile, busy }: { onFile: (f: File) => void; busy: boolean }
       <input ref={input} type="file" accept="application/pdf,.pdf" className="sr-only" aria-label="PDF della bolletta" tabIndex={-1}
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
       <button type="button" disabled={busy} onClick={() => input.current?.click()} className={`${PRIMARY_BUTTON} min-h-[3.5rem] !rounded-full px-8 text-xl disabled:opacity-70`}>{busy ? 'Leggo la bolletta…' : 'Scegli il PDF'}</button>
-      <p className="m-0 text-sm text-muted">Oppure trascinalo qui. Il file viene letto e subito scartato: non lo salviamo.</p>
+      <p className="m-0 text-sm text-muted">Oppure trascinalo qui. Il file viene letto e subito scartato: non lo salviamo. <Link to="/privacy" className="font-bold text-accent underline underline-offset-4">Privacy</Link></p>
     </div>
   );
 }
@@ -66,6 +67,8 @@ function Result({ sim, onAgain }: { sim: Simulation; onAgain: () => void }) {
         </>}
         <p className="mb-3 mt-4 text-sm text-muted">Stima, non preventivo. Considero le {sim.catalog_size} offerte del catalogo valide in tutta Italia, con {index} medio assunto di {num(sim.commodity === 'power' ? (a.assumptions?.pun ?? 0) : (a.assumptions?.psv ?? 0), 3)} €/{unit}. Verifica le condizioni sul sito del venditore.</p>
       </Card>
+
+      <AdSlot slot="simulation-result" />
 
       <Card className="border-accent/40">
         <h2 className="mb-1 mt-3 text-2xl font-extrabold tracking-tight">Vuoi una stima più precisa?</h2>

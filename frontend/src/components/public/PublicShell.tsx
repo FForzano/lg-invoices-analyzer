@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { BrandMark } from '../Layout';
+import Footer from '../Footer';
 import { FOCUS_RING, PRIMARY_BUTTON, SOFT_BUTTON, TEXT_BUTTON } from '../styles';
 
 /** Cornice delle pagine pubbliche (landing, simulazione): testata con accesso e registrazione, piede con le fonti. */
@@ -18,12 +19,7 @@ export default function PublicShell({ children, title }: { children: ReactNode; 
         </div>
       </header>
       {children}
-      <footer className="border-t border-edge bg-surface">
-        <div className="mx-auto max-w-6xl space-y-1 px-4 py-6 text-sm text-muted lg:px-8">
-          <p>Le offerte vengono dagli <a className="font-bold text-accent underline" href="https://www.ilportaleofferte.it/portaleOfferte/it/open-data.page" target="_blank" rel="noopener noreferrer">open data del Portale Offerte</a> (ARERA / Acquirente Unico). L'app non è affiliata a nessun fornitore.</p>
-          <p>Una stima non è un preventivo: prima di cambiare, controlla sempre le condizioni sul sito del venditore.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -56,3 +56,13 @@ export interface TeachInfo {
 }
 export interface Prefill { values: Record<string, unknown>; teach_pdf: string | null; messages: Message[] }
 export interface ProposalValues { id: number | null; contact: string | null; received_on: string | null; notes: string | null; created_at?: string; [key: string]: unknown }
+
+/** Chi gestisce l'installazione e quali funzioni opzionali sono attive (GET /api/site, pubblico): piè di pagina, termini e privacy. */
+export interface Site {
+  operator: { name: string; email: string; address: string; vat: string; registry: string };
+  auth_enabled: boolean; registration_open: boolean; mail_enabled: boolean; llm_enabled: boolean; ads_enabled: boolean;
+  storage: string; database: string;
+}
+export const NO_SITE: Site = { operator: { name: '', email: '', address: '', vat: '', registry: '' }, auth_enabled: false, registration_open: false, mail_enabled: false, llm_enabled: false, ads_enabled: false, storage: 'local', database: 'sqlite' };
+/** Un contenuto sponsorizzato (GET /api/ads?slot=…). */
+export interface Ad { sponsor: string; title: string; text: string; cta: string; url: string; image: string | null; video: string | null; alt: string }

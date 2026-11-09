@@ -17,6 +17,7 @@ export default function Register() {
         <TextInput label="Email" type="email" name="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <TextInput label="Password (almeno 8 caratteri)" type="password" name="password" autoComplete="new-password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} />
       </SimpleForm>
+      <p className="mb-0 mt-3 text-xs text-muted">Registrandoti accetti i <Link to="/termini" className="font-bold underline underline-offset-4">termini d'uso</Link> e dichiari di aver letto l'<Link to="/privacy" className="font-bold underline underline-offset-4">informativa privacy</Link>.</p>
       <p className="mb-0 mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-muted">
         <span>Hai già un account? <Link to="/accedi" className="font-bold text-accent underline">Accedi</Link></span>
         <Link to="/" className={TEXT_BUTTON}>Torna alla home</Link>

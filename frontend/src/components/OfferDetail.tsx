@@ -11,12 +11,19 @@ export const safeUrl = (u: unknown): string | null => {
   try { const p = new URL(u); return p.protocol === 'https:' || p.protocol === 'http:' ? p.href : null; } catch { return null; }
 };
 
-/** Etichette e, per gli oneri di uscita, le prime righe del testo del venditore: si vedono senza aprire l'offerta. */
+/** Le righe del testo con il contenuto degli oneri: scarta le sole intestazioni («Oneri di recesso anticipato»), se c'è altro. */
+export const exitLines = (text: string | null | undefined): string[] => {
+  const all = (text ?? '').split('\n').map((l) => l.trim()).filter(Boolean);
+  const body = all.filter((l) => /\d/.test(l) || l.length > 60);
+  return body.length ? body : all;
+};
+
+/** Etichette (oneri di uscita, bonus) e, sotto il nome, il testo del venditore sugli oneri: si legge senza aprire l'offerta. */
 export const Flags = ({ o }: { o: Offer }) => (
   <>
     {(o.exit_terms || o.bonus_terms) && <span className="ml-1 inline-flex flex-wrap gap-1 align-middle">
       {o.exit_terms && <Tag kind="warn">oneri di uscita</Tag>}{o.bonus_terms && <Tag>bonus</Tag>}</span>}
-    {o.exit_terms && <span className="mt-0.5 line-clamp-2 max-w-[48ch] text-sm text-muted"><strong className="font-bold">Uscita anticipata:</strong> {o.exit_terms.split('\n')[0]}</span>}
+    {o.exit_terms && <span className="mt-1 line-clamp-5 max-w-[60ch] text-sm font-normal text-muted">{exitLines(o.exit_terms).join(' ')}</span>}
   </>
 );
 
@@ -59,7 +66,7 @@ export default function OfferDetail({ ranked, consumption, assumptions, onClose 
   const perUnit = ranked && consumption && consumption.total > 0 ? ranked.estimate.energy / consumption.total : null;
   const url = safeUrl(o?.offer_url);
   const conditions = typeof o?.conditions === 'string' ? o.conditions.split('\n').filter(Boolean) : [];
-  const exitTerms = typeof o?.exit_terms === 'string' ? o.exit_terms.split('\n').filter(Boolean) : [];
+  const exitTerms = exitLines(typeof o?.exit_terms === 'string' ? o.exit_terms : null);
   const bonuses = typeof o?.bonus_terms === 'string' ? o.bonus_terms.split('\n').filter(Boolean) : [];
   const afterTerm = typeof o?.after_term === 'string' ? o.after_term : null;
   const monthly = n(o?.fixed_fee_month), powerFee = n(o?.power_fee_kw_month), once = n(o?.one_off_discount);

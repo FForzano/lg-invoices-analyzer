@@ -17,3 +17,12 @@ def test_presets_per_profile(client):
     assert client.get("/api/filter-presets").json["items"][0]["is_default"]
     client.delete(f"/api/filter-presets/{items[0]['id']}")
     assert client.get("/api/filter-presets").json["items"] == []
+
+
+def test_home_uses_default_preset_unless_told_otherwise(client):
+    assert client.get("/api/home").json["filter"]["active"] is False
+    pid = client.post("/api/filter-presets", json={"name": "Solo indicizzate", "query": "type=indexed&no_exit=1", "is_default": True}).json["id"]
+    d = client.get("/api/home").json
+    assert d["filter"]["active"] and d["filter"]["preset"]["id"] == pid and d["filter"]["presets"] == [{"id": pid, "name": "Solo indicizzate"}]
+    assert client.get("/api/home?preset=none").json["filter"]["active"] is False
+    assert client.get(f"/api/home?preset={pid}").json["filter"]["active"] is True

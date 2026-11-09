@@ -41,7 +41,7 @@ export interface ProposalVerdict {
 export interface PowerAdvice { contracted: number; peak: number; months: number; suggested: number | null; saving_year: number | null; partial: boolean; tight: boolean }
 export interface Analysis {
   commodity: Commodity; settings: Settings; consumption: Consumption | null; assumptions: Assumptions | null; skipped: string[];
-  verdict: Verdict | null; has_current: boolean; power_advice: PowerAdvice | null; season_multiplier: number;
+  verdict: Verdict | null; unfiltered_best?: { name: string; supplier: string; saving: number; total: number }; has_current: boolean; power_advice: PowerAdvice | null; season_multiplier: number;
 }
 export type Settings = Record<string, number | string>;
 export interface PageInfo { number: number; pages: number; total: number }

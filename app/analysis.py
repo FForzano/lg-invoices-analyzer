@@ -6,6 +6,7 @@ from datetime import date
 
 from . import db
 from .models import Offer
+from .services.offer_filter import OfferFilter
 from .services.consumption import Consumption, annual_consumption
 from .services.power import PowerAdvice, power_advice
 from .services.seasonality import consumption_profile, season_multiplier
@@ -28,12 +29,12 @@ class Analysis:
     season_multiplier: float = 1.0  # prezzo medio dell'indice sui mesi di consumo / media annua
 
 
-def analyze(commodity: str, today: date | None = None, power_kw: float | None = None) -> Analysis:
+def analyze(commodity: str, today: date | None = None, power_kw: float | None = None, flt: OfferFilter | None = None) -> Analysis:
     """Analisi dei dati del profilo attivo."""
-    return analyze_data(commodity, db.list_bills(commodity), db.list_offers(commodity), db.get_settings(), db.get_index_factors(), today, power_kw)
+    return analyze_data(commodity, db.list_bills(commodity), db.list_offers(commodity), db.get_settings(), db.get_index_factors(), today, power_kw, flt)
 
 
-def analyze_data(commodity: str, bills: list, all_offers: list[Offer], settings: dict, factors: dict, today: date | None = None, power_kw: float | None = None) -> Analysis:
+def analyze_data(commodity: str, bills: list, all_offers: list[Offer], settings: dict, factors: dict, today: date | None = None, power_kw: float | None = None, flt: OfferFilter | None = None) -> Analysis:
     """Lo stesso calcolo su dati qualsiasi: serve anche alla simulazione pubblica, che non ha profilo né database dell'utente."""
     today = today or date.today()
     result = Analysis(commodity, settings)
@@ -52,14 +53,16 @@ def analyze_data(commodity: str, bills: list, all_offers: list[Offer], settings:
         result.power_advice = power_advice(bills)
     result.has_current = any(o.is_current for o in all_offers)
     # le metà di offerte luce+gas valgono solo se sottoscritte insieme: fuori dal confronto singolo
-    offers = [o for o in all_offers if not o.dual_with]
+    # con un filtro, la «migliore alternativa» è la migliore tra le offerte che lo rispettano (l'attuale resta sempre)
+    offers = [o for o in all_offers if not o.dual_with and (flt is None or o.is_current or flt.keep(o))]
+    half = None if flt is None else replace(flt, bonus=False)  # luce+gas: il bonus si guarda sulla coppia (analyze_dual)
     if c:
         current = next((o for o in all_offers if o.is_current), None)
         power = (c.power_kw or settings["default_power_kw"]) if commodity == "power" else None
         location = Location(settings["region"], settings["province"], settings["comune"], bool(settings.get("resident", 1)), power, current.supplier if current else "")
         result.ranked, result.skipped = compare(offers, c, a, today, location)
         result.verdict = make_verdict(result.ranked, offers, c, a, today, location)
-        result.dual_ranked, _ = compare([o for o in all_offers if o.dual_with or o.is_current], c, a, today, location)
+        result.dual_ranked, _ = compare([o for o in all_offers if o.is_current or (o.dual_with and (half is None or half.keep(o)))], c, a, today, location)
     return result
 
 
@@ -69,8 +72,10 @@ class DualAnalysis:
     verdict: DualVerdict | None
 
 
-def analyze_dual(power: Analysis, gas: Analysis) -> DualAnalysis:
+def analyze_dual(power: Analysis, gas: Analysis, flt: OfferFilter | None = None) -> DualAnalysis:
     bundles = pair_bundles(power.dual_ranked, gas.dual_ranked)
+    if flt is not None:
+        bundles = [b for b in bundles if flt.keep_bundle(b.power.offer, b.gas.offer)]
     return DualAnalysis(bundles, make_dual_verdict(bundles, power.verdict, gas.verdict))
 
 

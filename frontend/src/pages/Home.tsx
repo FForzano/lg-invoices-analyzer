@@ -1,15 +1,20 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Flame, Gauge, Zap } from 'lucide-react';
 import { useQuery } from '../lib/useQuery';
 import { commodityLabel, eur, num, unitOf } from '../lib/format';
-import type { Analysis, DualVerdict, Message } from '../lib/types';
+import type { Analysis, DualVerdict, FilterPreset, Message } from '../lib/types';
 import { Actions, Card, ErrorBox, H1, InfoButton, LinkButton, Loading, Muted, Notice, VerdictBlock } from '../components/ui';
 import { Modal } from '../components/Modal';
 import { useApp } from '../context/AppContext';
-import { TEXT_BUTTON } from '../components/styles';
+import { TEXT_BUTTON, fieldClass } from '../components/styles';
 
-interface HomeData { alerts: Message[]; analyses: Record<'power' | 'gas', Analysis>; dual: { verdict: DualVerdict | null } }
+interface HomeData {
+  alerts: Message[]; analyses: Record<'power' | 'gas', Analysis>; dual: { verdict: DualVerdict | null };
+  filter: { active: boolean; preset: FilterPreset | null; presets: { id: number; name: string }[] };
+}
+/** Con quali filtri preferiti si valuta la migliore offerta (nome e query da riportare nel Confronto). */
+interface Scope { name: string; query: string }
 const iconBox = 'box-content h-[1.35rem] w-[1.35rem] rounded-full bg-accent-soft p-[.45rem] text-accent';
 
 function CardTitle({ children }: { children: React.ReactNode }) {
@@ -40,7 +45,7 @@ function CalcDetails({ a }: { a: Analysis }) {
   );
 }
 
-function VerdictCard({ a }: { a: Analysis }) {
+function VerdictCard({ a, scope }: { a: Analysis; scope: Scope | null }) {
   const label = commodityLabel(a.commodity), index = a.commodity === 'power' ? 'PUN' : 'PSV', unit = unitOf(a.commodity);
   const v = a.verdict, c = a.consumption;
   return (
@@ -54,14 +59,15 @@ function VerdictCard({ a }: { a: Analysis }) {
           : <>
             <VerdictBlock good={v.worthwhile} label={v.worthwhile ? 'Conviene cambiare' : 'Non conviene cambiare'} figure={`${eur(v.saving)} l'anno`}
               note={v.worthwhile ? <>Risparmio stimato<InfoButton term="t_saving" name="Risparmio stimato" /> del {num(v.saving_pct, 0)}%.</> : `Risparmio massimo ${eur(v.saving)} l'anno (${num(v.saving_pct, 0)}%): troppo poco per cambiare.`} />
-            <p>Migliore alternativa: <strong>{v.best.offer.name}</strong> – {v.best.offer.supplier}.<br />
+            <p>Migliore alternativa{scope && <> tra quelle che rispettano «{scope.name}»</>}: <strong>{v.best.offer.name}</strong> – {v.best.offer.supplier}.<br />
               Costo annuo<InfoButton term="t_total" name="Costo annuo" /> stimato <strong>{eur(v.best.estimate.total)}</strong> contro <strong>{eur(v.current.estimate.total)}</strong> con l'offerta attuale.</p>
+            {scope && a.unfiltered_best && <Muted className="mb-2">Senza filtri la migliore sarebbe <strong>{a.unfiltered_best.name}</strong> – {a.unfiltered_best.supplier}, a {eur(a.unfiltered_best.total)} l'anno ({eur(a.unfiltered_best.saving)} di risparmio).</Muted>}
             {v.saving_range[1] - v.saving_range[0] < 1
               ? <Muted>Il risparmio non dipende dall'andamento del {index}<InfoButton term={index.toLowerCase()} name={index} />: anche l'offerta attuale è indicizzata.</Muted>
               : v.worthwhile && !v.robust && <Notice level="warn">Il vantaggio dipende dall'andamento del {index}: con prezzi dell'indice ±20%<InfoButton term="t_sensitivity" name="Sensibilità ±20%" /> il risparmio va da {eur(v.saving_range[0])} a {eur(v.saving_range[1])}.</Notice>}
             <div className="flex flex-wrap items-center gap-x-6">
               <CalcDetails a={a} />
-              <Link className={TEXT_BUTTON} to={`/compare/${a.commodity}`}>Vedi tutte le offerte {label.toLowerCase()}</Link>
+              <Link className={TEXT_BUTTON} to={`/compare/${a.commodity}${scope ? `?${scope.query}` : ''}`}>Vedi tutte le offerte {label.toLowerCase()}</Link>
             </div>
           </>}
       </>}
@@ -69,13 +75,13 @@ function VerdictCard({ a }: { a: Analysis }) {
   );
 }
 
-function DualCard({ v }: { v: DualVerdict }) {
+function DualCard({ v, scope }: { v: DualVerdict; scope: Scope | null }) {
   return (
     <Card>
       <CardTitle><Zap className={iconBox} aria-hidden /><Flame className={`${iconBox} -ml-1`} aria-hidden />Luce e gas insieme</CardTitle>
       <VerdictBlock good={v.worthwhile} label={v.worthwhile ? "Conviene un'offerta luce+gas" : 'Nessuna offerta luce+gas conviene'} figure={`${eur(v.saving)} l'anno`}
         note={v.worthwhile ? `Risparmio stimato del ${num(v.saving_pct, 0)}%.` : `Risparmio massimo ${eur(v.saving)} l'anno (${num(v.saving_pct, 0)}%): troppo poco per cambiare.`} />
-      <p>Migliore alternativa: <strong>{v.best.power.offer.name}</strong> + <strong>{v.best.gas.offer.name}</strong> – {v.best.power.offer.supplier}.<br />
+      <p>Migliore alternativa{scope && <> tra quelle che rispettano «{scope.name}»</>}: <strong>{v.best.power.offer.name}</strong> + <strong>{v.best.gas.offer.name}</strong> – {v.best.power.offer.supplier}.<br />
         Costo annuo<InfoButton term="t_total" name="Costo annuo" /> stimato <strong>{eur(v.best.total)}</strong> (luce {eur(v.best.power.estimate.total)}, gas {eur(v.best.gas.estimate.total)}).</p>
       {v.separate_saving > 0 && <>
         <div className="my-2 grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-2" role="group" aria-label="Insieme o separate">
@@ -84,8 +90,22 @@ function DualCard({ v }: { v: DualVerdict }) {
         </div>
         <Muted>{v.beats_separate ? 'Cambiare insieme rende più che cambiare separatamente le due forniture.' : 'Cambiando luce e gas separatamente, con le migliori offerte singole, risparmieresti di più.'}</Muted>
       </>}
-      <Link className={TEXT_BUTTON} to="/compare/dual">Vedi tutte le offerte luce+gas</Link>
+      <Link className={TEXT_BUTTON} to={`/compare/dual${scope ? `?${scope.query}` : ''}`}>Vedi tutte le offerte luce+gas</Link>
     </Card>
+  );
+}
+
+/** «Valuta con»: tutte le offerte, oppure uno dei filtri preferiti (quello con la stella vale all'apertura). */
+function ScopePicker({ filter, value, onChange }: { filter: HomeData['filter']; value: string; onChange: (v: string) => void }) {
+  if (!filter.presets.length) return <Muted className="mb-3">Salva dei <Link className="font-bold text-accent underline" to="/compare/power">filtri preferiti</Link> nel Confronto (per esempio «solo prezzo fisso, senza oneri di uscita») per scegliere la migliore offerta tra quelle che ti interessano.</Muted>;
+  return (
+    <label className="mb-4 flex max-w-sm flex-col gap-1 text-sm font-medium">
+      <span>Valuta le offerte con</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={fieldClass}>
+        <option value="none">Tutte le offerte</option>
+        {filter.presets.map((p) => <option key={p.id} value={String(p.id)}>Filtri «{p.name}»</option>)}
+      </select>
+    </label>
   );
 }
 
@@ -111,7 +131,8 @@ function PowerCard({ a }: { a: Analysis }) {
 
 export default function Home() {
   const { profiles, profile } = useApp();
-  const { data, error, loading } = useQuery<HomeData>('/home');
+  const [params, setParams] = useSearchParams();
+  const { data, error, loading } = useQuery<HomeData>('/home', { preset: params.get('preset') ?? undefined });
   const title = <H1 sub={profiles.length > 1 ? `Profilo ${profile.name}` : undefined}>Bollette luce e gas</H1>;
   if (loading && !data) return <>{title}<Loading /></>;
   if (error || !data) return <>{title}<ErrorBox error={error!} /></>;
@@ -124,6 +145,9 @@ export default function Home() {
       <Muted>Stima della sola parte decisa dal fornitore: restano fuori trasporto, oneri, imposte, bonus e canone TV.</Muted>
     </>
   );
+  const preset = data.filter.active ? data.filter.preset : null;
+  const scope: Scope | null = preset ? { name: preset.name, query: preset.query } : null;
+  const picker = <ScopePicker filter={data.filter} value={preset ? String(preset.id) : 'none'} onChange={(v) => setParams(v === 'none' ? { preset: 'none' } : { preset: v })} />;
   const judged = list.filter((a) => a.verdict);
   const dual = data.dual.verdict;
   return (
@@ -136,8 +160,9 @@ export default function Home() {
         </p>
       )}
       {data.alerts.map((m, i) => <Notice key={i} level={m.level}>{m.text}</Notice>)}
-      {list.map((a) => <VerdictCard key={a.commodity} a={a} />)}
-      {dual && <DualCard v={dual} />}
+      {picker}
+      {list.map((a) => <VerdictCard key={a.commodity} a={a} scope={scope} />)}
+      {dual && <DualCard v={dual} scope={scope} />}
       {list.map((a) => a.commodity === 'power' ? <PowerCard key="p" a={a} /> : null)}
       <Actions><LinkButton to="/bills/new">Carica bolletta</LinkButton><LinkButton to="/offers/new" soft>Nuova offerta</LinkButton></Actions>
       <Muted>Stima della sola parte decisa dal fornitore: restano fuori trasporto, oneri, imposte, bonus e canone TV. Verifica le condizioni sul sito del venditore prima di cambiare. <Link className="font-bold text-accent underline" to="/guide">Come leggere i numeri</Link></Muted>

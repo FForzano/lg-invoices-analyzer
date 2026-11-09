@@ -1,4 +1,5 @@
 from datetime import date
+from urllib.parse import parse_qsl
 
 from flask import jsonify, request
 
@@ -34,13 +35,35 @@ def head(a: analysis.Analysis) -> dict:
     return {k: v for k, v in dump(a).items() if k not in ("ranked", "dual_ranked")}
 
 
+def _chosen_preset() -> dict | None:
+    """Il preferito con cui valutare la Home: `?preset=<id>`, `?preset=none` per nessuno, altrimenti quello predefinito."""
+    items = db.list_presets()
+    wanted = request.args.get("preset", "")
+    if wanted == "none":
+        return None
+    if wanted.isdigit():
+        return next((p for p in items if p["id"] == int(wanted)), None)
+    return next((p for p in items if p["is_default"]), None)
+
+
 @bp.get("/home")
 def home():
     alerts = build_alerts(db.list_bills(), db.list_offers(), date.today())
-    analyses = {c: analysis.analyze(c) for c in COMMODITIES}
-    dual = analysis.analyze_dual(*analyses.values())
-    return jsonify(alerts=[msg(level, text) for level, text in alerts],
-                   analyses={c: head(a) for c, a in analyses.items()}, dual={"verdict": dump(dual.verdict)})
+    preset = _chosen_preset()
+    args = dict(parse_qsl(preset["query"])) if preset else {}
+    flt = OfferFilter.from_args(args) if preset else None
+    power = float(args["power"]) if args.get("power") else None
+    analyses = {c: analysis.analyze(c, flt=flt, power_kw=power if c == "power" else None) for c in COMMODITIES}
+    dual = analysis.analyze_dual(*analyses.values(), flt=flt)
+    out = {c: head(a) for c, a in analyses.items()}
+    if flt:  # trasparenza: se senza filtri la migliore sarebbe un'altra, lo si dice (il filtro non nasconde un'offerta migliore)
+        for c, a in analyses.items():
+            free = analysis.analyze(c, power_kw=power if c == "power" else None)
+            if a.verdict and free.verdict and free.verdict.best.offer.id != a.verdict.best.offer.id:
+                b = free.verdict.best
+                out[c]["unfiltered_best"] = {"name": b.offer.name, "supplier": b.offer.supplier, "saving": free.verdict.saving, "total": b.estimate.total}
+    return jsonify(alerts=[msg(level, text) for level, text in alerts], analyses=out, dual={"verdict": dump(dual.verdict)},
+                   filter={"active": preset is not None, "preset": preset, "presets": [{"id": p["id"], "name": p["name"]} for p in db.list_presets()]})
 
 
 @bp.get("/compare/<commodity>")

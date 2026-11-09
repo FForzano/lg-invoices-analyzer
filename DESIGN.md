@@ -204,7 +204,7 @@ Menta fredda e pannelli bianchi con un teal profondo; ambra solo per il timbro.
 
 Mobile prima. Contenuto centrato, massimo 60rem; padding 1rem (0.75rem sotto 40rem), 2rem da 64rem. Ritmo in multipli di 0.25rem: gap 0.5/0.75/1rem, padding card 1.25rem.
 
-Navigazione: da telefono, barra di azioni fissa in basso (4.25rem) con Home, Bollette, Offerte, Confronto e Altro; "Altro" apre un foglio che sale dal basso (Storico, Proposta, Guida, Impostazioni, Profili, cambio profilo) con velo scuro. Sopra, una barra alta con logo e bordo superiore teal di 4px. Da 64rem (>=64rem) la barra diventa una barra laterale sinistra di 15rem, con logo, voci in colonna e cambio profilo in fondo; la barra alta scompare. Griglie di campi `auto-fill` da 14rem; riquadri di confronto `auto-fit` da 10rem. Le tabelle scorrono in orizzontale dentro un pannello. Area di tocco minima 44px.
+Navigazione: da telefono, barra di azioni fissa in basso (4.25rem) con Home, Bollette, Offerte, Confronto e Altro; "Altro" apre un foglio che sale dal basso (Storico, Proposta, Guida, Impostazioni, Account) con velo scuro. Sopra, una barra alta con logo e bordo superiore teal di 4px. Da 64rem (>=64rem) la barra diventa una barra laterale sinistra di 15rem, con logo, selettore del profilo (contesto, non voce di navigazione), voci in colonna; su telefono il selettore sta nella barra alta; la barra alta scompare. Griglie di campi `auto-fill` da 14rem; riquadri di confronto `auto-fit` da 10rem. Le tabelle scorrono in orizzontale dentro un pannello. Area di tocco minima 44px.
 
 ## Elevation & Depth
 
@@ -269,3 +269,7 @@ Blocco da 8px sotto il titolo di fornitura. "Non conviene": tinta calma, etichet
 - **Don't** caricare font o risorse da CDN, né riusare D-DIN (licenza commerciale).
 - **Don't** usare ombre con scostamento netto o bordi spessi sui pannelli (il 2px del timbro e della barra dei passi sono eccezioni dichiarate).
 - **Don't** aggiungere un secondo accento accanto al teal.
+
+## Piè di pagina e spazi pubblicitari
+
+Il piè di pagina è unico (`Footer`): marchio, informazioni (termini, privacy e cookie, fonti, codice), gestore del sito e avvertenze; filo di separazione, nessuna card. Gli annunci (`AdSlot`) sono riquadri tratteggiati in coda al contenuto, sempre con la pillola «Sponsorizzato»; mai tra il verdetto e i suoi numeri, mai l'ambra del timbro, nessuna risorsa da terzi.

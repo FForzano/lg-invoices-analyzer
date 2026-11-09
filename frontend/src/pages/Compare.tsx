@@ -1,18 +1,26 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '../lib/useQuery';
 import { eur, num, unitOf } from '../lib/format';
 import type { Analysis, Bundle, PageInfo, Ranked } from '../lib/types';
 import AdSlot from '../components/AdSlot';
+import OfferDetail from '../components/OfferDetail';
+import { FOCUS_RING } from '../components/styles';
 import { ErrorBox, good, H1, InfoButton, Loading, Muted, Notice, Pager, Scroll, Tabs, Tag, usePage } from '../components/ui';
 
 const TABS = [{ to: '/compare/power', label: 'Luce' }, { to: '/compare/gas', label: 'Gas' }, { to: '/compare/dual', label: 'Luce + gas insieme' }];
 const th = 'px-3.5 py-2.5 text-left text-[.8rem] font-bold uppercase tracking-wide text-muted bg-calm';
 const td = 'px-3.5 py-2.5 border-b border-edge whitespace-nowrap';
+/** Il nome dell'offerta è il pulsante che ne apre il dettaglio. */
+const NameButton = ({ onClick, children }: { onClick: () => void; children: React.ReactNode }) => (
+  <button type="button" onClick={onClick} className={`min-h-[44px] rounded-block text-left font-bold text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent ${FOCUS_RING}`}>{children}</button>
+);
 const NOTE = 'Stima della sola parte decisa dal fornitore (energia, quote fisse, potenza, sconti): trasporto, oneri, imposte, bonus sociali e canone TV sono esclusi. Non è un preventivo.';
 
 export function Compare() {
   const { commodity = 'power' } = useParams();
   const page = usePage();
+  const [open, setOpen] = useState<Ranked | null>(null);
   const { data, error, loading } = useQuery<{ analysis: Analysis; items: Ranked[]; page: PageInfo }>(`/compare/${commodity}`, { page });
   const title = <H1>Confronto {commodity === 'power' ? 'luce' : 'gas'}</H1>;
   if (loading && !data) return <>{title}<Tabs items={TABS} /><Loading /></>;
@@ -39,7 +47,7 @@ export function Compare() {
             <th className={`${th} text-right`}>Sconti<InfoButton term="t_discount" /></th><th className={`${th} text-right`}>Costo annuo<InfoButton term="t_total" /></th><th className={`${th} text-right`}>Risparmio<InfoButton term="t_saving" /></th></tr></thead>
           <tbody>{data.items.map((r, i) => (
             <tr key={i} className={r.offer.is_current ? 'bg-accent-soft' : 'hover:bg-calm'}>
-              <td className={`${td} whitespace-normal`}>{r.offer.supplier} – {r.offer.name}{r.offer.is_current && <> <Tag kind="current">attuale</Tag></>}</td>
+              <td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(r)}>{r.offer.supplier} – {r.offer.name}</NameButton>{r.offer.is_current && <> <Tag kind="current">attuale</Tag></>}</td>
               <td className={`${td} text-right`}>{eur(r.estimate.energy)}</td><td className={`${td} text-right`}>{eur(r.estimate.fixed_fee + r.estimate.power_fee)}</td>
               <td className={`${td} text-right`}>{eur(r.estimate.discount)}</td><td className={`${td} text-right`}><strong>{eur(r.estimate.total)}</strong></td>
               <td className={`${td} text-right ${good(r.saving)}`}>{r.saving == null || r.offer.is_current ? (r.saving == null ? '–' : '') : eur(r.saving)}</td>
@@ -47,6 +55,7 @@ export function Compare() {
             {!data.items.length && <tr><td colSpan={6} className={`${td} text-muted`}>Nessuna offerta valida.</td></tr>}
           </tbody></table></Scroll>
         <Pager page={data.page} />
+        <OfferDetail ranked={open} consumption={c} assumptions={as} onClose={() => setOpen(null)} />
         {a.skipped.length > 0 && <Muted>{a.skipped.length} offerte non valutabili per dati incompleti.</Muted>}
       </>}
       <Muted className="mt-3">{NOTE}</Muted>
@@ -57,6 +66,7 @@ export function Compare() {
 
 export function CompareDual() {
   const page = usePage();
+  const [open, setOpen] = useState<Ranked | null>(null);
   const { data, error, loading } = useQuery<{ power: Analysis; gas: Analysis; items: Bundle[]; page: PageInfo }>('/compare-dual', { page });
   const title = <H1>Confronto luce + gas insieme</H1>;
   if (loading && !data) return <>{title}<Tabs items={TABS} /><Loading /></>;
@@ -72,13 +82,14 @@ export function CompareDual() {
             <th className={`${th} text-right`}>Costo annuo<InfoButton term="t_total" /></th><th className={`${th} text-right`}>Risparmio<InfoButton term="t_saving" /></th></tr></thead>
           <tbody>{data.items.map((b, i) => (
             <tr key={i} className="hover:bg-calm">
-              <td className={`${td} whitespace-normal`}>{b.power.offer.supplier} – {b.power.offer.name}</td><td className={`${td} whitespace-normal`}>{b.gas.offer.name}</td>
+              <td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(b.power)}>{b.power.offer.supplier} – {b.power.offer.name}</NameButton></td><td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(b.gas)}>{b.gas.offer.name}</NameButton></td>
               <td className={`${td} text-right`}>{eur(b.power.estimate.total)}</td><td className={`${td} text-right`}>{eur(b.gas.estimate.total)}</td>
               <td className={`${td} text-right`}><strong>{eur(b.total)}</strong></td><td className={`${td} text-right ${good(b.saving)}`}>{eur(b.saving)}</td>
             </tr>))}
             {!data.items.length && <tr><td colSpan={6} className={`${td} text-muted`}>Nessuna offerta luce+gas valida nella tua zona. <Link className="font-bold text-accent underline" to="/offers">Importa le offerte</Link>.</td></tr>}
           </tbody></table></Scroll>
         <Pager page={data.page} />
+        <OfferDetail ranked={open} consumption={open?.offer.commodity === 'gas' ? data.gas.consumption : data.power.consumption} assumptions={open?.offer.commodity === 'gas' ? data.gas.assumptions : data.power.assumptions} onClose={() => setOpen(null)} />
       </>}
       <Muted className="mt-3">Sconti e bonus una tantum non sono inclusi. Trasporto, oneri, imposte, bonus sociali e canone TV sono esclusi. Non è un preventivo.</Muted>
       <AdSlot slot="compare-end" />

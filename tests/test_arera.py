@@ -21,6 +21,7 @@ def test_parse_sample():
     assert idx.price_type == "indexed" and idx.spread == pytest.approx(0.02)
     assert idx.fixed_fee_month == 12.0 and idx.expires_on == "2027-01-10"
     assert idx.dispatching == pytest.approx(0.0088) and idx.supplier == "esempio.it"
+    assert idx.offer_url == "https://www.esempio.it/offerte/indicizzata" and by["arera:FIX1"].offer_url is None
     assert unit_price(idx, A) == pytest.approx((0.12 + 0.02 + 0.0088) * 1.10)
 
     fix = by["arera:FIX1"]

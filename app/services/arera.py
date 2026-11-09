@@ -173,6 +173,7 @@ def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
         fixed_fee_month=round(yearly_fee / 12, 4),
         expires_on=_expiry(_t(el, "ValiditaOfferta/DATA_FINE")),
         zones=_zones(el.find(NS + "ZoneOfferta")),
+        offer_url=_web_url(_t(el, "DettaglioOfferta/Contatti/URL_OFFERTA")),
         duration_months=_duration(_t(el, "DettaglioOfferta/DURATA")),
         conditions=conditions,
         after_term=after_term,
@@ -269,6 +270,15 @@ def _zones(el: ET.Element | None) -> str | None:
     tokens = [f"{prefix}{e.text}" for tag, prefix in (("REGIONE", "R"), ("PROVINCIA", "P"), ("COMUNE", "C"))
               for e in el.findall(NS + tag) if e.text]
     return ",".join(tokens) or None
+
+
+def _web_url(raw: str | None) -> str | None:
+    """Indirizzo dichiarato dal venditore (contenuto non fidato): solo http/https con un host, altrimenti nessun link."""
+    raw = (raw or "").strip()
+    if not raw or len(raw) > 500 or any(c.isspace() or ord(c) < 32 for c in raw):
+        return None
+    parsed = urlparse(raw if "//" in raw else "https://" + raw)
+    return parsed.geturl() if parsed.scheme in ("http", "https") and parsed.hostname and "." in parsed.hostname else None
 
 
 def _supplier(el: ET.Element) -> str:

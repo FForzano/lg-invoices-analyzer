@@ -87,7 +87,7 @@ export default function Offers() {
               <td className={td}>{commodityLabel(o.commodity)}</td><td className={td}>{o.supplier}</td>
               <td className={td}><Link className="font-bold text-accent underline" to={`/offers/${o.id}`}>{o.name}</Link>{o.dual_with && <span className="text-sm text-muted"> (luce+gas)</span>}</td>
               <td className={td}>{o.price_type === 'fixed' ? 'fisso' : 'indicizzato'}</td><td className={td}>{o.expires_on ?? '–'}</td>
-              <td className={td}>{o.is_current && <Tag kind="current">attuale</Tag>}</td>
+              <td className={td}>{!!o.is_current && <Tag kind="current">attuale</Tag>}</td>
               <td className={td}>{(admin || o.profile_id != null) && <DangerLink onClick={() => void remove(o)}>elimina</DangerLink>}</td>
             </tr>))}
             {!data.items.length && <tr><td colSpan={7} className={`${td} text-muted`}>Nessuna offerta.</td></tr>}

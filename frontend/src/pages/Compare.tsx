@@ -15,6 +15,7 @@ const td = 'px-3.5 py-2.5 border-b border-edge whitespace-nowrap';
 const NameButton = ({ onClick, children }: { onClick: () => void; children: React.ReactNode }) => (
   <button type="button" onClick={onClick} className={`min-h-[44px] rounded-block text-left font-bold text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent ${FOCUS_RING}`}>{children}</button>
 );
+const ExitTag = ({ o }: { o: Ranked['offer'] }) => (o.exit_terms ? <> <Tag kind="warn">oneri di uscita</Tag></> : null);
 const NOTE = 'Stima della sola parte decisa dal fornitore (energia, quote fisse, potenza, sconti): trasporto, oneri, imposte, bonus sociali e canone TV sono esclusi. Non è un preventivo.';
 
 export function Compare() {
@@ -47,7 +48,7 @@ export function Compare() {
             <th className={`${th} text-right`}>Sconti<InfoButton term="t_discount" /></th><th className={`${th} text-right`}>Costo annuo<InfoButton term="t_total" /></th><th className={`${th} text-right`}>Risparmio<InfoButton term="t_saving" /></th></tr></thead>
           <tbody>{data.items.map((r, i) => (
             <tr key={i} className={r.offer.is_current ? 'bg-accent-soft' : 'hover:bg-calm'}>
-              <td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(r)}>{r.offer.supplier} – {r.offer.name}</NameButton>{r.offer.is_current && <> <Tag kind="current">attuale</Tag></>}</td>
+              <td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(r)}>{r.offer.supplier} – {r.offer.name}</NameButton><ExitTag o={r.offer} />{!!r.offer.is_current && <> <Tag kind="current">attuale</Tag></>}</td>
               <td className={`${td} text-right`}>{eur(r.estimate.energy)}</td><td className={`${td} text-right`}>{eur(r.estimate.fixed_fee + r.estimate.power_fee)}</td>
               <td className={`${td} text-right`}>{eur(r.estimate.discount)}</td><td className={`${td} text-right`}><strong>{eur(r.estimate.total)}</strong></td>
               <td className={`${td} text-right ${good(r.saving)}`}>{r.saving == null || r.offer.is_current ? (r.saving == null ? '–' : '') : eur(r.saving)}</td>
@@ -82,7 +83,7 @@ export function CompareDual() {
             <th className={`${th} text-right`}>Costo annuo<InfoButton term="t_total" /></th><th className={`${th} text-right`}>Risparmio<InfoButton term="t_saving" /></th></tr></thead>
           <tbody>{data.items.map((b, i) => (
             <tr key={i} className="hover:bg-calm">
-              <td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(b.power)}>{b.power.offer.supplier} – {b.power.offer.name}</NameButton></td><td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(b.gas)}>{b.gas.offer.name}</NameButton></td>
+              <td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(b.power)}>{b.power.offer.supplier} – {b.power.offer.name}</NameButton><ExitTag o={b.power.offer} /></td><td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(b.gas)}>{b.gas.offer.name}</NameButton><ExitTag o={b.gas.offer} /></td>
               <td className={`${td} text-right`}>{eur(b.power.estimate.total)}</td><td className={`${td} text-right`}>{eur(b.gas.estimate.total)}</td>
               <td className={`${td} text-right`}><strong>{eur(b.total)}</strong></td><td className={`${td} text-right ${good(b.saving)}`}>{eur(b.saving)}</td>
             </tr>))}

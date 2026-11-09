@@ -75,6 +75,7 @@ class Offer:
     started_on: str | None = None  # attivazione (offerta attuale): serve per avvisare prima della fine del periodo
     conditions: str | None = None  # condizioni limitanti dichiarate dal venditore (una per riga), solo da mostrare
     after_term: str | None = None  # cosa cambia a fine periodo secondo il venditore, solo da mostrare
+    exit_terms: str | None = None  # oneri/penali di recesso anticipato secondo il venditore (una per riga), solo da mostrare
     offer_url: str | None = None  # pagina dell'offerta sul sito del venditore (ARERA), solo https/http, solo da mostrare
     zones: str | None = None  # se limitata: codici ISTAT separati da virgola (R08 regione, P038 provincia, C038008 comune)
     # componenti formula indicizzata luce

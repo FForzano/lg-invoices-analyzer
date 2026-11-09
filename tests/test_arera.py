@@ -33,6 +33,7 @@ def test_parse_sample():
     assert fix.duration_months == 24 and idx.duration_months is None
     assert fix.conditions == "Valida solo con addebito su conto."
     assert fix.after_term.startswith("Trascorsi 24 mesi") and idx.conditions is None and idx.after_term is None
+    assert fix.exit_terms == "Onere di recesso anticipato di 2,00 € per ogni mese residuo." and idx.exit_terms is None
 
 
 def test_discover_urls_only_trusts_expected_host():

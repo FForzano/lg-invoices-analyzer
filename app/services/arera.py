@@ -38,6 +38,9 @@ AFTER_TERM = re.compile(
     re.I,
 )
 MAX_TEXT = 500
+COND_EXIT = "05"  # TIPOLOGIA_CONDIZIONE: oneri di recesso anticipato (testo libero del venditore, a volte con la formula)
+MAX_EXIT_TEXT = 1200
+NO_EXIT = re.compile(r"^\W*(nessun\w*|non (è |sono )?previst\w*|assent\w*|gratuit\w*|no)\W*$", re.I)  # «nessuna», «non previsti»: niente da avvisare
 SOURCE_PREFIX = "arera:"
 UNPAIRED = SOURCE_PREFIX + "?"  # offerta luce+gas non ancora abbinata alla sua metà (vedi `pair_dual_fuel`)
 MAX_ENERGY_PRICE = {"power": 1.5, "gas": 5.0}  # oltre è un errore di unità del venditore
@@ -164,7 +167,7 @@ def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
     passthrough = commodity == "power" and any(
         d.findtext(NS + "TIPO_DISPACCIAMENTO") == DISP_PASSTHROUGH for d in el.findall(NS + "Dispacciamento")
     )
-    conditions, after_term = _condition_texts(el)
+    conditions, after_term, exit_terms = _condition_texts(el)
     common = dict(
         dispatching_extra=passthrough,
         commodity=commodity,
@@ -177,6 +180,7 @@ def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
         duration_months=_duration(_t(el, "DettaglioOfferta/DURATA")),
         conditions=conditions,
         after_term=after_term,
+        exit_terms=exit_terms,
         source=SOURCE_PREFIX + (_t(el, "IdentificativiOfferta/COD_OFFERTA") or "?"),
         dual_with=None if single == "SI" else _dual_link(el),
     )
@@ -240,20 +244,25 @@ def _duration(raw: str | None) -> int | None:
     return months if 0 < months < DURATION_OTHER else None
 
 
-def _condition_texts(el: ET.Element) -> tuple[str | None, str | None]:
-    """(condizioni limitanti, frase sul dopo-periodo) come testo del venditore, accorciato; solo da mostrare."""
+def _condition_texts(el: ET.Element) -> tuple[str | None, str | None, str | None]:
+    """(condizioni limitanti, frase sul dopo-periodo, oneri di recesso anticipato) come testo del venditore, accorciato; solo da mostrare."""
     limiting: list[str] = []
     after: list[str] = []
+    leaving: list[str] = []
     for c in el.findall(NS + "CondizioniContrattuali"):
         text = " ".join((c.findtext(NS + "DESCRIZIONE") or "").split())
         if not text:
+            continue
+        if c.findtext(NS + "TIPOLOGIA_CONDIZIONE") == COND_EXIT:  # la formula dell'onere sta nel testo: non accorciare troppo
+            if not NO_EXIT.match(text) and text not in leaving:
+                leaving.append(text if len(text) <= MAX_EXIT_TEXT else text[:MAX_EXIT_TEXT].rstrip() + "…")
             continue
         text = text if len(text) <= MAX_TEXT else text[:MAX_TEXT].rstrip() + "…"
         if AFTER_TERM.search(text):
             after.append(text)
         elif c.findtext(NS + "LIMITANTE") == COND_LIMITING and text not in limiting:
             limiting.append(text)
-    return "\n".join(limiting[:6]) or None, "\n".join(after[:2]) or None
+    return "\n".join(limiting[:6]) or None, "\n".join(after[:2]) or None, "\n".join(leaving[:3]) or None
 
 
 def _expiry(raw: str | None) -> str | None:

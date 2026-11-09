@@ -23,6 +23,7 @@
     <CondizioniContrattuali><TIPOLOGIA_CONDIZIONE>01</TIPOLOGIA_CONDIZIONE><DESCRIZIONE>Valida solo con addebito su conto.</DESCRIZIONE><LIMITANTE>01</LIMITANTE></CondizioniContrattuali>
     <CondizioniContrattuali><TIPOLOGIA_CONDIZIONE>99</TIPOLOGIA_CONDIZIONE><DESCRIZIONE>Trascorsi 24 mesi di fornitura il prezzo sarà sostituito dalla formula indicizzata.</DESCRIZIONE><LIMITANTE>02</LIMITANTE></CondizioniContrattuali>
     <CondizioniContrattuali><TIPOLOGIA_CONDIZIONE>03</TIPOLOGIA_CONDIZIONE><DESCRIZIONE>Il contratto è a tempo indeterminato.</DESCRIZIONE><LIMITANTE>02</LIMITANTE></CondizioniContrattuali>
+    <CondizioniContrattuali><TIPOLOGIA_CONDIZIONE>05</TIPOLOGIA_CONDIZIONE><DESCRIZIONE>Onere di recesso anticipato di 2,00 € per ogni mese residuo.</DESCRIZIONE><LIMITANTE>02</LIMITANTE></CondizioniContrattuali>
     <ComponenteImpresa><NOME>Energia</NOME><TIPOLOGIA>01</TIPOLOGIA><MACROAREA>04</MACROAREA>
       <IntervalloPrezzi><FASCIA_COMPONENTE>01</FASCIA_COMPONENTE><PREZZO>0.13</PREZZO><UNITA_MISURA>03</UNITA_MISURA></IntervalloPrezzi></ComponenteImpresa>
   </offerta>

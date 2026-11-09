@@ -1,5 +1,6 @@
 import { ExternalLink } from 'lucide-react';
 import { Modal } from './Modal';
+import { Notice } from './ui';
 import { FOCUS_RING, PRIMARY_BUTTON } from './styles';
 import { eur, num, unitOf } from '../lib/format';
 import type { Assumptions, Consumption, Ranked } from '../lib/types';
@@ -49,13 +50,19 @@ export default function OfferDetail({ ranked, consumption, assumptions, onClose 
   const perUnit = ranked && consumption && consumption.total > 0 ? ranked.estimate.energy / consumption.total : null;
   const url = safeUrl(o?.offer_url);
   const conditions = typeof o?.conditions === 'string' ? o.conditions.split('\n').filter(Boolean) : [];
+  const exitTerms = typeof o?.exit_terms === 'string' ? o.exit_terms.split('\n').filter(Boolean) : [];
   const afterTerm = typeof o?.after_term === 'string' ? o.after_term : null;
   const monthly = n(o?.fixed_fee_month), powerFee = n(o?.power_fee_kw_month), once = n(o?.one_off_discount);
 
   return (
     <Modal open={!!ranked} onClose={onClose} title={o ? `${o.supplier} – ${o.name}` : ''} wide>
       {ranked && o && <div className="pb-4">
-        {o.is_current && <p className="mb-2 text-sm font-bold text-accent-deep">È la tua offerta attuale.</p>}
+        {!!o.is_current && <p className="mb-2 text-sm font-bold text-accent-deep">È la tua offerta attuale.</p>}
+        {exitTerms.length > 0 && <div className="mt-3"><Notice level="warn">
+          <strong>Se esci prima della scadenza potresti pagare un onere.</strong>
+          {exitTerms.map((t, i) => <span key={i} className="mt-1 block">{t}</span>)}
+          <span className="mt-1 block text-sm text-muted">Testo del venditore sul Portale Offerte ARERA: leggi le condizioni sul suo sito prima di firmare.</span>
+        </Notice></div>}
         <Section title="Prezzo dell'energia">
           {rows.length ? <dl>{rows.map(([l, v]) => <Row key={l} label={l} value={v} strong={l === rows[0][0]} />)}</dl> : <p className="text-muted">Il prezzo non è indicato in modo semplice.</p>}
           {o.price_type === 'indexed' && <p className="mt-1 max-w-[58ch] text-sm text-muted">Offerta indicizzata: il prezzo segue il {power ? 'PUN' : 'PSV'} di mese in mese, qui c&rsquo;è solo la parte aggiunta dal venditore.</p>}
@@ -82,7 +89,7 @@ export default function OfferDetail({ ranked, consumption, assumptions, onClose 
           </dl>
           {conditions.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5">{conditions.map((c, i) => <li key={i}>{c}</li>)}</ul>}
           {afterTerm && <p className="mt-2"><strong>A fine periodo: </strong>{afterTerm}</p>}
-          {!conditions.length && !afterTerm && o.duration_months == null && !o.expires_on && <p className="text-muted">Nessuna condizione indicata.</p>}
+          {!conditions.length && !afterTerm && !exitTerms.length && o.duration_months == null && !o.expires_on && <p className="text-muted">Nessuna condizione indicata.</p>}
         </Section>
         <div className="mt-6">
           {url ? <>

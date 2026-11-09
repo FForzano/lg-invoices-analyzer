@@ -35,6 +35,20 @@ services:
       - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID:-}
       - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY:-}
       - S3_PREFIX=${S3_PREFIX:-}
+      # Gestore del sito (piè di pagina, termini, privacy), posta per il recupero password, annunci propri (file in /data/ads/)
+      - OPERATOR_NAME=${OPERATOR_NAME:-}
+      - OPERATOR_EMAIL=${OPERATOR_EMAIL:-}
+      - OPERATOR_ADDRESS=${OPERATOR_ADDRESS:-}
+      - OPERATOR_VAT=${OPERATOR_VAT:-}
+      - OPERATOR_REGISTRY=${OPERATOR_REGISTRY:-}
+      - MAIL_HOST=${MAIL_HOST:-}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_SECURITY=${MAIL_SECURITY:-starttls}
+      - MAIL_USER=${MAIL_USER:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - MAIL_FROM=${MAIL_FROM:-}
+      - APP_URL=${APP_URL:-}
+      - ADS_FILE=${ADS_FILE:-}
       # Opzionale. Senza chiave l'app non invia mai dati a servizi esterni (la lettura PDF è locale).
       # Con la chiave, SOLO se la lettura locale non basta, il testo della bolletta va all'API Anthropic.
       # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}

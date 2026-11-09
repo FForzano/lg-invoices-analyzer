@@ -56,4 +56,4 @@ def _not_found(_e):
     return jsonify(error="Non trovato."), 404
 
 
-from . import accounts, bills, compare, layouts, offers, profiles, proposals, public, settings  # noqa: E402,F401  (registrano le route)
+from . import accounts, bills, compare, layouts, offers, profiles, proposals, public, settings, site  # noqa: E402,F401  (registrano le route)

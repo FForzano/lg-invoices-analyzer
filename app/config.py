@@ -23,6 +23,8 @@ def from_env(env: Mapping[str, str] | None = None, data_dir: str | Path | None =
                 local: STORAGE_PATH (default DATA_DIR/pdf)
                 s3:    S3_BUCKET, S3_PREFIX, S3_ENDPOINT_URL (MinIO e simili), S3_REGION,
                        S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY (senza: catena standard di AWS), S3_ADDRESSING=path|virtual
+    Posta:      MAIL_HOST, MAIL_PORT, MAIL_USER, MAIL_PASSWORD, MAIL_FROM, MAIL_SECURITY, APP_URL (recupero password)
+    Gestore:    OPERATOR_NAME, OPERATOR_EMAIL, OPERATOR_ADDRESS, OPERATOR_VAT   Pubblicità: ADS_FILE
     Login:      AUTH_ENABLED=true  (con ADMIN_EMAIL, ADMIN_PASSWORD, ALLOW_REGISTRATION, TRUST_PROXY, SECRET_KEY, ACCESS_MINUTES, SESSION_DAYS, COOKIE_SECURE, CRON_TOKEN)"""
     env = os.environ if env is None else env
     data = Path(data_dir or env.get("DATA_DIR") or "data")
@@ -48,4 +50,20 @@ def from_env(env: Mapping[str, str] | None = None, data_dir: str | Path | None =
         "SESSION_DAYS": int(env.get("SESSION_DAYS") or 30),  # un accesso scade dopo tanti giorni senza usare l'app (il refresh ruota a ogni uso)
         "COOKIE_SECURE": (env.get("COOKIE_SECURE") or "auto").strip().lower(),  # auto = Secure se la richiesta arriva in HTTPS
         "CRON_TOKEN": env.get("CRON_TOKEN") or None,
+        # Posta in uscita (opzionale): serve solo al recupero password. Senza MAIL_HOST e MAIL_FROM il recupero resta spento.
+        "MAIL_HOST": env.get("MAIL_HOST", "").strip(),
+        "MAIL_PORT": int(env.get("MAIL_PORT") or 587),
+        "MAIL_USER": env.get("MAIL_USER", ""),
+        "MAIL_PASSWORD": env.get("MAIL_PASSWORD", ""),
+        "MAIL_FROM": env.get("MAIL_FROM", "").strip(),
+        "MAIL_SECURITY": (env.get("MAIL_SECURITY") or "starttls").strip().lower(),  # starttls | ssl | none
+        "APP_URL": env.get("APP_URL", "").strip().rstrip("/"),  # indirizzo pubblico, per i link nelle email (altrimenti quello della richiesta)
+        # Chi gestisce questa installazione: compare nel piè di pagina, nei termini e nell'informativa privacy (D.Lgs. 70/2003, art. 7; GDPR, art. 13)
+        "OPERATOR_NAME": env.get("OPERATOR_NAME", "").strip(),
+        "OPERATOR_EMAIL": env.get("OPERATOR_EMAIL", "").strip(),
+        "OPERATOR_ADDRESS": env.get("OPERATOR_ADDRESS", "").strip(),
+        "OPERATOR_REGISTRY": env.get("OPERATOR_REGISTRY", "").strip(),  # iscrizione al Registro imprese / REA, es. «FE-123456»
+        "OPERATOR_VAT": env.get("OPERATOR_VAT", "").strip(),  # partita IVA, solo se il servizio è offerto in forma di impresa
+        # Spazi pubblicitari (opzionale): file JSON con i contenuti sponsorizzati, vedi deploy/ads.example.json
+        "ADS_FILE": env.get("ADS_FILE", "").strip(),
     }

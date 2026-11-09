@@ -1,0 +1,17 @@
+{
+  "ads": [
+    {
+      "sponsor": "Formando PerCorsi",
+      "title": "Ripetizioni per tutti i livelli di istruzione",
+      "text": "Trova un insegnante vicino a te con Formando PerCorsi.",
+      "cta": "Scopri l'app",
+      "url": "https://example.com/",
+      "image": "fpc.webp",
+      "alt": "Schermata dell'app Formando PerCorsi",
+      "video": "fpc.mp4",
+      "slots": ["simulation-result", "bills-list", "compare-end"],
+      "from": "2026-01-01",
+      "to": "2026-12-31"
+    }
+  ]
+}

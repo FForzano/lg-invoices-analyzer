@@ -456,3 +456,105 @@ def test_import_offers_cli_works_without_login_or_token(tmp_path, monkeypatch):
     monkeypatch.setattr(arera, "fetch_offers", lambda: (_ for _ in ()).throw(arera.AreraError("rete assente")))
     bad = app.test_cli_runner().invoke(args=["import-offers"])
     assert bad.exit_code == 1 and "rete assente" in bad.output
+
+
+# --- recupero password, informazioni del sito e pubblicità -------------------------
+
+MAIL = {"MAIL_HOST": "smtp.example", "MAIL_FROM": "bollette@example.com"}
+
+
+@pytest.fixture
+def mailed(tmp_path, monkeypatch):
+    from app import create_app, mail
+
+    sent = []
+    monkeypatch.setattr(mail, "_send", lambda cfg, msg: sent.append(msg))
+    app = create_app(str(tmp_path), AUTH_ENABLED=True, ADMIN_PASSWORD="segretissima", ADMIN_EMAIL="a@b.it", **MAIL)
+    app.config["TESTING"] = True
+    return app.test_client(), sent
+
+
+H = {"X-Requested-With": "bollette"}
+
+
+def test_forgot_password_is_off_without_a_mail_server(app):
+    c = app.test_client()
+    assert c.get("/api/site").get_json()["mail_enabled"] is False
+    r = c.post("/api/auth/forgot", json={"email": "a@b.it"}, headers=H)
+    assert r.status_code == 404 and "non è attivo" in r.get_json()["error"]
+
+
+def test_forgot_and_reset_password_by_mail(mailed):
+    c, sent = mailed
+    assert c.get("/api/site").get_json()["mail_enabled"] is True
+    r = c.post("/api/auth/forgot", json={"email": "A@b.it"}, headers=H)
+    assert r.status_code == 200 and len(sent) == 1
+    token = sent[0].get_content().split("token=")[1].split()[0]
+    assert c.post("/api/auth/reset", json={"token": "sbagliato", "password": "nuovapassword1"}, headers=H).status_code == 400
+    assert c.post("/api/auth/reset", json={"token": token, "password": "corta"}, headers=H).status_code == 400
+    assert c.post("/api/auth/reset", json={"token": token, "password": "nuovapassword1"}, headers=H).status_code == 200
+    assert c.post("/api/auth/reset", json={"token": token, "password": "ancoraunaltra1"}, headers=H).status_code == 400  # monouso
+    assert c.post("/api/auth/login", json={"email": "a@b.it", "password": "segretissima"}, headers=H).status_code == 401
+    assert c.post("/api/auth/login", json={"email": "a@b.it", "password": "nuovapassword1"}, headers=H).status_code == 200
+
+
+def test_forgot_does_not_reveal_whether_the_account_exists(mailed):
+    c, sent = mailed
+    known = c.post("/api/auth/forgot", json={"email": "a@b.it"}, headers=H)
+    unknown = c.post("/api/auth/forgot", json={"email": "nessuno@b.it"}, headers=H)
+    assert known.status_code == unknown.status_code == 200 and known.get_json() == unknown.get_json() and len(sent) == 1
+
+
+def test_a_new_reset_link_cancels_the_previous_one(mailed):
+    c, sent = mailed
+    for _ in range(2):
+        c.post("/api/auth/forgot", json={"email": "a@b.it"}, headers=H)
+    first = sent[0].get_content().split("token=")[1].split()[0]
+    assert c.post("/api/auth/reset", json={"token": first, "password": "nuovapassword1"}, headers=H).status_code == 400
+
+
+def test_site_info_is_public_and_lists_the_operator(tmp_path):
+    from app import create_app
+
+    app = create_app(str(tmp_path), AUTH_ENABLED=True, OPERATOR_NAME="Mario Rossi", OPERATOR_EMAIL="m@r.it")
+    r = app.test_client().get("/api/site")
+    assert r.status_code == 200
+    d = r.get_json()
+    assert d["operator"]["name"] == "Mario Rossi" and d["auth_enabled"] is True and d["ads_enabled"] is False and d["mail_enabled"] is False
+
+
+def test_ads_are_off_by_default_and_only_https_ads_are_served(tmp_path):
+    import json
+
+    from app import create_app
+
+    assert create_app(str(tmp_path / "a")).test_client().get("/api/ads?slot=compare-end").get_json() == {"ad": None}
+    f = tmp_path / "ads.json"
+    f.write_text(json.dumps({"ads": [
+        {"sponsor": "S", "title": "Buono", "url": "https://example.com/x", "slots": ["compare-end"]},
+        {"sponsor": "S", "title": "Insicuro", "url": "javascript:alert(1)", "slots": ["compare-end"]},
+        {"sponsor": "S", "title": "Scaduto", "url": "https://example.com/y", "slots": ["compare-end"], "to": "2000-01-01"},
+        {"title": "Senza sponsor", "url": "https://example.com/z", "slots": ["compare-end"]},
+    ]}))
+    c = create_app(str(tmp_path / "b"), ADS_FILE=str(f)).test_client()
+    assert c.get("/api/ads?slot=compare-end").get_json()["ad"]["title"] == "Buono"
+    assert c.get("/api/ads?slot=bills-list").get_json() == {"ad": None}
+    assert c.get("/api/site").get_json()["ads_enabled"] is True
+
+
+def test_ad_media_is_served_only_if_declared_in_a_valid_ad(tmp_path):
+    import json
+
+    from app import create_app
+
+    (tmp_path / "ads").mkdir()
+    (tmp_path / "ads" / "a.png").write_bytes(b"\x89PNG")
+    (tmp_path / "ads" / "segreto.png").write_bytes(b"x")
+    (tmp_path / "ads" / "ads.json").write_text(json.dumps({"ads": [
+        {"sponsor": "S", "title": "T", "url": "https://example.com", "slots": ["compare-end"], "image": "a.png", "video": "manca.mp4"}]}))
+    c = create_app(str(tmp_path / "d"), ADS_FILE=str(tmp_path / "ads" / "ads.json")).test_client()
+    ad = c.get("/api/ads?slot=compare-end").get_json()["ad"]
+    assert ad["image"] == "/api/ads/media/a.png" and ad["video"] is None and ad["alt"] == "T"
+    assert c.get(ad["image"]).status_code == 200
+    assert c.get("/api/ads/media/segreto.png").status_code == 404  # c'è nella cartella ma nessun annuncio lo cita
+    assert c.get("/api/ads/media/..%2Fads.json").status_code == 404

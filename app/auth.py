@@ -37,7 +37,8 @@ ACCESS_COOKIE, REFRESH_COOKIE = "bollette_access", "bollette_refresh"
 CSRF_HEADER, CSRF_VALUE = "X-Requested-With", "bollette"
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
-PUBLIC_ENDPOINTS = {"api.auth_session", "api.auth_login", "api.auth_register", "api.auth_refresh", "api.auth_logout", "api.simulate"}
+PUBLIC_ENDPOINTS = {"api.auth_session", "api.auth_login", "api.auth_register", "api.auth_refresh", "api.auth_logout", "api.simulate",
+                    "api.auth_forgot", "api.auth_reset", "api.site_info", "api.ads_for_slot", "api.ads_media"}
 # con la password da cambiare si può solo gestire il proprio account
 ACCOUNT_ENDPOINTS = PUBLIC_ENDPOINTS | {"api.auth_me", "api.auth_update_me", "api.auth_password"}
 CRON_ENDPOINTS = {"api.import_arera", "legacy_import_arera"}
@@ -192,6 +193,7 @@ def delete_user(id: int) -> list[str]:
     for row in d.execute("SELECT id FROM profiles WHERE user_id = ?", (id,)).fetchall():
         pdfs += db.delete_profile(row["id"])
     d.execute("DELETE FROM sessions WHERE user_id = ?", (id,))
+    d.execute("DELETE FROM password_resets WHERE user_id = ?", (id,))
     d.execute("DELETE FROM users WHERE id = ?", (id,))
     d.commit()
     return pdfs
@@ -306,6 +308,37 @@ def end_sessions(user_id: int, keep_family: str | None = None) -> None:
 
 def current_family() -> str | None:
     return _family_of(request.cookies.get(REFRESH_COOKIE, ""))
+
+
+# --- recupero password (solo con un server di posta configurato) ------------------
+
+RESET_MINUTES = 60
+
+
+def start_reset(user_id: int) -> str:
+    """Un token monouso per reimpostare la password (nel database solo l'impronta). Annulla i link precedenti dello stesso utente."""
+    token = secrets.token_urlsafe(32)
+    d = db.get_db()
+    d.execute("DELETE FROM password_resets WHERE user_id = ? OR expires_at < ?", (user_id, _stamp(utcnow())))
+    d.execute("INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?, ?, ?)",
+              (user_id, _digest(token), _stamp(utcnow() + timedelta(minutes=RESET_MINUTES))))
+    d.commit()
+    return token
+
+
+def finish_reset(token: str, password: str) -> dict:
+    """Imposta la nuova password con un token valido: il link si consuma e ogni accesso aperto si chiude."""
+    d = db.get_db()
+    row = d.execute("SELECT * FROM password_resets WHERE token_hash = ?", (_digest(token or ""),)).fetchone() if token else None
+    if row is None or row["expires_at"] <= _stamp(utcnow()):
+        raise ApiError("Il link non è valido o è scaduto: richiedine uno nuovo.", 400)
+    password = check_password(password)
+    gone = d.execute("DELETE FROM password_resets WHERE id = ?", (row["id"],))
+    d.commit()
+    if not gone.rowcount:  # un'altra richiesta l'ha appena usato
+        raise ApiError("Il link non è valido o è scaduto: richiedine uno nuovo.", 400)
+    set_password(row["user_id"], password)
+    return get_user(row["user_id"])
 
 
 # --- cookie -----------------------------------------------------------------

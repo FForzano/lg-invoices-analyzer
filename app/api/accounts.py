@@ -2,7 +2,7 @@
 Con AUTH_ENABLED spento esistono solo `/auth/session` (risponde «login spento») e nessun utente."""
 from flask import current_app, g, jsonify, request
 
-from .. import auth, db, ratelimit
+from .. import auth, db, mail, ratelimit
 from . import ApiError, bp, msg, storage
 
 
@@ -54,6 +54,38 @@ def auth_register():
     resp = _with_session(auth.get_user(id), auth.issue_refresh(id))
     resp.status_code = 201
     return resp
+
+
+def _reset_link(token: str) -> str:
+    base = current_app.config["APP_URL"] or request.host_url.rstrip("/")
+    return f"{base}/reimposta-password?token={token}"
+
+
+@bp.post("/auth/forgot")
+def auth_forgot():
+    """Richiesta di recupero password. Risponde sempre allo stesso modo, esista o no l'account (nessuna enumerazione di indirizzi)."""
+    _need_auth()
+    if not mail.enabled():
+        raise ApiError("Il recupero password non è attivo su questa installazione: chiedi a un amministratore di reimpostarla.", 404)
+    ratelimit.check("forgot", 5, 3600, "richieste di recupero")
+    user = auth.get_user_by_email(str(_body().get("email", "")))
+    if user:
+        mail.send(user["email"], "Bollette: reimposta la password",
+                  f"Ciao {user['name']},\n\nhai chiesto di reimpostare la password di Bollette. Apri questo link entro {auth.RESET_MINUTES} minuti:\n\n"
+                  f"{_reset_link(auth.start_reset(user['id']))}\n\nSe non sei stato tu, ignora questo messaggio: la password attuale resta valida.\n")
+    return jsonify(messages=[msg("info", "Se esiste un account con questo indirizzo, ti abbiamo scritto con il link per scegliere una nuova password.")])
+
+
+@bp.post("/auth/reset")
+def auth_reset():
+    """Nuova password con il token ricevuto per email. Chiude ogni accesso aperto; non fa entrare: si accede con la nuova password."""
+    _need_auth()
+    if not mail.enabled():
+        raise ApiError("Il recupero password non è attivo su questa installazione.", 404)
+    ratelimit.check("reset", 10, 3600, "tentativi")
+    data = _body()
+    auth.finish_reset(str(data.get("token", "")), data.get("password", ""))
+    return jsonify(messages=[msg("info", "Password cambiata: ora puoi accedere.")])
 
 
 @bp.post("/auth/refresh")

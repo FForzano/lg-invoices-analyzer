@@ -5,6 +5,7 @@ from flask import jsonify, request
 from .. import analysis, db
 from ..models import COMMODITIES
 from ..services.alerts import build_alerts
+from ..services.offer_filter import OfferFilter
 from ..services.paging import paginate
 from . import ApiError, bp, dump, msg
 
@@ -34,7 +35,9 @@ def compare(commodity: str):
     if commodity not in COMMODITIES:
         raise ApiError("Fornitura non valida.", 404)
     a = analysis.analyze(commodity)
-    page = paginate(a.ranked, request.args.get("page", 1, type=int), PER_PAGE)
+    flt = OfferFilter.from_args(request.args)
+    ranked = [r for r in a.ranked if r.offer.is_current or flt.keep(r.offer)]  # l'offerta attuale resta sempre: è il termine di paragone
+    page = paginate(ranked, request.args.get("page", 1, type=int), PER_PAGE)
     return jsonify(analysis=head(a), items=dump(page.items), page=page_info(page))
 
 
@@ -42,5 +45,6 @@ def compare(commodity: str):
 def compare_dual():
     power, gas = (analysis.analyze(c) for c in COMMODITIES)
     dual = analysis.analyze_dual(power, gas)
-    page = paginate(dual.bundles, request.args.get("page", 1, type=int), PER_PAGE)
+    flt = OfferFilter.from_args(request.args)
+    page = paginate([b for b in dual.bundles if flt.keep_bundle(b.power.offer, b.gas.offer)], request.args.get("page", 1, type=int), PER_PAGE)
     return jsonify(power=head(power), gas=head(gas), verdict=dump(dual.verdict), items=dump(page.items), page=page_info(page))

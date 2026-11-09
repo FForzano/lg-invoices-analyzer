@@ -181,6 +181,7 @@ def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
         conditions=conditions,
         after_term=after_term,
         exit_terms=exit_terms,
+        bonus_terms=_bonus_texts(el),
         source=SOURCE_PREFIX + (_t(el, "IdentificativiOfferta/COD_OFFERTA") or "?"),
         dual_with=None if single == "SI" else _dual_link(el),
     )
@@ -263,6 +264,21 @@ def _condition_texts(el: ET.Element) -> tuple[str | None, str | None, str | None
         elif c.findtext(NS + "LIMITANTE") == COND_LIMITING and text not in limiting:
             limiting.append(text)
     return "\n".join(limiting[:6]) or None, "\n".join(after[:2]) or None, "\n".join(leaving[:3]) or None
+
+
+def _bonus_texts(el: ET.Element) -> str | None:
+    """Bonus e sconti come li descrive il venditore («Nome: descrizione»), una voce per riga. Importi e unità di misura
+    dei codici ARERA non sono interpretati: la cifra sta nel testo. Non entrano nella stima."""
+    out: list[str] = []
+    for sc in el.findall(NS + "Sconto"):
+        name = " ".join((sc.findtext(NS + "NOME") or "").split())
+        desc = " ".join((sc.findtext(NS + "DESCRIZIONE") or "").split())
+        text = desc if not name or name.lower() in desc.lower() else (f"{name}: {desc}" if desc else name)
+        if text:
+            text = text if len(text) <= MAX_TEXT else text[:MAX_TEXT].rstrip() + "…"
+            if text not in out:
+                out.append(text)
+    return "\n".join(out[:5]) or None
 
 
 def _expiry(raw: str | None) -> str | None:

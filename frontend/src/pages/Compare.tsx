@@ -4,8 +4,10 @@ import { useQuery } from '../lib/useQuery';
 import { eur, num, unitOf } from '../lib/format';
 import type { Analysis, Bundle, PageInfo, Ranked } from '../lib/types';
 import AdSlot from '../components/AdSlot';
-import OfferDetail from '../components/OfferDetail';
+import OfferDetail, { Flags } from '../components/OfferDetail';
 import { FOCUS_RING } from '../components/styles';
+import OfferFilters, { filtersActive, useOfferFilters } from '../components/OfferFilters';
+import { useSearchParams } from 'react-router-dom';
 import { ErrorBox, good, H1, InfoButton, Loading, Muted, Notice, Pager, Scroll, Tabs, Tag, usePage } from '../components/ui';
 
 const TABS = [{ to: '/compare/power', label: 'Luce' }, { to: '/compare/gas', label: 'Gas' }, { to: '/compare/dual', label: 'Luce + gas insieme' }];
@@ -15,14 +17,15 @@ const td = 'px-3.5 py-2.5 border-b border-edge whitespace-nowrap';
 const NameButton = ({ onClick, children }: { onClick: () => void; children: React.ReactNode }) => (
   <button type="button" onClick={onClick} className={`min-h-[44px] rounded-block text-left font-bold text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent ${FOCUS_RING}`}>{children}</button>
 );
-const ExitTag = ({ o }: { o: Ranked['offer'] }) => (o.exit_terms ? <> <Tag kind="warn">oneri di uscita</Tag></> : null);
+const useFilterParams = () => { const f = useOfferFilters(); const q = useSearchParams()[0].get('q') ?? undefined; return { ...f, q }; };
 const NOTE = 'Stima della sola parte decisa dal fornitore (energia, quote fisse, potenza, sconti): trasporto, oneri, imposte, bonus sociali e canone TV sono esclusi. Non è un preventivo.';
 
 export function Compare() {
   const { commodity = 'power' } = useParams();
   const page = usePage();
+  const filters = useFilterParams();
   const [open, setOpen] = useState<Ranked | null>(null);
-  const { data, error, loading } = useQuery<{ analysis: Analysis; items: Ranked[]; page: PageInfo }>(`/compare/${commodity}`, { page });
+  const { data, error, loading } = useQuery<{ analysis: Analysis; items: Ranked[]; page: PageInfo }>(`/compare/${commodity}`, { page, ...filters });
   const title = <H1>Confronto {commodity === 'power' ? 'luce' : 'gas'}</H1>;
   if (loading && !data) return <>{title}<Tabs items={TABS} /><Loading /></>;
   if (error || !data) return <>{title}<Tabs items={TABS} /><ErrorBox error={error!} /></>;
@@ -41,6 +44,7 @@ export function Compare() {
             : <>PSV<InfoButton term="psv" name="PSV" /> medio annuo {num(s.psv as number, 3)} €/Smc × {num(a.season_multiplier, 2)} (stagionalità sui tuoi consumi) = {num(as!.psv, 3)} €/Smc</>}
             {' '}(<Link className="font-bold text-accent underline" to="/settings">modifica</Link>). Zona: regione {s.region || '–'}, provincia {s.province || '–'}, comune {s.comune || '–'}.</Muted>
         </div>
+        <OfferFilters search />
         <Pager page={data.page} />
         <Scroll><table className="w-full">
           <thead><tr><th className={th}>Offerta</th>
@@ -48,12 +52,12 @@ export function Compare() {
             <th className={`${th} text-right`}>Sconti<InfoButton term="t_discount" /></th><th className={`${th} text-right`}>Costo annuo<InfoButton term="t_total" /></th><th className={`${th} text-right`}>Risparmio<InfoButton term="t_saving" /></th></tr></thead>
           <tbody>{data.items.map((r, i) => (
             <tr key={i} className={r.offer.is_current ? 'bg-accent-soft' : 'hover:bg-calm'}>
-              <td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(r)}>{r.offer.supplier} – {r.offer.name}</NameButton><ExitTag o={r.offer} />{!!r.offer.is_current && <> <Tag kind="current">attuale</Tag></>}</td>
+              <td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(r)}>{r.offer.supplier} – {r.offer.name}</NameButton><Flags o={r.offer} />{!!r.offer.is_current && <> <Tag kind="current">attuale</Tag></>}</td>
               <td className={`${td} text-right`}>{eur(r.estimate.energy)}</td><td className={`${td} text-right`}>{eur(r.estimate.fixed_fee + r.estimate.power_fee)}</td>
               <td className={`${td} text-right`}>{eur(r.estimate.discount)}</td><td className={`${td} text-right`}><strong>{eur(r.estimate.total)}</strong></td>
               <td className={`${td} text-right ${good(r.saving)}`}>{r.saving == null || r.offer.is_current ? (r.saving == null ? '–' : '') : eur(r.saving)}</td>
             </tr>))}
-            {!data.items.length && <tr><td colSpan={6} className={`${td} text-muted`}>Nessuna offerta valida.</td></tr>}
+            {!data.items.length && <tr><td colSpan={6} className={`${td} text-muted`}>{filtersActive(filters) || filters.q ? 'Nessuna offerta con questi filtri: provane meno.' : 'Nessuna offerta valida.'}</td></tr>}
           </tbody></table></Scroll>
         <Pager page={data.page} />
         <OfferDetail ranked={open} consumption={c} assumptions={as} onClose={() => setOpen(null)} />
@@ -67,8 +71,9 @@ export function Compare() {
 
 export function CompareDual() {
   const page = usePage();
+  const filters = useFilterParams();
   const [open, setOpen] = useState<Ranked | null>(null);
-  const { data, error, loading } = useQuery<{ power: Analysis; gas: Analysis; items: Bundle[]; page: PageInfo }>('/compare-dual', { page });
+  const { data, error, loading } = useQuery<{ power: Analysis; gas: Analysis; items: Bundle[]; page: PageInfo }>('/compare-dual', { page, ...filters });
   const title = <H1>Confronto luce + gas insieme</H1>;
   if (loading && !data) return <>{title}<Tabs items={TABS} /><Loading /></>;
   if (error || !data) return <>{title}<Tabs items={TABS} /><ErrorBox error={error!} /></>;
@@ -77,17 +82,18 @@ export function CompareDual() {
       {title}<Tabs items={TABS} />
       {!(data.power.consumption && data.gas.consumption) ? <Notice>Servono bollette sia di luce sia di gas per stimare i consumi annui.</Notice> : <>
         <Muted>Offerte con luce e gas dello stesso fornitore, da sottoscrivere insieme. Costo = parte decisa dal fornitore per luce e gas. Il risparmio è rispetto alle due offerte attuali{!(data.power.has_current && data.gas.has_current) ? ': manca l\'offerta attuale di una delle due, quindi non posso calcolarlo' : ''}.</Muted>
+        <OfferFilters search />
         <Pager page={data.page} />
         <Scroll><table className="w-full">
           <thead><tr><th className={th}>Offerta luce</th><th className={th}>Offerta gas</th><th className={`${th} text-right`}>Luce</th><th className={`${th} text-right`}>Gas</th>
             <th className={`${th} text-right`}>Costo annuo<InfoButton term="t_total" /></th><th className={`${th} text-right`}>Risparmio<InfoButton term="t_saving" /></th></tr></thead>
           <tbody>{data.items.map((b, i) => (
             <tr key={i} className="hover:bg-calm">
-              <td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(b.power)}>{b.power.offer.supplier} – {b.power.offer.name}</NameButton><ExitTag o={b.power.offer} /></td><td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(b.gas)}>{b.gas.offer.name}</NameButton><ExitTag o={b.gas.offer} /></td>
+              <td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(b.power)}>{b.power.offer.supplier} – {b.power.offer.name}</NameButton><Flags o={b.power.offer} /></td><td className={`${td} whitespace-normal`}><NameButton onClick={() => setOpen(b.gas)}>{b.gas.offer.name}</NameButton><Flags o={b.gas.offer} /></td>
               <td className={`${td} text-right`}>{eur(b.power.estimate.total)}</td><td className={`${td} text-right`}>{eur(b.gas.estimate.total)}</td>
               <td className={`${td} text-right`}><strong>{eur(b.total)}</strong></td><td className={`${td} text-right ${good(b.saving)}`}>{eur(b.saving)}</td>
             </tr>))}
-            {!data.items.length && <tr><td colSpan={6} className={`${td} text-muted`}>Nessuna offerta luce+gas valida nella tua zona. <Link className="font-bold text-accent underline" to="/offers">Importa le offerte</Link>.</td></tr>}
+            {!data.items.length && <tr><td colSpan={6} className={`${td} text-muted`}>{filtersActive(filters) || filters.q ? 'Nessuna offerta con questi filtri: provane meno.' : <>Nessuna offerta luce+gas valida nella tua zona. <Link className="font-bold text-accent underline" to="/offers">Importa le offerte</Link>.</>}</td></tr>}
           </tbody></table></Scroll>
         <Pager page={data.page} />
         <OfferDetail ranked={open} consumption={open?.offer.commodity === 'gas' ? data.gas.consumption : data.power.consumption} assumptions={open?.offer.commodity === 'gas' ? data.gas.assumptions : data.power.assumptions} onClose={() => setOpen(null)} />

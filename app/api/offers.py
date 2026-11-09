@@ -3,6 +3,7 @@ from flask import jsonify, request
 from .. import auth, db, forms
 from ..models import Offer
 from ..services import arera, catalog
+from ..services.offer_filter import OfferFilter
 from ..services.offers_csv import parse_offers_csv
 from ..services.paging import paginate
 from . import ApiError, bp, dump, msg
@@ -14,10 +15,9 @@ PER_PAGE = 50
 
 @bp.get("/offers")
 def list_offers():
-    q = request.args.get("q", "").strip().lower()
-    offers = db.list_offers()
-    if q:
-        offers = [o for o in offers if q in f"{o.supplier} {o.name}".lower()]
+    flt = OfferFilter.from_args(request.args)
+    q = flt.q
+    offers = [o for o in db.list_offers() if flt.keep(o)]
     # prima le offerte inserite a mano o marcate come attuali, poi quelle importate
     offers.sort(key=lambda o: (not o.is_current, (o.source or "").startswith(arera.SOURCE_PREFIX)))
     page = paginate(offers, request.args.get("page", 1, type=int), PER_PAGE)

@@ -10,6 +10,8 @@ import { useIsAdmin } from '../context/AuthContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { Actions, Button, DangerLink, ErrorBox, H1, LinkButton, Loading, Muted, Pager, Scroll, SoftButton, Tag, usePage } from '../components/ui';
 import { Modal } from '../components/Modal';
+import OfferFilters, { filtersActive, useOfferFilters } from '../components/OfferFilters';
+import { Flags } from '../components/OfferDetail';
 import { fieldClass } from '../components/styles';
 
 const th = 'px-3.5 py-2.5 text-left text-[.8rem] font-bold uppercase tracking-wide text-muted bg-calm whitespace-nowrap';
@@ -51,11 +53,12 @@ export default function Offers() {
   const page = usePage();
   const q = params.get('q') ?? '';
   const [term, setTerm] = useState(q);
+  const filters = useOfferFilters();
   const [catalog, setCatalog] = useState(false);
   const confirm = useConfirm();
   const { run } = useAction();
   const admin = useIsAdmin();
-  const { data, error, loading, reload } = useQuery<{ items: Offer[]; page: PageInfo; q: string; catalog_empty: boolean }>('/offers', { q, page });
+  const { data, error, loading, reload } = useQuery<{ items: Offer[]; page: PageInfo; q: string; catalog_empty: boolean }>('/offers', { q, page, ...filters });
 
   const remove = async (o: Offer) => {
     if (!(await confirm({ title: "Eliminare l'offerta?", message: `${o.supplier} – ${o.name}` }))) return;
@@ -79,18 +82,19 @@ export default function Offers() {
             <Button type="submit">Cerca</Button>
           </form>
         )}
+        <OfferFilters />
         <Pager page={data.page} />
         <Scroll><table className="w-full">
           <thead><tr><th className={th}>Fornitura</th><th className={th}>Fornitore</th><th className={th}>Offerta</th><th className={th}>Tipo</th><th className={th}>Scadenza</th><th className={th} /><th className={th} /></tr></thead>
           <tbody>{data.items.map((o) => (
             <tr key={o.id} className={o.is_current ? 'bg-accent-soft' : 'hover:bg-calm'}>
               <td className={td}>{commodityLabel(o.commodity)}</td><td className={td}>{o.supplier}</td>
-              <td className={td}><Link className="font-bold text-accent underline" to={`/offers/${o.id}`}>{o.name}</Link>{o.dual_with && <span className="text-sm text-muted"> (luce+gas)</span>}</td>
+              <td className={`${td} whitespace-normal`}><Link className="font-bold text-accent underline" to={`/offers/${o.id}`}>{o.name}</Link>{o.dual_with && <span className="text-sm text-muted"> (luce+gas)</span>}<Flags o={o} /></td>
               <td className={td}>{o.price_type === 'fixed' ? 'fisso' : 'indicizzato'}</td><td className={td}>{o.expires_on ?? '–'}</td>
               <td className={td}>{!!o.is_current && <Tag kind="current">attuale</Tag>}</td>
               <td className={td}>{(admin || o.profile_id != null) && <DangerLink onClick={() => void remove(o)}>elimina</DangerLink>}</td>
             </tr>))}
-            {!data.items.length && <tr><td colSpan={7} className={`${td} text-muted`}>Nessuna offerta.</td></tr>}
+            {!data.items.length && <tr><td colSpan={7} className={`${td} text-muted`}>{filtersActive(filters) || q ? 'Nessuna offerta con questi filtri: provane meno.' : 'Nessuna offerta.'}</td></tr>}
           </tbody></table></Scroll>
         <Pager page={data.page} />
       </>}

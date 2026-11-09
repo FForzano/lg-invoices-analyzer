@@ -1,15 +1,24 @@
 import { ExternalLink } from 'lucide-react';
 import { Modal } from './Modal';
-import { Notice } from './ui';
 import { FOCUS_RING, PRIMARY_BUTTON } from './styles';
 import { eur, num, unitOf } from '../lib/format';
-import type { Assumptions, Consumption, Ranked } from '../lib/types';
+import { Notice, Tag } from './ui';
+import type { Assumptions, Consumption, Offer, Ranked } from '../lib/types';
 
 /** Solo http/https: l'indirizzo viene dal venditore (o da un CSV) e non va mai eseguito. */
 export const safeUrl = (u: unknown): string | null => {
   if (typeof u !== 'string') return null;
   try { const p = new URL(u); return p.protocol === 'https:' || p.protocol === 'http:' ? p.href : null; } catch { return null; }
 };
+
+/** Etichette e, per gli oneri di uscita, le prime righe del testo del venditore: si vedono senza aprire l'offerta. */
+export const Flags = ({ o }: { o: Offer }) => (
+  <>
+    {(o.exit_terms || o.bonus_terms) && <span className="ml-1 inline-flex flex-wrap gap-1 align-middle">
+      {o.exit_terms && <Tag kind="warn">oneri di uscita</Tag>}{o.bonus_terms && <Tag>bonus</Tag>}</span>}
+    {o.exit_terms && <span className="mt-0.5 line-clamp-2 max-w-[48ch] text-sm text-muted"><strong className="font-bold">Uscita anticipata:</strong> {o.exit_terms.split('\n')[0]}</span>}
+  </>
+);
 
 const n = (x: unknown): number | null => (typeof x === 'number' ? x : null);
 const dateIt = (iso: string) => iso.split('-').reverse().join('/');
@@ -51,6 +60,7 @@ export default function OfferDetail({ ranked, consumption, assumptions, onClose 
   const url = safeUrl(o?.offer_url);
   const conditions = typeof o?.conditions === 'string' ? o.conditions.split('\n').filter(Boolean) : [];
   const exitTerms = typeof o?.exit_terms === 'string' ? o.exit_terms.split('\n').filter(Boolean) : [];
+  const bonuses = typeof o?.bonus_terms === 'string' ? o.bonus_terms.split('\n').filter(Boolean) : [];
   const afterTerm = typeof o?.after_term === 'string' ? o.after_term : null;
   const monthly = n(o?.fixed_fee_month), powerFee = n(o?.power_fee_kw_month), once = n(o?.one_off_discount);
 
@@ -74,6 +84,10 @@ export default function OfferDetail({ ranked, consumption, assumptions, onClose 
             {powerFee != null && <Row label="Quota potenza" value={`${num(powerFee, 4)} €/kW al mese`} />}
             {once != null && <Row label="Sconto una tantum" value={eur(once)} />}
           </dl>
+        </Section>}
+        {bonuses.length > 0 && <Section title="Bonus e sconti">
+          <ul className="list-disc space-y-1 pl-5">{bonuses.map((t, i) => <li key={i}>{t}</li>)}</ul>
+          <p className="mt-1 max-w-[58ch] text-sm text-muted">Come li descrive il venditore. Non sono nel costo annuo stimato qui sotto: controlla a quali condizioni valgono e per quanto tempo.</p>
         </Section>}
         <Section title="Stima per il tuo consumo">
           <dl>

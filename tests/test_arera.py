@@ -34,6 +34,7 @@ def test_parse_sample():
     assert fix.conditions == "Valida solo con addebito su conto."
     assert fix.after_term.startswith("Trascorsi 24 mesi") and idx.conditions is None and idx.after_term is None
     assert fix.exit_terms == "Onere di recesso anticipato di 2,00 € per ogni mese residuo." and idx.exit_terms is None
+    assert fix.bonus_terms == "Bonus benvenuto: Bonus una tantum di 30 € in prima fattura." and idx.bonus_terms is None
 
 
 def test_discover_urls_only_trusts_expected_host():

@@ -38,6 +38,10 @@ AFTER_TERM = re.compile(
     re.I,
 )
 MAX_TEXT = 500
+# DOMESTICO_RESIDENTE: 01 solo residenti, 02 solo non residenti, 03 tutti (verificato sui nomi delle offerte nei file ARERA)
+RESIDENCY = {"01": "resident", "02": "non_resident"}
+# MODALITA_PAGAMENTO: ogni codice ha sempre la stessa descrizione nei file (99 = bonifico, PagoPA e altro)
+PAYMENT_LABELS = {"01": "domiciliazione bancaria", "02": "domiciliazione postale", "03": "domiciliazione su carta", "04": "bollettino", "99": "bonifico o altro"}
 COND_EXIT = "05"  # TIPOLOGIA_CONDIZIONE: oneri di recesso anticipato (testo libero del venditore, a volte con la formula)
 MAX_EXIT_TEXT = 1200
 NO_EXIT = re.compile(r"^\W*(nessun\w*|non (è |sono )?previst\w*|assent\w*|gratuit\w*|no)\W*$", re.I)  # «nessuna», «non previsti»: niente da avvisare
@@ -182,6 +186,11 @@ def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
         after_term=after_term,
         exit_terms=exit_terms,
         bonus_terms=_bonus_texts(el),
+        residency=RESIDENCY.get(_any(el, "DOMESTICO_RESIDENTE") or ""),
+        power_min=_limit(_any(el, "POTENZA_MIN")), power_max=_limit(_any(el, "POTENZA_MAX")),
+        consumption_min=_limit(_any(el, "CONSUMO_MIN")), consumption_max=_limit(_any(el, "CONSUMO_MAX")),
+        payment_methods=_payment_methods(el), activation_terms=_activation_texts(el),
+        phone=(_t(el, "DettaglioOfferta/Contatti/TELEFONO") or "").strip()[:30] or None,
         source=SOURCE_PREFIX + (_t(el, "IdentificativiOfferta/COD_OFFERTA") or "?"),
         dual_with=None if single == "SI" else _dual_link(el),
     )
@@ -264,6 +273,35 @@ def _condition_texts(el: ET.Element) -> tuple[str | None, str | None, str | None
         elif c.findtext(NS + "LIMITANTE") == COND_LIMITING and text not in limiting:
             limiting.append(text)
     return "\n".join(limiting[:6]) or None, "\n".join(after[:2]) or None, "\n".join(leaving[:3]) or None
+
+
+def _any(el: ET.Element, tag: str) -> str | None:
+    """Primo valore del tag, ovunque sia nell'offerta."""
+    return next((e.text.strip() for e in el.iter(NS + tag) if e.text and e.text.strip()), None)
+
+
+def _limit(raw: str | None) -> float | None:
+    """Estremo di un intervallo ammesso; 0 o assente = nessun limite."""
+    try:
+        v = float(raw or "")
+    except ValueError:
+        return None
+    return v if v > 0 else None
+
+
+def _payment_methods(el: ET.Element) -> str | None:
+    codes = [c.text for c in el.iter(NS + "MODALITA_PAGAMENTO") if c.text in PAYMENT_LABELS]
+    return ", ".join(dict.fromkeys(PAYMENT_LABELS[c] for c in sorted(set(codes)))) or None
+
+
+def _activation_texts(el: ET.Element) -> str | None:
+    """Come si attiva l'offerta, con le parole del venditore (il codice del canale non è interpretato)."""
+    out: list[str] = []
+    for m in el.iter(NS + "ModalitaAttivazione"):
+        text = " ".join((m.findtext(NS + "DESCRIZIONE") or "").split())
+        if text and text not in out:
+            out.append(text if len(text) <= MAX_TEXT else text[:MAX_TEXT].rstrip() + "…")
+    return "\n".join(out[:3]) or None
 
 
 def _bonus_texts(el: ET.Element) -> str | None:

@@ -68,6 +68,14 @@ export default function OfferDetail({ ranked, consumption, assumptions, onClose 
   const conditions = typeof o?.conditions === 'string' ? o.conditions.split('\n').filter(Boolean) : [];
   const exitTerms = exitLines(typeof o?.exit_terms === 'string' ? o.exit_terms : null);
   const bonuses = typeof o?.bonus_terms === 'string' ? o.bonus_terms.split('\n').filter(Boolean) : [];
+  const code = typeof o?.source === 'string' && o.source.startsWith('arera:') && o.source !== 'arera:?' ? o.source.slice(6) : null;
+  const range = (lo: unknown, hi: unknown, u: string) => (n(lo) != null && n(hi) != null ? `da ${num(n(lo), 0)} a ${num(n(hi), 0)} ${u}` : n(lo) != null ? `da ${num(n(lo), 0)} ${u}` : n(hi) != null ? `fino a ${num(n(hi), 0)} ${u}` : null);
+  const who: [string, string][] = [];
+  if (o?.residency) who.push(['Residenza', o.residency === 'resident' ? 'Solo residenti' : 'Solo non residenti']);
+  const pw = range(o?.power_min, o?.power_max, 'kW'), cs = range(o?.consumption_min, o?.consumption_max, unit);
+  if (pw) who.push(['Potenza ammessa', pw]);
+  if (cs) who.push(['Consumo annuo ammesso', cs]);
+  const activation = typeof o?.activation_terms === 'string' ? o.activation_terms.split('\n').filter(Boolean) : [];
   const afterTerm = typeof o?.after_term === 'string' ? o.after_term : null;
   const monthly = n(o?.fixed_fee_month), powerFee = n(o?.power_fee_kw_month), once = n(o?.one_off_discount);
 
@@ -112,6 +120,16 @@ export default function OfferDetail({ ranked, consumption, assumptions, onClose 
           {afterTerm && <p className="mt-2"><strong>A fine periodo: </strong>{afterTerm}</p>}
           {!conditions.length && !afterTerm && !exitTerms.length && o.duration_months == null && !o.expires_on && <p className="text-muted">Nessuna condizione indicata.</p>}
         </Section>
+        {(code || who.length > 0 || o.payment_methods || activation.length > 0 || o.phone) && <Section title="Per chi vale e come si sottoscrive">
+          <dl>
+            {code && <Row label="Codice offerta" value={code} />}
+            {who.map(([l, v]) => <Row key={l} label={l} value={v} />)}
+            {typeof o.payment_methods === 'string' && <Row label="Pagamento" value={o.payment_methods} />}
+            {typeof o.phone === 'string' && <Row label="Telefono del venditore" value={o.phone} />}
+          </dl>
+          {activation.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5">{activation.map((t, i) => <li key={i}>{t}</li>)}</ul>}
+          {code && <p className="mt-1 max-w-[58ch] text-sm text-muted">Il codice offerta è quello del Portale Offerte ARERA: confrontalo con quello riportato sul sito o sul contratto per essere certo che sia proprio questa offerta.</p>}
+        </Section>}
         <div className="mt-6">
           {url ? <>
             <a href={url} target="_blank" rel="noopener noreferrer" className={`${PRIMARY_BUTTON} inline-flex items-center gap-2 ${FOCUS_RING}`}>Vai all&rsquo;offerta sul sito del venditore<ExternalLink className="h-4 w-4" aria-hidden /></a>

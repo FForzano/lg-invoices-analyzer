@@ -79,3 +79,11 @@ def test_computed_properties_are_serialized(client):
     a = client.get("/api/home").json["analyses"]["power"]
     assert a["verdict"]["best"]["estimate"]["total"] > 0 and isinstance(a["consumption"]["partial"], bool)
     assert "beats_separate" not in a  # solo nel verdetto luce+gas
+
+
+def test_compare_accepts_filters_and_power(client):
+    qs = "?type=fixed&no_exit=1&bonus=1&no_domic=1&power=4.5&q=x"
+    for path in ("/api/compare/power", "/api/compare/gas", "/api/compare-dual"):
+        assert client.get(path + qs).status_code == 200
+    assert client.get("/api/compare/power?power=abc").status_code == 200  # valore non valido: ignorato
+    assert client.get("/api/compare/power").json["power_default"] == 3.0

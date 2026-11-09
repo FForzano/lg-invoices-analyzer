@@ -14,12 +14,12 @@ from .models import SYSTEM_FIELDS, Bill, Offer, columns
 from .services.seasonality import DEFAULT_INDEX_FACTORS
 
 SETTING_DEFAULTS: dict[str, float | str] = {
-    "pun": 0.12, "psv": 0.40, "loss_pct": 10.0, "dispatching_extra": 0.019, "default_power_kw": 3.0,
+    "pun": 0.12, "psv": 0.40, "loss_pct": 10.0, "dispatching_extra": 0.019, "default_power_kw": 3.0, "resident": 1.0,
     # codici ISTAT della località di fornitura (default: Ferrara)
     "region": "08", "province": "038", "comune": "038008",
 }
 # impostazioni che valgono per il singolo profilo (appartamento); le altre sono globali
-PROFILE_SETTINGS = ("region", "province", "comune", "default_power_kw")
+PROFILE_SETTINGS = ("region", "province", "comune", "default_power_kw", "resident")
 
 
 def get_db() -> Database:

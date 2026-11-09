@@ -1,0 +1,10 @@
+-- Vedi sqlite/018_eligibility.sql.
+ALTER TABLE offers ADD COLUMN residency TEXT;
+ALTER TABLE offers ADD COLUMN power_min DOUBLE PRECISION;
+ALTER TABLE offers ADD COLUMN power_max DOUBLE PRECISION;
+ALTER TABLE offers ADD COLUMN consumption_min DOUBLE PRECISION;
+ALTER TABLE offers ADD COLUMN consumption_max DOUBLE PRECISION;
+ALTER TABLE offers ADD COLUMN payment_methods TEXT;
+ALTER TABLE offers ADD COLUMN activation_terms TEXT;
+ALTER TABLE offers ADD COLUMN phone TEXT;
+ALTER TABLE profiles ADD COLUMN resident INTEGER NOT NULL DEFAULT 1;

@@ -25,7 +25,7 @@ export function Compare() {
   const page = usePage();
   const filters = useFilterParams();
   const [open, setOpen] = useState<Ranked | null>(null);
-  const { data, error, loading } = useQuery<{ analysis: Analysis; items: Ranked[]; page: PageInfo }>(`/compare/${commodity}`, { page, ...filters });
+  const { data, error, loading } = useQuery<{ analysis: Analysis; items: Ranked[]; page: PageInfo; power_default: number | null }>(`/compare/${commodity}`, { page, ...filters });
   const title = <H1>Confronto {commodity === 'power' ? 'luce' : 'gas'}</H1>;
   if (loading && !data) return <>{title}<Tabs items={TABS} /><Loading /></>;
   if (error || !data) return <>{title}<Tabs items={TABS} /><ErrorBox error={error!} /></>;
@@ -44,7 +44,7 @@ export function Compare() {
             : <>PSV<InfoButton term="psv" name="PSV" /> medio annuo {num(s.psv as number, 3)} €/Smc × {num(a.season_multiplier, 2)} (stagionalità sui tuoi consumi) = {num(as!.psv, 3)} €/Smc</>}
             {' '}(<Link className="font-bold text-accent underline" to="/settings">modifica</Link>). Zona: regione {s.region || '–'}, provincia {s.province || '–'}, comune {s.comune || '–'}.</Muted>
         </div>
-        <OfferFilters search />
+        <OfferFilters search power={data.power_default ?? undefined} />
         <Pager page={data.page} />
         <Scroll><table className="w-full">
           <thead><tr><th className={th}>Offerta</th>
@@ -73,7 +73,7 @@ export function CompareDual() {
   const page = usePage();
   const filters = useFilterParams();
   const [open, setOpen] = useState<Ranked | null>(null);
-  const { data, error, loading } = useQuery<{ power: Analysis; gas: Analysis; items: Bundle[]; page: PageInfo }>('/compare-dual', { page, ...filters });
+  const { data, error, loading } = useQuery<{ power: Analysis; gas: Analysis; items: Bundle[]; page: PageInfo; power_default: number }>('/compare-dual', { page, ...filters });
   const title = <H1>Confronto luce + gas insieme</H1>;
   if (loading && !data) return <>{title}<Tabs items={TABS} /><Loading /></>;
   if (error || !data) return <>{title}<Tabs items={TABS} /><ErrorBox error={error!} /></>;
@@ -82,7 +82,7 @@ export function CompareDual() {
       {title}<Tabs items={TABS} />
       {!(data.power.consumption && data.gas.consumption) ? <Notice>Servono bollette sia di luce sia di gas per stimare i consumi annui.</Notice> : <>
         <Muted>Offerte con luce e gas dello stesso fornitore, da sottoscrivere insieme. Costo = parte decisa dal fornitore per luce e gas. Il risparmio è rispetto alle due offerte attuali{!(data.power.has_current && data.gas.has_current) ? ': manca l\'offerta attuale di una delle due, quindi non posso calcolarlo' : ''}.</Muted>
-        <OfferFilters search />
+        <OfferFilters search power={data.power_default} />
         <Pager page={data.page} />
         <Scroll><table className="w-full">
           <thead><tr><th className={th}>Offerta luce</th><th className={th}>Offerta gas</th><th className={`${th} text-right`}>Luce</th><th className={`${th} text-right`}>Gas</th>

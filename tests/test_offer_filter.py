@@ -20,3 +20,9 @@ def test_bundle_bonus_on_one_half_is_enough_but_exit_charges_exclude():
     assert OfferFilter(bonus=True).keep_bundle(power, gas)
     assert not OfferFilter(bonus=True).keep_bundle(offer(), gas)
     assert not OfferFilter(no_exit=True).keep_bundle(power, offer(commodity="gas", exit_terms="Onere"))
+
+
+def test_no_domiciliation_filter():
+    f = OfferFilter(no_domiciliation=True)
+    assert f.keep(offer()) and f.keep(offer(payment_methods="domiciliazione bancaria, bollettino"))  # sconosciuto o con alternativa
+    assert not f.keep(offer(payment_methods="domiciliazione bancaria, domiciliazione postale"))

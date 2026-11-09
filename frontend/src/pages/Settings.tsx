@@ -6,7 +6,7 @@ import { num } from '../lib/format';
 import type { Settings as SettingsT } from '../lib/types';
 import { useApp } from '../context/AppContext';
 import { useIsAdmin } from '../context/AuthContext';
-import { Button, Card, ErrorBox, Field, FieldGrid, GroupTitle, H1, InfoButton, Loading, Muted, SoftButton, useForm } from '../components/ui';
+import { Button, Card, ErrorBox, Field, FieldGrid, GroupTitle, H1, InfoButton, Loading, Muted, SelectField, SoftButton, useForm } from '../components/ui';
 
 export default function Settings() {
   const { profile, flash } = useApp();
@@ -34,10 +34,11 @@ export default function Settings() {
           <Muted className="col-span-full">PUN e PSV sono medie annue assunte per stimare le offerte indicizzate (il valore futuro non è noto). Il confronto le adatta ai mesi in cui consumi (il gas soprattutto d'inverno) con la stagionalità storica; si aggiorna con «Aggiorna dal Portale Offerte».</Muted>
           <GroupTitle>Profilo {profile.name}: potenza e località</GroupTitle>
           <Field form={form} name="default_power_kw" label="Potenza di default (kW)" type="number" />
+          <SelectField form={form} name="resident" required label="Residenza" options={[['1', 'Abitazione di residenza'], ['0', 'Non residente (seconda casa)']]} />
           <Field form={form} name="region" label="Regione (ISTAT, es. 08)" />
           <Field form={form} name="province" label="Provincia (ISTAT, es. 038)" />
           <Field form={form} name="comune" label="Comune (ISTAT, es. 038008)" />
-          <Muted className="col-span-full">Le offerte limitate a certe zone compaiono nel confronto solo se coprono questa regione, provincia o comune. Codici su <a className="font-bold text-accent underline" href="https://www.istat.it/classificazione/codici-dei-comuni-delle-province-e-delle-regioni/" target="_blank" rel="noopener noreferrer">istat.it</a>.</Muted>
+          <Muted className="col-span-full">Le offerte limitate a certe zone compaiono nel confronto solo se coprono questa regione, provincia o comune. Anche le offerte riservate ai residenti o ai non residenti, o a certe potenze e consumi, compaiono solo se valgono per te. Codici su <a className="font-bold text-accent underline" href="https://www.istat.it/classificazione/codici-dei-comuni-delle-province-e-delle-regioni/" target="_blank" rel="noopener noreferrer">istat.it</a>.</Muted>
         </FieldGrid>
         <div className="my-5"><Button type="submit" busy={busy}>Salva</Button></div>
       </form>

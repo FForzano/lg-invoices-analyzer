@@ -77,6 +77,14 @@ class Offer:
     after_term: str | None = None  # cosa cambia a fine periodo secondo il venditore, solo da mostrare
     exit_terms: str | None = None  # oneri/penali di recesso anticipato secondo il venditore (una per riga), solo da mostrare
     bonus_terms: str | None = None  # bonus e sconti dichiarati dal venditore (una voce per riga), solo da mostrare
+    residency: str | None = None  # "resident" | "non_resident" se riservata, None se per tutti
+    power_min: float | None = None  # potenza impegnata ammessa (kW)
+    power_max: float | None = None
+    consumption_min: float | None = None  # consumo annuo ammesso (kWh o Smc)
+    consumption_max: float | None = None
+    payment_methods: str | None = None  # modalità di pagamento ammesse, separate da virgola, solo da mostrare
+    activation_terms: str | None = None  # come si attiva, testo del venditore, solo da mostrare
+    phone: str | None = None
     offer_url: str | None = None  # pagina dell'offerta sul sito del venditore (ARERA), solo https/http, solo da mostrare
     zones: str | None = None  # se limitata: codici ISTAT separati da virgola (R08 regione, P038 provincia, C038008 comune)
     # componenti formula indicizzata luce

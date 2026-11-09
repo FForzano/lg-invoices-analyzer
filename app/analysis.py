@@ -1,7 +1,7 @@
 """Analisi di una fornitura: lega database e servizi (consumo, confronto, verdetto)."""
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 
 from . import db
@@ -28,12 +28,12 @@ class Analysis:
     season_multiplier: float = 1.0  # prezzo medio dell'indice sui mesi di consumo / media annua
 
 
-def analyze(commodity: str, today: date | None = None) -> Analysis:
+def analyze(commodity: str, today: date | None = None, power_kw: float | None = None) -> Analysis:
     """Analisi dei dati del profilo attivo."""
-    return analyze_data(commodity, db.list_bills(commodity), db.list_offers(commodity), db.get_settings(), db.get_index_factors(), today)
+    return analyze_data(commodity, db.list_bills(commodity), db.list_offers(commodity), db.get_settings(), db.get_index_factors(), today, power_kw)
 
 
-def analyze_data(commodity: str, bills: list, all_offers: list[Offer], settings: dict, factors: dict, today: date | None = None) -> Analysis:
+def analyze_data(commodity: str, bills: list, all_offers: list[Offer], settings: dict, factors: dict, today: date | None = None, power_kw: float | None = None) -> Analysis:
     """Lo stesso calcolo su dati qualsiasi: serve anche alla simulazione pubblica, che non ha profilo né database dell'utente."""
     today = today or date.today()
     result = Analysis(commodity, settings)
@@ -46,13 +46,17 @@ def analyze_data(commodity: str, bills: list, all_offers: list[Offer], settings:
         settings["default_power_kw"], settings["loss_pct"], settings["dispatching_extra"],
     )
     result.consumption = c = annual_consumption(bills)
+    if c and power_kw and commodity == "power":  # potenza scelta nel confronto al posto di quella delle bollette
+        result.consumption = c = replace(c, power_kw=power_kw)
     if commodity == "power":
         result.power_advice = power_advice(bills)
     result.has_current = any(o.is_current for o in all_offers)
     # le metà di offerte luce+gas valgono solo se sottoscritte insieme: fuori dal confronto singolo
     offers = [o for o in all_offers if not o.dual_with]
     if c:
-        location = Location(settings["region"], settings["province"], settings["comune"])
+        current = next((o for o in all_offers if o.is_current), None)
+        power = (c.power_kw or settings["default_power_kw"]) if commodity == "power" else None
+        location = Location(settings["region"], settings["province"], settings["comune"], bool(settings.get("resident", 1)), power, current.supplier if current else "")
         result.ranked, result.skipped = compare(offers, c, a, today, location)
         result.verdict = make_verdict(result.ranked, offers, c, a, today, location)
         result.dual_ranked, _ = compare([o for o in all_offers if o.dual_with or o.is_current], c, a, today, location)

@@ -4,6 +4,7 @@ Trasporto, oneri di sistema e imposte sono uguali per tutti e restano fuori.
 Bonus sociali e canone TV non dipendono dal fornitore e restano fuori."""
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import date
 
@@ -22,21 +23,42 @@ class Assumptions:
 
 @dataclass(frozen=True)
 class Location:
-    """Codici ISTAT della località di fornitura."""
+    """Dove e per chi si cerca l'offerta: località ISTAT, residenza, potenza impegnata e fornitore attuale."""
     region: str = ""
     province: str = ""
     comune: str = ""
+    resident: bool = True
+    power_kw: float | None = None  # solo luce
+    supplier: str = ""  # fornitore dell'offerta attuale
 
     def tokens(self) -> set[str]:
         return {t for t in (f"R{self.region}" if self.region else "", f"P{self.province}" if self.province else "",
                             f"C{self.comune}" if self.comune else "") if t}
 
 
-def available_in(offer: Offer, location: Location) -> bool:
-    """Offerte senza restrizioni valgono ovunque; con restrizioni serve una zona in comune."""
-    if not offer.zones:
-        return True
-    return bool(set(offer.zones.split(",")) & location.tokens())
+NEW_CUSTOMERS_ONLY = re.compile(r"\b(solo|riservat\w+|esclusivamente|valid\w+)\b[^.]{0,40}\bnuov[oi] client\w*", re.I)
+
+
+def _same_supplier(a: str, b: str) -> bool:
+    """«enel.it» e «Enel Energia» sono lo stesso fornitore: confronto sulle sole lettere, per inclusione."""
+    x, y = (re.sub(r"[^a-z0-9]", "", re.sub(r"\.(it|com|eu)\b.*", "", v.lower())) for v in (a, b))
+    return bool(x) and bool(y) and (x in y or y in x)
+
+
+def available_in(offer: Offer, location: Location, annual: float | None = None) -> bool:
+    """L'offerta vale per te: zona, residenza, potenza, consumo annuo e, se riservata ai nuovi clienti, fornitore diverso dall'attuale."""
+    if offer.zones and not set(offer.zones.split(",")) & location.tokens():
+        return False
+    if offer.residency and (offer.residency == "resident") != location.resident:
+        return False
+    if offer.commodity == "power" and location.power_kw is not None:
+        if (offer.power_min and location.power_kw < offer.power_min) or (offer.power_max and location.power_kw > offer.power_max):
+            return False
+    if annual is not None and ((offer.consumption_min and annual < offer.consumption_min) or (offer.consumption_max and annual > offer.consumption_max)):
+        return False
+    if location.supplier and offer.conditions and NEW_CUSTOMERS_ONLY.search(offer.conditions) and _same_supplier(offer.supplier, location.supplier):
+        return False
+    return True
 
 
 @dataclass(frozen=True)
@@ -112,7 +134,7 @@ def compare(offers: list[Offer], c: Consumption, a: Assumptions, today: date, lo
     estimates: dict[int, Estimate] = {}
     skipped: list[str] = []
     for o in offers:
-        if not o.is_current and (is_expired(o, today) or not available_in(o, location)):
+        if not o.is_current and (is_expired(o, today) or not available_in(o, location, c.total)):
             continue
         try:
             estimates[o.id] = estimate(o, c, a)

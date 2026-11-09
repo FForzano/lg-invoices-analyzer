@@ -25,7 +25,7 @@ def put_settings():
     try:
         db.save_settings({
             k: _code(data[k]) if isinstance(default, str) else float(str(data[k]).replace(",", "."))
-            for k, default in db.SETTING_DEFAULTS.items() if k in own
+            for k, default in db.SETTING_DEFAULTS.items() if k in own and (k != "resident" or k in data)
         })
     except (KeyError, ValueError):
         raise ApiError("Valori non validi.") from None

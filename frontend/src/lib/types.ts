@@ -23,7 +23,7 @@ export interface Bill {
 export interface Offer {
   id: number | null; commodity: Commodity; supplier: string; name: string; price_type: 'fixed' | 'indexed';
   expires_on: string | null; is_current: boolean; dual_with: string | null; source: string | null;
-  duration_months: number | null; conditions: string | null; after_term: string | null; exit_terms: string | null; bonus_terms: string | null; residency: 'resident' | 'non_resident' | null; power_min: number | null; power_max: number | null; consumption_min: number | null; consumption_max: number | null; payment_methods: string | null; activation_terms: string | null; phone: string | null; offer_url: string | null;
+  duration_months: number | null; conditions: string | null; after_term: string | null; exit_terms: string | null; bonus_terms: string | null; residency: 'resident' | 'non_resident' | null; power_min: number | null; power_max: number | null; consumption_min: number | null; consumption_max: number | null; valid_for: string | null; activation_channels: string | null; index_name: string | null; payment_methods: string | null; activation_terms: string | null; phone: string | null; offer_url: string | null;
   [key: string]: unknown;
 }
 export interface Estimate { energy: number; fixed_fee: number; power_fee: number; discount: number; total: number }
@@ -66,3 +66,6 @@ export interface Site {
 export const NO_SITE: Site = { operator: { name: '', email: '', address: '', vat: '', registry: '' }, auth_enabled: false, registration_open: false, mail_enabled: false, llm_enabled: false, ads_enabled: false, storage: 'local', database: 'sqlite' };
 /** Un contenuto sponsorizzato (GET /api/ads?slot=…). */
 export interface Ad { sponsor: string; title: string; text: string; cta: string; url: string; image: string | null; video: string | null; alt: string }
+
+/** Un insieme di filtri salvato per il profilo (query = ?type=fixed&no_exit=1…). */
+export interface FilterPreset { id: number; name: string; query: string; is_default: boolean }

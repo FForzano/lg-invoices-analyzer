@@ -128,7 +128,7 @@ def delete_profile(id: int) -> list[str]:
     """Elimina il profilo con bollette e offerte attuali. Restituisce i PDF da cancellare dal disco."""
     db = get_db()
     pdfs = [r["pdf_path"] for r in db.execute("SELECT pdf_path FROM bills WHERE profile_id = ? AND pdf_path IS NOT NULL", (id,))]
-    for table in ("bills", "offers", "proposals"):
+    for table in ("bills", "offers", "proposals", "filter_presets"):
         db.execute(f"DELETE FROM {table} WHERE profile_id = ?", (id,))
     db.execute("DELETE FROM profiles WHERE id = ?", (id,))
     db.commit()
@@ -332,6 +332,37 @@ def save_settings(values: dict[str, float | str]) -> None:
     for key, value in per_profile.items():  # i nomi vengono da PROFILE_SETTINGS, mai dall'utente
         db.execute(f"UPDATE profiles SET {key} = ? WHERE id = ?", (value, profile_id()))
     db.commit()
+
+
+# --- filtri preferiti ----------------------------------------------------------
+
+def list_presets() -> list[dict]:
+    rows = get_db().execute("SELECT id, name, query, is_default FROM filter_presets WHERE profile_id = ? ORDER BY name", (profile_id(),))
+    return [{**dict(r), "is_default": bool(r["is_default"])} for r in rows]
+
+
+def save_preset(name: str, query: str, is_default: bool) -> int:
+    """Nuovo preferito del profilo; con lo stesso nome sostituisce il precedente. Uno solo può essere quello di default."""
+    db = get_db()
+    db.execute("DELETE FROM filter_presets WHERE profile_id = ? AND name = ?", (profile_id(), name))
+    if is_default:
+        db.execute("UPDATE filter_presets SET is_default = 0 WHERE profile_id = ?", (profile_id(),))
+    id = db.insert("INSERT INTO filter_presets (profile_id, name, query, is_default) VALUES (?, ?, ?, ?)", (profile_id(), name, query, int(is_default)))
+    db.commit()
+    return id
+
+
+def set_default_preset(id: int | None) -> None:
+    """Il preferito applicato all'apertura (None = nessuno)."""
+    db = get_db()
+    db.execute("UPDATE filter_presets SET is_default = 0 WHERE profile_id = ?", (profile_id(),))
+    if id is not None:
+        db.execute("UPDATE filter_presets SET is_default = 1 WHERE id = ? AND profile_id = ?", (id, profile_id()))
+    db.commit()
+
+
+def delete_preset(id: int) -> None:
+    _delete("filter_presets", id, profile_id=profile_id())
 
 
 # --- stagionalità degli indici -----------------------------------------------

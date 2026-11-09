@@ -13,13 +13,14 @@ class OfferFilter:
     price_type: str | None = None  # "fixed" | "indexed"
     no_exit: bool = False  # esclude le offerte con oneri di recesso anticipato dichiarati
     bonus: bool = False  # solo offerte con bonus o sconti dichiarati
+    online: bool = False  # attivabile da web
     no_domiciliation: bool = False  # pagabili anche senza domiciliazione (bollettino, bonifico...)
 
     @classmethod
     def from_args(cls, args: Mapping[str, str]) -> OfferFilter:
         kind = args.get("type", "")
         return cls(q=args.get("q", "").strip().lower(), price_type=kind if kind in ("fixed", "indexed") else None,
-                   no_exit=args.get("no_exit") == "1", bonus=args.get("bonus") == "1", no_domiciliation=args.get("no_domic") == "1")
+                   no_exit=args.get("no_exit") == "1", bonus=args.get("bonus") == "1", online=args.get("online") == "1", no_domiciliation=args.get("no_domic") == "1")
 
     def keep(self, o: Offer) -> bool:
         if self.q and self.q not in f"{o.supplier} {o.name}".lower():
@@ -27,6 +28,8 @@ class OfferFilter:
         if self.price_type and o.price_type != self.price_type:
             return False
         if self.no_exit and o.exit_terms:
+            return False
+        if self.online and o.activation_channels and not ({"solo da web", "qualsiasi canale"} & set(o.activation_channels.split(", "))):
             return False
         if self.no_domiciliation and o.payment_methods and not ({"bollettino", "bonifico"} & {w for m in o.payment_methods.split(", ") for w in m.split()}):
             return False

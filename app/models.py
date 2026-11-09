@@ -82,6 +82,9 @@ class Offer:
     power_max: float | None = None
     consumption_min: float | None = None  # consumo annuo ammesso (kWh o Smc)
     consumption_max: float | None = None
+    valid_for: str | None = None  # casi in cui vale: switch, first, reactivation, transfer, always (separati da virgola)
+    activation_channels: str | None = None  # canali di attivazione ammessi, solo da mostrare
+    index_name: str | None = None  # indice delle offerte indicizzate: pun, psv, ttf, psbil, pe, pfor, cmem, other
     payment_methods: str | None = None  # modalità di pagamento ammesse, separate da virgola, solo da mostrare
     activation_terms: str | None = None  # come si attiva, testo del venditore, solo da mostrare
     phone: str | None = None

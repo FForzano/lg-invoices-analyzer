@@ -56,6 +56,12 @@ def available_in(offer: Offer, location: Location, annual: float | None = None) 
             return False
     if annual is not None and ((offer.consumption_min and annual < offer.consumption_min) or (offer.consumption_max and annual > offer.consumption_max)):
         return False
+    if offer.valid_for:  # specifiche SII: cambio fornitore (switch), prima attivazione, riattivazione, voltura, sempre
+        cases = set(offer.valid_for.split(","))
+        if "always" not in cases and "switch" not in cases:
+            return False  # non vale per chi cambia fornitore
+        if cases == {"switch"} and location.supplier and _same_supplier(offer.supplier, location.supplier):
+            return False  # vale solo cambiando fornitore: non è proponibile dal fornitore attuale
     if location.supplier and offer.conditions and NEW_CUSTOMERS_ONLY.search(offer.conditions) and _same_supplier(offer.supplier, location.supplier):
         return False
     return True
@@ -88,6 +94,10 @@ def unit_price(offer: Offer, a: Assumptions, band: int | None = None) -> float:
     return base
 
 
+# Indici per cui non c'è un valore assunto: l'offerta non si stima (il Portale usa Psbil come PSV, noi pure)
+UNSUPPORTED_INDEXES = {"ttf": "TTF", "pe": "PE", "pfor": "Pfor", "cmem": "Cmem", "other": "non standard"}
+
+
 def _base_price(offer: Offer, a: Assumptions, band: int | None) -> float:
     if offer.avg_price is not None:
         return offer.avg_price
@@ -96,6 +106,8 @@ def _base_price(offer: Offer, a: Assumptions, band: int | None) -> float:
         if offer.commodity == "power" and band is not None and all(p is not None for p in band_prices):
             return band_prices[band]
         return _need(offer.price, offer, "price")
+    if offer.index_name in UNSUPPORTED_INDEXES:
+        raise ValueError(f"Offerta «{offer.name}»: indice {UNSUPPORTED_INDEXES[offer.index_name]} non gestito")
     spread = _need(offer.spread, offer, "spread")
     if offer.commodity == "power":
         loss = a.loss_pct if offer.loss_pct is None else offer.loss_pct

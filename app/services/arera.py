@@ -40,8 +40,14 @@ AFTER_TERM = re.compile(
 MAX_TEXT = 500
 # DOMESTICO_RESIDENTE: 01 solo residenti, 02 solo non residenti, 03 tutti (verificato sui nomi delle offerte nei file ARERA)
 RESIDENCY = {"01": "resident", "02": "non_resident"}
-# MODALITA_PAGAMENTO: ogni codice ha sempre la stessa descrizione nei file (99 = bonifico, PagoPA e altro)
-PAYMENT_LABELS = {"01": "domiciliazione bancaria", "02": "domiciliazione postale", "03": "domiciliazione su carta", "04": "bollettino", "99": "bonifico o altro"}
+# Codici dalle specifiche ufficiali «Trasmissione Offerte Mercato Retail» v4.6 del SII (Acquirente Unico)
+PAYMENT_LABELS = {"01": "domiciliazione bancaria", "02": "domiciliazione postale", "03": "domiciliazione su carta di credito", "04": "bollettino", "99": "altro (bonifico, PagoPA...)"}
+VALID_FOR = {"01": "switch", "02": "first", "03": "reactivation", "04": "transfer", "99": "always"}  # TIPOLOGIA_ATT_CONTR: cambio fornitore, prima attivazione, riattivazione, voltura, sempre
+CHANNEL_LABELS = {"01": "solo da web", "02": "qualsiasi canale", "03": "punto vendita", "04": "teleselling", "05": "agenzia", "99": "altro canale"}  # MODALITA
+INDEX_NAMES = {  # IDX_PREZZO_ENERGIA, per periodicità trimestrale / bimestrale / mensile
+    "01": "pun", "08": "pun", "12": "pun", "02": "ttf", "09": "ttf", "13": "ttf", "03": "psv", "10": "psv", "14": "psv",
+    "04": "psbil", "11": "psbil", "15": "psbil", "05": "pe", "07": "pfor", "06": "cmem", "99": "other",
+}
 COND_EXIT = "05"  # TIPOLOGIA_CONDIZIONE: oneri di recesso anticipato (testo libero del venditore, a volte con la formula)
 MAX_EXIT_TEXT = 1200
 NO_EXIT = re.compile(r"^\W*(nessun\w*|non (è |sono )?previst\w*|assent\w*|gratuit\w*|no)\W*$", re.I)  # «nessuna», «non previsti»: niente da avvisare
@@ -190,6 +196,8 @@ def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
         power_min=_limit(_any(el, "POTENZA_MIN")), power_max=_limit(_any(el, "POTENZA_MAX")),
         consumption_min=_limit(_any(el, "CONSUMO_MIN")), consumption_max=_limit(_any(el, "CONSUMO_MAX")),
         payment_methods=_payment_methods(el), activation_terms=_activation_texts(el),
+        valid_for=",".join(dict.fromkeys(VALID_FOR[c.text] for c in el.iter(NS + "TIPOLOGIA_ATT_CONTR") if c.text in VALID_FOR)) or None,
+        activation_channels=", ".join(dict.fromkeys(CHANNEL_LABELS[c.text] for c in el.iter(NS + "MODALITA") if c.text in CHANNEL_LABELS)) or None,
         phone=(_t(el, "DettaglioOfferta/Contatti/TELEFONO") or "").strip()[:30] or None,
         source=SOURCE_PREFIX + (_t(el, "IdentificativiOfferta/COD_OFFERTA") or "?"),
         dual_with=None if single == "SI" else _dual_link(el),
@@ -206,7 +214,7 @@ def _convert(el: ET.Element, commodity: str) -> Offer | str | None:
 
     spread = sum(b * w for b, w in zip(bands, DEFAULT_BAND_SPLIT))  # PUN/PSV unico nelle ipotesi: spread medio pesato
     dispatching = sum(float(d.text) for d in el.iter(NS + "VALORE_DISP") if d.text) if commodity == "power" else None
-    return Offer(price_type="indexed", spread=spread, dispatching=dispatching or None, **common)
+    return Offer(price_type="indexed", index_name=INDEX_NAMES.get(_any(el, "IDX_PREZZO_ENERGIA") or ""), spread=spread, dispatching=dispatching or None, **common)
 
 
 def _dual_link(el: ET.Element) -> str:
@@ -304,18 +312,34 @@ def _activation_texts(el: ET.Element) -> str | None:
     return "\n".join(out[:3]) or None
 
 
+SCONTO_UNITS = {"01": "€ l'anno", "02": "€/kW", "03": "€/kWh", "04": "€/Smc", "05": "€", "06": "%"}  # UNITA_MISURA di PrezziSconto
+SCONTO_WHEN = {"01": "all'ingresso", "02": "entro 12 mesi", "03": "oltre 12 mesi"}  # VALIDITA
+SCONTO_IF = {"01": "con fatturazione elettronica", "02": "con gestione online", "03": "con fatturazione elettronica e domiciliazione bancaria"}  # CONDIZIONE_APPLICAZIONE
+
+
 def _bonus_texts(el: ET.Element) -> str | None:
-    """Bonus e sconti come li descrive il venditore («Nome: descrizione»), una voce per riga. Importi e unità di misura
-    dei codici ARERA non sono interpretati: la cifra sta nel testo. Non entrano nella stima."""
+    """Bonus e sconti, uno per riga: «Descrizione — importo, quando, a quale condizione». Importo, momento e condizione
+    sono quelli strutturati di ARERA; la descrizione è il testo del venditore. Non entrano nella stima."""
     out: list[str] = []
     for sc in el.findall(NS + "Sconto"):
         name = " ".join((sc.findtext(NS + "NOME") or "").split())
         desc = " ".join((sc.findtext(NS + "DESCRIZIONE") or "").split())
         text = desc if not name or name.lower() in desc.lower() else (f"{name}: {desc}" if desc else name)
-        if text:
-            text = text if len(text) <= MAX_TEXT else text[:MAX_TEXT].rstrip() + "…"
-            if text not in out:
-                out.append(text)
+        if not text:
+            continue
+        text = text if len(text) <= MAX_TEXT else text[:MAX_TEXT].rstrip() + "…"
+        amounts = []
+        for ps in sc.findall(NS + "PrezziSconto"):
+            unit, raw = SCONTO_UNITS.get(ps.findtext(NS + "UNITA_MISURA") or ""), ps.findtext(NS + "PREZZO")
+            try:
+                amounts.append(f"{float(raw or ''):g} {unit}".replace(".", ",")) if unit else None
+            except ValueError:
+                pass
+        details = [", ".join(dict.fromkeys(amounts)) or None, SCONTO_WHEN.get(sc.findtext(NS + "VALIDITA") or ""),
+                   SCONTO_IF.get(sc.findtext(f"{NS}Condizione/{NS}CONDIZIONE_APPLICAZIONE") or "")]
+        line = " — ".join([text, ", ".join(d for d in details if d)]) if any(details) else text
+        if line not in out:
+            out.append(line)
     return "\n".join(out[:5]) or None
 
 

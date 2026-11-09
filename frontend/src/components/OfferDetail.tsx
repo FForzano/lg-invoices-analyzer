@@ -27,6 +27,8 @@ export const Flags = ({ o }: { o: Offer }) => (
   </>
 );
 
+const CASES: Record<string, string> = { switch: 'cambio fornitore', first: 'prima attivazione', reactivation: 'riattivazione', transfer: 'voltura' };
+const INDEXES: Record<string, string> = { pun: 'PUN', psv: 'PSV', ttf: 'TTF', psbil: 'Psbil (stimato come PSV)', pe: 'PE', pfor: 'Pfor', cmem: 'Cmem', other: 'altro' };
 const n = (x: unknown): number | null => (typeof x === 'number' ? x : null);
 const dateIt = (iso: string) => iso.split('-').reverse().join('/');
 
@@ -71,6 +73,7 @@ export default function OfferDetail({ ranked, consumption, assumptions, onClose 
   const code = typeof o?.source === 'string' && o.source.startsWith('arera:') && o.source !== 'arera:?' ? o.source.slice(6) : null;
   const range = (lo: unknown, hi: unknown, u: string) => (n(lo) != null && n(hi) != null ? `da ${num(n(lo), 0)} a ${num(n(hi), 0)} ${u}` : n(lo) != null ? `da ${num(n(lo), 0)} ${u}` : n(hi) != null ? `fino a ${num(n(hi), 0)} ${u}` : null);
   const who: [string, string][] = [];
+  if (typeof o?.valid_for === 'string') who.push(['Vale per', o.valid_for.includes('always') ? 'ogni caso' : o.valid_for.split(',').map((c) => CASES[c] ?? c).join(', ')]);
   if (o?.residency) who.push(['Residenza', o.residency === 'resident' ? 'Solo residenti' : 'Solo non residenti']);
   const pw = range(o?.power_min, o?.power_max, 'kW'), cs = range(o?.consumption_min, o?.consumption_max, unit);
   if (pw) who.push(['Potenza ammessa', pw]);
@@ -120,10 +123,12 @@ export default function OfferDetail({ ranked, consumption, assumptions, onClose 
           {afterTerm && <p className="mt-2"><strong>A fine periodo: </strong>{afterTerm}</p>}
           {!conditions.length && !afterTerm && !exitTerms.length && o.duration_months == null && !o.expires_on && <p className="text-muted">Nessuna condizione indicata.</p>}
         </Section>
-        {(code || who.length > 0 || o.payment_methods || activation.length > 0 || o.phone) && <Section title="Per chi vale e come si sottoscrive">
+        {(code || who.length > 0 || o.index_name || o.activation_channels || o.payment_methods || activation.length > 0 || o.phone) && <Section title="Per chi vale e come si sottoscrive">
           <dl>
             {code && <Row label="Codice offerta" value={code} />}
             {who.map(([l, v]) => <Row key={l} label={l} value={v} />)}
+            {typeof o.index_name === 'string' && <Row label="Indice di riferimento" value={INDEXES[o.index_name] ?? o.index_name} />}
+            {typeof o.activation_channels === 'string' && <Row label="Si attiva" value={o.activation_channels} />}
             {typeof o.payment_methods === 'string' && <Row label="Pagamento" value={o.payment_methods} />}
             {typeof o.phone === 'string' && <Row label="Telefono del venditore" value={o.phone} />}
           </dl>

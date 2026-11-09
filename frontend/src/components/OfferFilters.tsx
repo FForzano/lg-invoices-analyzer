@@ -1,15 +1,21 @@
-import { useId, useState, type ReactNode } from 'react';
-import { Check, ChevronDown, SlidersHorizontal, X } from 'lucide-react';
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { Check, ChevronDown, SlidersHorizontal, Star, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { FOCUS_RING, fieldClass } from './styles';
+import { api, type WithMessages } from '../lib/api';
+import { useQuery } from '../lib/useQuery';
+import { useAction } from '../lib/useAction';
+import { useApp } from '../context/AppContext';
+import type { FilterPreset } from '../lib/types';
 
-const KEYS = ['type', 'no_exit', 'bonus', 'no_domic', 'power'] as const;
+const KEYS = ['type', 'no_exit', 'bonus', 'no_domic', 'online', 'power'] as const;
 type Key = (typeof KEYS)[number];
 const TYPES: [string, string][] = [['', 'Tutte'], ['fixed', 'Prezzo fisso'], ['indexed', 'Indicizzate']];
 const POWERS = [1.5, 3, 4.5, 6, 7.5, 10, 15];
 const SWITCHES: { key: Key; group: string; label: string; chip: string }[] = [
   { key: 'no_exit', group: 'Escludi', label: 'Con oneri di uscita', chip: 'Senza oneri di uscita' },
   { key: 'no_domic', group: 'Escludi', label: 'Con domiciliazione obbligatoria', chip: 'Pagabile senza domiciliazione' },
+  { key: 'online', group: 'Mostra solo', label: 'Attivabile online', chip: 'Attivabile online' },
   { key: 'bonus', group: 'Mostra solo', label: 'Con bonus o sconti', chip: 'Con bonus o sconti' },
 ];
 const kw = (n: number) => `${String(n).replace('.', ',')} kW`;
@@ -37,12 +43,33 @@ export default function OfferFilters({ search = false, power }: { search?: boole
   const [term, setTerm] = useState(params.get('q') ?? '');
   const [open, setOpen] = useState(false);
   const panel = useId();
+  const { flash } = useApp();
+  const { run, busy } = useAction();
+  const presets = useQuery<{ items: FilterPreset[] }>('/filter-presets');
+  const [naming, setNaming] = useState('');
+  const appliedDefault = useRef(false);
   const change = (key: string, value: string | null) => {
     const p = new URLSearchParams(params);
     if (value) p.set(key, value); else p.delete(key);
     p.delete('page');
     setParams(p);
   };
+  const current = () => { const p = new URLSearchParams(); KEYS.forEach((k) => params.get(k) && p.set(k, params.get(k)!)); return p.toString(); };
+  const apply = (query: string, replace = false) => { const p = new URLSearchParams(query); if (params.get('q')) p.set('q', params.get('q')!); setParams(p, { replace }); };
+  // all'apertura, senza filtri nell'indirizzo, vale il preferito segnato come predefinito (una volta sola per pagina)
+  useEffect(() => {
+    if (appliedDefault.current || !presets.data) return;
+    appliedDefault.current = true;
+    const d = presets.data.items.find((p) => p.is_default);
+    if (d && !KEYS.some((k) => params.get(k))) apply(d.query, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presets.data]);
+  const save = (e: FormEvent) => {
+    e.preventDefault();
+    void run(async () => { const r = await api.post<WithMessages>('/filter-presets', { name: naming, query: current() }); flash(r.messages); setNaming(''); presets.reload(); });
+  };
+  const remove = (p: FilterPreset) => void run(async () => { await api.del(`/filter-presets/${p.id}`); presets.reload(); });
+  const makeDefault = (p: FilterPreset) => void run(async () => { await api.put('/filter-presets/default', { id: p.is_default ? null : p.id }); presets.reload(); });
   const type = params.get('type') ?? '';
   const chosenPower = Number(params.get('power')) || null;
   const chips: { key: Key; label: string }[] = [];
@@ -89,6 +116,22 @@ export default function OfferFilters({ search = false, power }: { search?: boole
             })}
           </Group>
         ))}
+        <div className="border-t border-edge pt-4 sm:col-span-2">
+          <h3 className="mb-2 text-[.8rem] font-bold uppercase tracking-wider text-muted">Preferiti</h3>
+          {presets.data?.items.length ? <ul className="mb-3 flex flex-wrap gap-2">
+            {presets.data.items.map((p) => (
+              <li key={p.id} className="inline-flex items-center rounded-full bg-calm shadow-panel">
+                <button type="button" onClick={() => apply(p.query)} className={`min-h-[44px] rounded-l-full pl-4 pr-2 font-bold ${FOCUS_RING}`}>{p.name}</button>
+                <button type="button" onClick={() => makeDefault(p)} aria-pressed={p.is_default} aria-label={p.is_default ? `Non applicare «${p.name}» all'apertura` : `Applica «${p.name}» all'apertura`} title="Applica all'apertura"
+                  className={`flex min-h-[44px] w-10 items-center justify-center ${FOCUS_RING} ${p.is_default ? 'text-accent' : 'text-muted hover:text-accent'}`}><Star className="h-5 w-5" fill={p.is_default ? 'currentColor' : 'none'} aria-hidden /></button>
+                <button type="button" onClick={() => remove(p)} aria-label={`Elimina «${p.name}»`} className={`flex min-h-[44px] w-10 items-center justify-center rounded-r-full text-muted hover:text-bad ${FOCUS_RING}`}><X className="h-4 w-4" aria-hidden /></button>
+              </li>))}
+          </ul> : <p className="mb-3 max-w-[58ch] text-sm text-muted">Salva una combinazione di filtri per riusarla con un tocco. La stella indica quella da applicare quando apri la pagina.</p>}
+          <form onSubmit={save} className="flex flex-wrap gap-2">
+            <input value={naming} onChange={(e) => setNaming(e.target.value)} maxLength={40} placeholder="Nome, es. «Solo fisso, senza penali»" aria-label="Nome dei filtri da salvare" className={`${fieldClass} max-w-xs flex-1`} />
+            <button type="submit" disabled={!naming.trim() || count === 0 || busy} className={`${pill(false)} disabled:pointer-events-none disabled:opacity-50`}>Salva i filtri attuali</button>
+          </form>
+        </div>
       </div>}
 
       {count > 0 && <ul className="flex flex-wrap items-center gap-2" aria-label="Filtri attivi">

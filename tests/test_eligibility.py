@@ -26,3 +26,10 @@ def test_new_customers_only_excludes_own_supplier():
     assert not available_in(only_new, HOME)  # stesso fornitore («enel.it» = «Enel Energia»)
     assert available_in(offer(supplier="altro.it", conditions="Solo nuovi clienti"), HOME)
     assert available_in(only_new, Location())  # fornitore attuale sconosciuto
+
+
+def test_activation_cases_from_the_official_codes():
+    assert available_in(offer(valid_for="always"), HOME) and available_in(offer(valid_for="switch,transfer"), Location(supplier="Altro"))
+    assert not available_in(offer(valid_for="first,transfer"), HOME)  # non vale per chi cambia fornitore
+    assert not available_in(offer(valid_for="switch"), HOME)  # solo cambiando fornitore, ma il fornitore è lo stesso
+    assert available_in(offer(valid_for="switch", supplier="altro.it"), HOME)

@@ -2,12 +2,13 @@
 <ListaOfferteMercatoLibero xmlns="http://www.acquirenteunico.it/schemas/SII_AU/OffertaRetail/01">
   <offerta>
     <IdentificativiOfferta><PIVA_UTENTE>111</PIVA_UTENTE><COD_OFFERTA>IDX1</COD_OFFERTA></IdentificativiOfferta>
-    <DettaglioOfferta><TIPO_CLIENTE>01</TIPO_CLIENTE><DOMESTICO_RESIDENTE>01</DOMESTICO_RESIDENTE><OFFERTA_SINGOLA>SI</OFFERTA_SINGOLA><TIPO_OFFERTA>02</TIPO_OFFERTA>
+    <DettaglioOfferta><TIPO_CLIENTE>01</TIPO_CLIENTE><DOMESTICO_RESIDENTE>01</DOMESTICO_RESIDENTE><TIPOLOGIA_ATT_CONTR>01</TIPOLOGIA_ATT_CONTR><OFFERTA_SINGOLA>SI</OFFERTA_SINGOLA><TIPO_OFFERTA>02</TIPO_OFFERTA>
       <NOME_OFFERTA>Indicizzata</NOME_OFFERTA><Contatti><URL_SITO_VENDITORE>www.esempio.it</URL_SITO_VENDITORE><URL_OFFERTA>www.esempio.it/offerte/indicizzata</URL_OFFERTA><TELEFONO>800123456</TELEFONO></Contatti></DettaglioOfferta>
     <ValiditaOfferta><DATA_INIZIO>13/10/2026_16:27:02</DATA_INIZIO><DATA_FINE>10/01/2027_23:59:59</DATA_FINE></ValiditaOfferta>
     <CaratteristicheOfferta><POTENZA_MIN>1.5</POTENZA_MIN><POTENZA_MAX>6</POTENZA_MAX><CONSUMO_MIN>0</CONSUMO_MIN><CONSUMO_MAX>10000</CONSUMO_MAX></CaratteristicheOfferta>
     <MetodoPagamento><MODALITA_PAGAMENTO>01</MODALITA_PAGAMENTO></MetodoPagamento><MetodoPagamento><MODALITA_PAGAMENTO>04</MODALITA_PAGAMENTO></MetodoPagamento>
-    <ModalitaAttivazione><MODALITA>03</MODALITA><DESCRIZIONE>Presso i punti vendita.</DESCRIZIONE></ModalitaAttivazione>
+    <ModalitaAttivazione><MODALITA>03</MODALITA><MODALITA>04</MODALITA><DESCRIZIONE>Presso i punti vendita.</DESCRIZIONE></ModalitaAttivazione>
+    <RiferimentiPrezzoEnergia><IDX_PREZZO_ENERGIA>12</IDX_PREZZO_ENERGIA></RiferimentiPrezzoEnergia>
     <TipoPrezzo><TIPOLOGIA_FASCE>03</TIPOLOGIA_FASCE></TipoPrezzo>
     <Dispacciamento><TIPO_DISPACCIAMENTO>99</TIPO_DISPACCIAMENTO><VALORE_DISP>0.0088</VALORE_DISP></Dispacciamento>
     <ComponenteImpresa><NOME>SPREAD</NOME><TIPOLOGIA>01</TIPOLOGIA><MACROAREA>04</MACROAREA>
@@ -26,7 +27,7 @@
     <CondizioniContrattuali><TIPOLOGIA_CONDIZIONE>01</TIPOLOGIA_CONDIZIONE><DESCRIZIONE>Valida solo con addebito su conto.</DESCRIZIONE><LIMITANTE>01</LIMITANTE></CondizioniContrattuali>
     <CondizioniContrattuali><TIPOLOGIA_CONDIZIONE>99</TIPOLOGIA_CONDIZIONE><DESCRIZIONE>Trascorsi 24 mesi di fornitura il prezzo sarà sostituito dalla formula indicizzata.</DESCRIZIONE><LIMITANTE>02</LIMITANTE></CondizioniContrattuali>
     <CondizioniContrattuali><TIPOLOGIA_CONDIZIONE>03</TIPOLOGIA_CONDIZIONE><DESCRIZIONE>Il contratto è a tempo indeterminato.</DESCRIZIONE><LIMITANTE>02</LIMITANTE></CondizioniContrattuali>
-    <Sconto><NOME>Bonus benvenuto</NOME><DESCRIZIONE>Bonus una tantum di 30 € in prima fattura.</DESCRIZIONE><VALIDITA>02</VALIDITA><PrezziSconto><TIPOLOGIA>01</TIPOLOGIA><UNITA_MISURA>01</UNITA_MISURA><PREZZO>30</PREZZO></PrezziSconto></Sconto>
+    <Sconto><NOME>Bonus benvenuto</NOME><DESCRIZIONE>Bonus una tantum di 30 € in prima fattura.</DESCRIZIONE><VALIDITA>01</VALIDITA><PrezziSconto><TIPOLOGIA>01</TIPOLOGIA><UNITA_MISURA>05</UNITA_MISURA><PREZZO>30</PREZZO></PrezziSconto></Sconto>
     <CondizioniContrattuali><TIPOLOGIA_CONDIZIONE>05</TIPOLOGIA_CONDIZIONE><DESCRIZIONE>Onere di recesso anticipato di 2,00 € per ogni mese residuo.</DESCRIZIONE><LIMITANTE>02</LIMITANTE></CondizioniContrattuali>
     <ComponenteImpresa><NOME>Energia</NOME><TIPOLOGIA>01</TIPOLOGIA><MACROAREA>04</MACROAREA>
       <IntervalloPrezzi><FASCIA_COMPONENTE>01</FASCIA_COMPONENTE><PREZZO>0.13</PREZZO><UNITA_MISURA>03</UNITA_MISURA></IntervalloPrezzi></ComponenteImpresa>
